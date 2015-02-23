@@ -1,0 +1,37 @@
+{
+  "name" : "caleydo-altsplice",
+  "version": "0.0.1",
+  "dependencies": {
+    "d3": "~3.4.11",
+    "js-lru": "git@github.com:rsms/js-lru.git"
+  },
+  "caleydo" : {
+    "plugins": [
+      {
+        "type": "datatype",
+        "id": "genomeDataLink",
+        "folder" : "caleydo-altsplice",
+        "module": "caleydo-altsplice/genomeDataLink"
+      },
+      {
+        "type": "vis",
+        "id": "altsplice-junctions",
+        "name": "Alternative Splicing - Junctions",
+        "size": [840,2000],
+        "filter": "genomeDataLink",
+        "folder" : "caleydo-altsplice",
+        "module" : "caleydo-altsplice/altsplice-junctions"
+
+      },
+      {
+        "type": "vis",
+        "id": "altsplice-reads",
+        "name": "Alternative Splicing - Abundance",
+        "size": [840,2000],
+        "filter": "genomeDataLink",
+        "folder" : "caleydo-altsplice",
+        "module" : "caleydo-altsplice/altsplice-reads"
+      }
+    ]
+  }
+}

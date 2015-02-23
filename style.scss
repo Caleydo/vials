@@ -1,0 +1,34 @@
+
+/**
+ * Created by Hendrik Strobelt 10/10/14
+ */
+
+//by convention create a namespace for your own plugin
+.gv {
+  //  textarea{
+  //    /*width: 600px;*/
+  //    /*min-width:200px;*/
+  //    /*max-width:200px;*/
+  //
+  //    height:200px;
+  //    min-height:200px;
+  //    max-height:200px;
+  //  }
+  .axis text {
+    font: 10px sans-serif;
+  }
+
+  .axis line,
+  .axis path {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+  }
+  .seqText{
+    font: 10px sans-serif;
+  }
+  .seqBox{
+    opacity: .5;
+  }
+
+}
