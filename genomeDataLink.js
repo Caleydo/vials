@@ -6,17 +6,20 @@ define(['exports', '../caleydo/main', '../caleydo/datatype', 'd3', '../bower_com
       init: function (desc) {
         this.serveradress = desc.serveradress;
         this.sampleCache = new LRUCache(5); // create a cache of size 5
+        this.allGenes=null;
+        this.bamHeader=null;
       },
-      getSamples:function (chromID, startPos, baseWidth){
+      getSamples:function (chromID, startPos, baseWidth, gene){
         var res = this.sampleCache.get(chromID+"-"+startPos+"-"+ baseWidth);
 
         /* cache fail */
         if (!res){
           //console.log("cahce miss");
-          res = $.getJSON(this.serveradress+ "/pileup?chromID="
-              + encodeURIComponent(chromID) + "&pos="
-              + encodeURIComponent(startPos) + "&baseWidth="
-              + encodeURIComponent(baseWidth));
+          res = $.getJSON(this.serveradress+ "/pileup?" +
+          "geneName="+encodeURIComponent(gene)+
+          "&chromID="+ encodeURIComponent(chromID) +
+          "&pos=" + encodeURIComponent(startPos) +
+          "&baseWidth=" + encodeURIComponent(baseWidth));
 
           this.sampleCache.put(chromID+"-"+startPos+"-"+ baseWidth, res);
         }
@@ -27,10 +30,28 @@ define(['exports', '../caleydo/main', '../caleydo/datatype', 'd3', '../bower_com
         /* return a (fullfilled) promise */
         return res;
 
+      },
+      getAllGenes:function(){
+        if (this.allGenes === null)
+          this.allGenes =$.getJSON(this.serveradress + "/genes");
+
+        return this.allGenes;
+
+      },
+      getBamHeader:function(){
+        if (this.bamHeader == null)
+          this.bamHeader= $.getJSON(this.serveradress+"/header");
+        return this.bamHeader;
       }
 
-
     });
+
+
+
+
+
+
+
 
     exports.create = function(desc) {
       return new exports.GenomeDataLink(desc);
