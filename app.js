@@ -14,10 +14,10 @@ require(['../caleydo/data', '../caleydo/vis'], function (data, visPlugins) {
       vis = plugin.factory(genome, document.querySelector("#vis1") );
     });
 
-    //var readVis = visses.filter(function (vis) { return vis.id === 'altsplice-reads'})[0];
-    //readVis.load().then(function (plugin) {
-    //  vis = plugin.factory(genome, document.querySelector("#vis2") );
-    //});
+    var readVis = visses.filter(function (vis) { return vis.id === 'altsplice-reads'})[0];
+    readVis.load().then(function (plugin) {
+      vis = plugin.factory(genome, document.querySelector("#vis2") );
+    });
 
 
   });

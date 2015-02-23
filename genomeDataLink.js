@@ -9,19 +9,20 @@ define(['exports', '../caleydo/main', '../caleydo/datatype', 'd3', '../bower_com
         this.allGenes=null;
         this.bamHeader=null;
       },
-      getSamples:function (chromID, startPos, baseWidth, gene){
-        var res = this.sampleCache.get(chromID+"-"+startPos+"-"+ baseWidth);
+      getSamples:function (gene, startPos, baseWidth){
+        var res = this.sampleCache.get(gene+"-"+startPos+"-"+ baseWidth);
 
         /* cache fail */
         if (!res){
           //console.log("cahce miss");
-          res = $.getJSON(this.serveradress+ "/pileup?" +
-          "geneName="+encodeURIComponent(gene)+
-          "&chromID="+ encodeURIComponent(chromID) +
-          "&pos=" + encodeURIComponent(startPos) +
-          "&baseWidth=" + encodeURIComponent(baseWidth));
 
-          this.sampleCache.put(chromID+"-"+startPos+"-"+ baseWidth, res);
+          var parameters = ["geneName="+encodeURIComponent(gene)];
+          if (startPos) parameters.push("pos="+encodeURIComponent(startPos));
+          if (baseWidth) parameters.push("baseWidth="+encodeURIComponent(baseWidth))
+
+          res = $.getJSON(this.serveradress+ "/pileup?"+parameters.join("&"));
+
+          this.sampleCache.put(gene+"-"+startPos+"-"+ baseWidth, res);
         }
         //else{
         //  console.log("cahce hit");

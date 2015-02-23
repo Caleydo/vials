@@ -121,6 +121,7 @@ define(['exports', 'd3'], function (exports, d3) {
     startPos = getStartPos()
     chromID =getCromID ()
     baseWidth =getBaseWidth ()
+    //geneName     = $(geneSelector.node()).val()
 
 
     curGene = getCurGene(startPos, baseWidth);
@@ -160,8 +161,9 @@ define(['exports', 'd3'], function (exports, d3) {
     // BIND DATA TO VISUALIZATION
     // ==========================
 
-    that.data.getSamples(chromID,startPos,baseWidth).then(function(sampleData) {
+    that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
       samples = d3.keys(sampleData);
+      console.log("SAMPLE:", sampleData);
 
       var totalAxisWidth = width - axisPadding*(axisRanges.length - 1);
 
@@ -265,8 +267,8 @@ define(['exports', 'd3'], function (exports, d3) {
   function drawJxns(data) {
 
     var maxJxnReads = 0;
-    for (sample in data) {
-      maxJxnReads = Math.max(data[sample]["jxns"].reduce(function(a, b) {return Math.max(a, b[1])}, 0), maxJxnReads);
+    for (sample in data.samples) {
+      maxJxnReads = Math.max(data.samples[sample]["jxns"].reduce(function(a, b) {return Math.max(a, b[1])}, 0), maxJxnReads);
     }
 
     var exonWeightsAreaHeight = jxnWrapperHeight - 4 * miniExonHeight;
@@ -379,8 +381,8 @@ define(['exports', 'd3'], function (exports, d3) {
 
       function getJxnsFromSpan(curExon, otherExon) {
         var jxns = [];
-        for (var sample in data) {
-          data[sample]["jxns"].forEach(function(jxn, i) {
+        for (var sample in data.samples) {
+          data.samples[sample]["jxns"].forEach(function(jxn, i) {
             if ((curExon[1] == jxn[0][0] && otherExon[0] == jxn[0][1]) ||
               (otherExon[1] == jxn[0][0] && curExon[0] == jxn[0][1])) {
               jxns.push(jxn[1]);
@@ -438,9 +440,13 @@ define(['exports', 'd3'], function (exports, d3) {
     });
   }
 
+    //globalCallCount = 1;
   function getCurRNAs(geneName, pos, baseWidth) {
-    console.log(geneName)
+    if (!geneData) return [];
+    //console.log(globalCallCount, geneName, geneData)
+    //globalCallCount++;
     var gene = geneData[geneName];
+    //console.log(gene);
     var curRNAs = [];
     var curExons = [];
     for (var j in gene.exons) {
@@ -471,7 +477,7 @@ define(['exports', 'd3'], function (exports, d3) {
       .reduce(function(a, b) {
         if (a.length > b.length) {return a;}
         else {return b;}
-      })
+      }, 0)
   }
 
   function getCurGene(pos, baseWidth) {
@@ -545,8 +551,7 @@ define(['exports', 'd3'], function (exports, d3) {
       class:"btn"
     }).text("-")
 
-
-    $.getJSON(serverOffset + "/genes", function(genes) {
+    that.data.getAllGenes().then( function(genes) {
       geneData = genes;
       for (var gene in genes) {
         geneSelector.append("option").attr('value', gene).text(gene);

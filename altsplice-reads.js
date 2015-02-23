@@ -20,6 +20,8 @@ define(['exports', 'd3'], function (exports, d3) {
 
     GenomeVis.prototype.build = function ($parent) {
         var serverOffset = this.data.serveradress;
+        var that = this;
+
 
         var head = $parent.append("div").attr({
                 "class":"gv"
@@ -28,16 +30,16 @@ define(['exports', 'd3'], function (exports, d3) {
         var ta = head.append("textarea").style({
                 "width":"800px",
                 "height":"300px",
-                "top":"20px",
+                "top":"920px",
                 "left":"20px",
-                "position":"absolute"
+                "position":"relative"
         })
 
         var $inputOuterDiv = head.append("div").style({
-                "top":"340px",
+                "top":"1340px",
                 "left":"20px",
                 "width":"600px",
-                "position":"absolute"
+                "position":"relative"
         })
 
         var $queryDiv = $inputOuterDiv.append("div").text("chromosome ID:");
@@ -147,7 +149,7 @@ define(['exports', 'd3'], function (exports, d3) {
                 class:"btn"
         }).text("-")
 
-        $.getJSON(serverOffset+"/header", function (data) {
+        this.data.getBamHeader().then(function (data) {
                 ta.text(JSON.stringify(data, undefined, 2));
         });
 
@@ -403,7 +405,7 @@ define(['exports', 'd3'], function (exports, d3) {
                                 "wiggle": samples.map(function(sample) {return data["samples"][sample]["positions"][i].wiggle}),
                             };
                     })
-                    this.aggBar.update(aggData);                    
+                    this.aggBar.update(aggData);
                 }
             }
 
@@ -495,7 +497,7 @@ define(['exports', 'd3'], function (exports, d3) {
                     collapseButton = linesGroup.append("rect")
                                              .attr({
                                                  "class": "collapseButton",
-                                                 "fill": this.collapse ? "black" : "white",                    
+                                                 "fill": this.collapse ? "black" : "white",
                                                  "stroke": "black",
                                                  "width": 10,
                                                  "height": 10,
@@ -531,7 +533,7 @@ define(['exports', 'd3'], function (exports, d3) {
                     return i * (styles["sampleBarHeight"] + styles["sampleBarMargin"]) + styles["collectionMargin"]/2;
                 }.bind(this);
                 this.g.selectAll(".collapseButton").transition().attr({
-                    "fill": this.collapse ? "white" : "black",                    
+                    "fill": this.collapse ? "white" : "black",
                 })
                 this.g.selectAll(".sample").transition().attr({
                     "transform": function(c, i) {return "translate(" + styles["horizAxisPadding"] + "," + samplePos(i) + ")"},
@@ -552,15 +554,18 @@ define(['exports', 'd3'], function (exports, d3) {
             return new Collection(joinedSamples);
         };
 
-        function SampleView(g) {
+        function SampleView(g, data) {
             this.curGene = undefined;
             this.g = g;
+            this.data = data;
             this.options = {"showIntrons": false, "showHorizons": false};
             this.axis = new BrokenAxis(this.options);
+            var that = this;
 
             this.getCollectionGroups = function() {
                 return d3.selectAll(this.collections.map(function (c) {return c.g}));
             }
+
 
             this.update = function() {
                 var geneName     = $(geneSelector.node()).val(),
@@ -568,17 +573,27 @@ define(['exports', 'd3'], function (exports, d3) {
                     pos         = parseInt($(startPos.node()).val()),
                     baseWidth   = parseInt($(baseWidthInput.node()).val());
 
-                var url = serverOffset + "/pileup?geneName=" + encodeURIComponent(geneName);
-                if (geneName === this.curGene) {
-                    url += "&pos=" + encodeURIComponent(pos) +
-                           "&baseWidth=" + encodeURIComponent(baseWidth)
-                    this.curGene = geneName;
-                }
-                $.getJSON(url, function (data) {
-                                    this.axis.update(data["geneInfo"], pos, baseWidth);
-                                    this.draw(data);
-                                }.bind(this)
-                );
+                //var url = serverOffset + "/pileup?geneName=" + encodeURIComponent(geneName);
+                //if (geneName === this.curGene) {
+                //    url += "&pos=" + encodeURIComponent(pos) +
+                //           "&baseWidth=" + encodeURIComponent(baseWidth)
+                //    this.curGene = geneName;
+                //}
+              //console.log("UPDATE:", geneName, this.curGene, pos, baseWidth, that, this);
+              if (geneName === this.curGene){
+                that.data.getSamples(geneName,pos,baseWidth)
+                  .then(function (data) {
+                    that.axis.update(data["geneInfo"], pos, baseWidth);
+                    that.draw(data);
+                  })
+              }else{
+                that.data.getSamples(geneName,null,null)
+                  .then(function (data) {
+                    that.axis.update(data["geneInfo"], pos, baseWidth);
+                    that.draw(data);
+                  })
+              }
+
             }
 
             this.draw = function(data) {
@@ -624,11 +639,12 @@ define(['exports', 'd3'], function (exports, d3) {
 
         styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 0, "horizAxisPadding": 20};
         var sampleGroup = svg.append("g");
-        $.getJSON(serverOffset + "/genes", function(genes) {
-            genes.forEach(function(gene) {
+        this.data.getAllGenes().then(function(genes) {
+          //console.log("genes:", genes);
+            Object.keys(genes).forEach(function(gene) {
                 geneSelector.append("option").attr('value', gene).text(gene);
             });
-            var sampleView = new SampleView(sampleGroup);
+            var sampleView = new SampleView(sampleGroup, that.data);
             geneSelector.on({
                 "change": sampleView.update
             });
