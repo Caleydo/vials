@@ -93,6 +93,7 @@ define(['exports', 'd3'], function (exports, d3) {
         }
 
         function getAxisRanges(curExons, startPosVal, baseWidth, showIntrons) {
+            curExons = curExons.sort(function(a, b) {return a[0] > b[0] ? 1 : -1});
             if (showIntrons) {
                 var ranges = [];
                 var prevExon;
