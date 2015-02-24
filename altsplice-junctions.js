@@ -44,6 +44,7 @@ define(['exports', 'd3'], function (exports, d3) {
   var miniExonSpacing = 5;
   var miniExonHeight = 7;
   var jxnCircleRadius = 5;
+  var hoveredEdgeColor = "orange";
   var jxnBBoxWidth = jxnCircleRadius * 3;
 
   var curGene;
