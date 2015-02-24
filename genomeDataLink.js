@@ -3,12 +3,14 @@
 //noinspection Annotator
 define(['exports', '../caleydo/main', '../caleydo/datatype', 'd3', '../bower_components/js-lru/lru.js'], function(exports, C, datatypes, d3, lru) {
     exports.GenomeDataLink = datatypes.defineDataType('GenomeDataLink', {
+
       init: function (desc) {
         this.serveradress = desc.serveradress;
         this.sampleCache = new LRUCache(5); // create a cache of size 5
         this.allGenes=null;
         this.bamHeader=null;
       },
+
       getSamples:function (gene, startPos, baseWidth){
         var res = this.sampleCache.get(gene+"-"+startPos+"-"+ baseWidth);
 
@@ -32,6 +34,7 @@ define(['exports', '../caleydo/main', '../caleydo/datatype', 'd3', '../bower_com
         return res;
 
       },
+
       getAllGenes:function(){
         if (this.allGenes === null)
           this.allGenes =$.getJSON(this.serveradress + "/genes");
@@ -39,6 +42,7 @@ define(['exports', '../caleydo/main', '../caleydo/datatype', 'd3', '../bower_com
         return this.allGenes;
 
       },
+
       getBamHeader:function(){
         if (this.bamHeader == null)
           this.bamHeader= $.getJSON(this.serveradress+"/header");
