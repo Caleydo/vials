@@ -286,7 +286,7 @@ define(['exports', 'd3'], function (exports, d3) {
                 var axis = this.axis;
                 this.g.selectAll(".dataHorizon").remove();
                 var avgFunc = d3.svg.line().x(function(d) {return axis.getXPos(d.pos) + 0.5*axis.rangeBand();})
-                                            .y(function(d) {return styles["sampleBarHeight"]*(1-(d3.mean(d.wiggle)|| d.wiggle));})
+                                            .y(function(d) {return styles["sampleBarHeight"]*(1-(d3.mean(d.wiggle) || d.wiggle));})
                                             .interpolate('step');
 
                 var avgLines = this.g.selectAll(".avgLine").data(this.splitData);
@@ -660,7 +660,7 @@ define(['exports', 'd3'], function (exports, d3) {
         styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10, "horizAxisPadding": 20};
         var sampleGroup = svg.append("g");
         this.data.getAllGenes().then(function(genes) {
-            genes.forEach(function(gene) {
+            Object.keys(genes).forEach(function(gene) {
                 geneSelector.append("option").attr('value', gene).text(gene);
             });
             var sampleView = new SampleView(sampleGroup, that.data);
