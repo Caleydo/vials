@@ -22,7 +22,6 @@ define(['exports', 'd3'], function (exports, d3) {
         var serverOffset = this.data.serveradress;
         var that = this;
 
-
         var head = $parent.append("div").attr({
                 "class":"gv"
         })
@@ -112,9 +111,11 @@ define(['exports', 'd3'], function (exports, d3) {
                 if (prevExon[1] < startPosVal+baseWidth) {
                     ranges.push([prevExon[1], startPosVal+baseWidth])
                 }
-                return ranges;
             }
-            return curExons;
+            else {
+                ranges = curExons;
+            }
+            return ranges;
         }
 
         var requestButton = $queryDiv.append("button").attr({
@@ -390,8 +391,10 @@ define(['exports', 'd3'], function (exports, d3) {
             this.axis = axis;
             this.options = options;
 
-            this.getSampleGroups = function() {
-                return d3.selectAll(this.collections.map(function (s) {return s.g}));
+            this.set = function(property, value) {
+                this[property] = value;
+                this.sampleBars.forEach(function(s) {s[property] = value});
+                this.aggBar[property] = value;
             }
 
             this.update = function(data) {
@@ -428,11 +431,16 @@ define(['exports', 'd3'], function (exports, d3) {
                         "class": "sampleAgg",
                         "height": styles["sampleBarHeight"],
                         "width": this.axis.width,
-                        "transform": function(c, i) {return "translate(" + styles["horizAxisPadding"] + "," + (i*(styles["sampleBarHeight"]+styles["sampleBarMargin"])+styles["collectionMargin"]/2) + ")"},
+                        "transform": function(c) {return "translate(" + styles["horizAxisPadding"] + "," + styles["collectionMargin"]/2 + ")"},
                     });
                 }
+
                 this.aggBar.g = aggGroup;
 
+                var samplePos = function(i) {
+                    i = this.collapse ? 0 : i;
+                    return i * (styles["sampleBarHeight"] + styles["sampleBarMargin"]) + styles["collectionMargin"]/2;
+                }.bind(this);
                 var sampleGroups = this.g.selectAll(".sample").data(this.sampleBars, function(d) {return d.id});
                 sampleGroups.exit().remove();
                 sampleGroups.enter()
@@ -441,8 +449,12 @@ define(['exports', 'd3'], function (exports, d3) {
                                 "class": "sample",
                                 "height": styles["sampleBarHeight"],
                                 "width": this.axis.width,
-                                "transform": function(c, i) {return "translate(" + styles["horizAxisPadding"] + "," + (i*(styles["sampleBarHeight"]+styles["sampleBarMargin"])+styles["collectionMargin"]/2) + ")"},
                             })
+
+                sampleGroups.attr({
+                    "transform": function(s, i) {return "translate(" + styles["horizAxisPadding"] + "," + samplePos(i) + ")"},
+                })
+
                 sampleGroups.each(function(s) {s.g = d3.select(this);})
 
                 if (this.aggregate) {
@@ -495,50 +507,54 @@ define(['exports', 'd3'], function (exports, d3) {
                                        "stroke": "black",
                                     });
 
-                    collapseButton = linesGroup.append("rect")
+                    var buttonGroup = linesGroup.append("g")
+                                                .attr({
+                                                    "class": "buttonGroup",
+                                                });
+
+                    var collapseButton = buttonGroup.append("rect")
                                              .attr({
                                                  "class": "collapseButton",
-                                                 "fill": this.collapse ? "black" : "white",
                                                  "stroke": "black",
                                                  "width": 10,
                                                  "height": 10,
-                                                 "x": -5 + width - styles["horizAxisPadding"],
-                                                 "y": -5 + (this.samples.length*(styles["sampleBarHeight"]+styles["sampleBarMargin"])+styles["collectionMargin"]/4)/2,
+                                                 "x": 0,
                                              })
                                              .on("click", this.toggleExpand);
 
-                    aggregateButton = linesGroup.append("rect")
+                    var aggregateButton = buttonGroup.append("rect")
                                                 .attr({
                                                     "class": "aggregateButton",
                                                     "fill": this.aggregate ? "black" : "white",
                                                     "stroke": "black",
                                                     "width": 10,
                                                     "height": 10,
-                                                    "x": 15 + width - styles["horizAxisPadding"],
-                                                    "y": -5 + (this.samples.length*(styles["sampleBarHeight"]+styles["sampleBarMargin"])+styles["collectionMargin"]/4)/2,
+                                                    "x": 20,
                                                 }).on("click", this.toggleAgg)
                 }
-                linesGroup.selectAll(".v").attr({
-                   "y2": this.samples.length*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + styles["collectionMargin"]/4,
-                })
-                linesGroup.selectAll(".bottom").attr({
-                   "y1": this.samples.length*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + styles["collectionMargin"]/4,
-                   "y2": this.samples.length*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + styles["collectionMargin"]/4,
-                })
+                linesGroup.selectAll(".buttonGroup").transition().attr({
+                    "transform": "translate(" + (-5 + width - styles["horizAxisPadding"]) + "," + (-5 + 1/2 * ((this.collapse? 1 : this.samples.length)*(styles["sampleBarHeight"]+styles["sampleBarMargin"])+styles["collectionMargin"]/4)) + ")",
+                });
+                linesGroup.selectAll(".collapseButton").transition().attr({
+                    "fill": this.collapse ? "black" : "white"
+                });
+                linesGroup.selectAll(".aggregateButton").transition().attr({
+                    "visibility": this.collapse ? "visible" : "hidden",
+                    "fill": this.aggregate ? "black" : "white"
+                });
+                linesGroup.selectAll(".v").transition().attr({
+                   "y2": (this.collapse ? 1 : this.samples.length)*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + styles["collectionMargin"]/4,
+                });
+                linesGroup.selectAll(".bottom").transition().attr({
+                   "y1": (this.collapse ? 1 : this.samples.length)*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + styles["collectionMargin"]/4,
+                   "y2": (this.collapse ? 1 : this.samples.length)*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + styles["collectionMargin"]/4,
+                });
             }
 
             this.toggleExpand = function() {
                 this.collapse = !this.collapse;
-                var samplePos = function(i) {
-                    i = this.collapse ? i : 0;
-                    return i * (styles["sampleBarHeight"] + styles["sampleBarMargin"]) + styles["collectionMargin"]/2;
-                }.bind(this);
-                this.g.selectAll(".collapseButton").transition().attr({
-                    "fill": this.collapse ? "white" : "black",
-                })
-                this.g.selectAll(".sample").transition().attr({
-                    "transform": function(c, i) {return "translate(" + styles["horizAxisPadding"] + "," + samplePos(i) + ")"},
-                })
+                this.aggregate = this.collapse ? this.agg : false;
+                this.sampleView.draw();
             }.bind(this);
 
             this.toggleAgg = function() {
@@ -546,14 +562,6 @@ define(['exports', 'd3'], function (exports, d3) {
                 this.drawSamples();
             }.bind(this);
         }
-
-        Collection.join = function(collections) {
-            var joinedSamples = [];
-            collections.forEach(function(c) {
-                joinedSamples += c.samples;
-            })
-            return new Collection(joinedSamples);
-        };
 
         function SampleView(g, data) {
             this.curGene = undefined;
@@ -563,10 +571,9 @@ define(['exports', 'd3'], function (exports, d3) {
             this.axis = new BrokenAxis(this.options);
             var that = this;
 
-            this.getCollectionGroups = function() {
-                return d3.selectAll(this.collections.map(function (c) {return c.g}));
+            this.set = function(property, value) {
+                this.collections.forEach(function(c) {c.set(property, value)});
             }
-
 
             this.update = function() {
                 var geneName     = $(geneSelector.node()).val(),
@@ -574,28 +581,31 @@ define(['exports', 'd3'], function (exports, d3) {
                     pos         = parseInt($(startPos.node()).val()),
                     baseWidth   = parseInt($(baseWidthInput.node()).val());
 
-                //var url = serverOffset + "/pileup?geneName=" + encodeURIComponent(geneName);
-                //if (geneName === this.curGene) {
-                //    url += "&pos=" + encodeURIComponent(pos) +
-                //           "&baseWidth=" + encodeURIComponent(baseWidth)
-                //    this.curGene = geneName;
-                //}
-              //console.log("UPDATE:", geneName, this.curGene, pos, baseWidth, that, this);
-              if (geneName === this.curGene){
-                that.data.getSamples(geneName,pos,baseWidth)
-                  .then(function (data) {
-                    that.axis.update(data["geneInfo"], pos, baseWidth);
-                    that.draw(data);
-                  })
-              }else{
-                that.data.getSamples(geneName,null,null)
-                  .then(function (data) {
-                    that.axis.update(data["geneInfo"], pos, baseWidth);
-                    that.draw(data);
-                  })
-              }
-
+                if (geneName === this.curGene){
+                    that.data.getSamples(geneName,pos,baseWidth)
+                        .then(function (data) {
+                            that.axis.update(data["geneInfo"], pos, baseWidth);
+                            that.draw(data);
+                        })
+                }
+                else{
+                    that.data.getSamples(geneName,null,null)
+                        .then(function (data) {
+                            that.axis.update(data["geneInfo"], pos, baseWidth);
+                            that.draw(data);
+                        })
+                }
             }
+
+            this.joinCollections = function(indices) {
+                var joinedSamples = [];
+                indices.forEach(function(i) {
+                    joinedSamples += this.collections.samples;
+                })
+                this.collections = this.collections.filter(function(c, i) {return indices.indexOf(i) < 0})
+                this.collections.push(new Collection(joinedSamples));
+                this.draw();
+            };
 
             this.draw = function(data) {
                 var chromID_val   = $(chromID.node()).val(),
@@ -610,7 +620,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
                 var sampleObjs;
 
-                samples = [[samples[0]], [samples[1]], [samples[2], samples[3]]];
+                samples = [[samples[0], samples[1]], [samples[2], samples[3]]];
                 // this.collections = this.collections || samples.map(function (sample) {return new Collection([sample], this.axis, this.options)}.bind(this));
                 this.collections = this.collections || samples.map(function (sample) {return new Collection(sample, this.axis, this.options)}.bind(this));
 
@@ -618,31 +628,39 @@ define(['exports', 'd3'], function (exports, d3) {
                 if (axisGroup.empty()) {
                     axisGroup = this.g.append("g").attr({
                         "class": "genomeAxis",
-                        "transform": "translate(" + styles["horizAxisPadding"] + "," + (samples.reduce(function(memo, num) {return memo + num.length}, 0) * (styles["sampleBarHeight"] + styles["sampleBarMargin"]) + this.collections.length * styles["collectionMargin"]) + ")",
                     });
                 }
+                axisGroup.transition().attr({
+                    "transform": "translate(" + styles["horizAxisPadding"] + "," + (this.collections.reduce(function(memo, c) {return memo + (c.collapse ? 1 : c.samples.length)}, 0) * (styles["sampleBarHeight"] + styles["sampleBarMargin"]) + this.collections.length * styles["collectionMargin"]) + ")",
+                });
                 this.axis.g = axisGroup;
                 this.axis.update(data["geneInfo"], pos, baseWidth);
 
                 var collectionGroups = this.g.selectAll(".collection").data(this.collections);
                 collectionGroups.exit().remove();
+                collectionGroups.enter().append("g").attr("class", "collection");
+
                 var samplesBefore = 0;
-                collectionGroups.enter().append("g")
-                                        .attr({
-                                                "class": "collection",
-                                                "transform": function(c, i) {var height = samplesBefore*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + i*styles["collectionMargin"];
-                                                                             samplesBefore += c.samples.length;
-                                                                             return "translate(0," + height + ")"},
-                                            });
-                collectionGroups.each(function(c) {c.g = d3.select(this); c.draw(); c.update(data)});
+                this.g.selectAll(".collection").transition().attr({
+                    "transform": function(c, i) {var height = samplesBefore*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + i*styles["collectionMargin"];
+                                                 samplesBefore += c.collapse ? 1 : c.samples.length;
+                                                 return "translate(0," + height + ")"},
+                });
+
+                collectionGroups.each(function(c) {
+                    c.g = d3.select(this);
+                    c.draw();
+                    c.update(data)
+                });
+
+                this.set("sampleView", this);
             }
         }
 
-        styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 0, "horizAxisPadding": 20};
+        styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10, "horizAxisPadding": 20};
         var sampleGroup = svg.append("g");
         this.data.getAllGenes().then(function(genes) {
-          //console.log("genes:", genes);
-            Object.keys(genes).forEach(function(gene) {
+            genes.forEach(function(gene) {
                 geneSelector.append("option").attr('value', gene).text(gene);
             });
             var sampleView = new SampleView(sampleGroup, that.data);
