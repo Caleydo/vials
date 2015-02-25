@@ -32,7 +32,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
   var margin = {top: 40, right: 10, bottom: 20, left: 10},
     width = 800 - margin.left - margin.right,
-    height = 2000 - margin.top - margin.bottom;
+    height = 450 - margin.top - margin.bottom;
   var dotRadius = 4;
   var defaultDotColor = "rgba(0,0,0,0.6)";
   var dehighlightedDotColor = "rgba(0,0,0,0.2)";
@@ -83,14 +83,14 @@ define(['exports', 'd3'], function (exports, d3) {
       .attr("width", width + margin.left + margin.right)
       .attr("height", height + margin.top + margin.bottom)
       .style({
-        "top":"50px",
+        //"top":"10px",
         "left":"20px",
-        "position":"absolute"
+        "position":"relative"
 
       })
-      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var exploreArea = svg.append("g").attr("transform", "translate(20, 80)");
+    var exploreArea = svg.append("g").attr("transform", "translate(20, 20)");
     jxnArea = exploreArea.append("g").attr("id", "jxnArea");
 
 
@@ -123,7 +123,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
     var updateVisualization = function() {
       startPos = getStartPos()
-      chromID =getCromID ()
+      //chromID =getCromID ()
       baseWidth =getBaseWidth ()
       //geneName     = $(geneSelector.node()).val()
 
@@ -606,6 +606,8 @@ define(['exports', 'd3'], function (exports, d3) {
 
     //globalCallCount = 1;
     function getCurRNAs(geneName, pos, baseWidth) {
+      console.log(geneName, pos, baseWidth);
+
       if (!geneData) return [];
       //console.log(globalCallCount, geneName, geneData)
       //globalCallCount++;
@@ -645,6 +647,7 @@ define(['exports', 'd3'], function (exports, d3) {
     }
 
     function getCurGene(pos, baseWidth) {
+
       for (var geneName in geneData) {
         geneInfo = geneData[geneName]
         if ((geneInfo.tx_start >= pos && geneInfo.tx_start <= pos + baseWidth) ||
@@ -656,65 +659,20 @@ define(['exports', 'd3'], function (exports, d3) {
 
     function createGenDefControls(container) {
 
-      var $inputOuterDiv = container.append("div").style({
-        "top":"10px",
-        "left":"20px",
-        "width":"600px",
-        "position":"absolute"
-      })
+      var geneSelector = d3.select("#geneSelect");
 
-      var $queryDiv = $inputOuterDiv.append("div").text("Chromosome ID:");
+      var chromIDDiv = d3.select("#chromosomeInfo");
 
-      var $geneDiv = $inputOuterDiv.append("div");
+      startPosDiv = d3.select("#startPos");
 
-      var geneSelector = $inputOuterDiv.append("select");
-
-      chromIDDiv = $queryDiv.append("input").attr({
-        type: "text",
-        value: "chr17"
-      })
-
-      var $queryDiv = $inputOuterDiv.append("div").text("startpos:");
-
-      startPosDiv = $queryDiv.append("input").attr({
-        type:"text",
-        value:"1"
-      })
-
-
-      var requestButton = $queryDiv.append("button").attr({
-        type:"button",
-        class:"btn"
-      }).text("request")
-
-
-      var backwardButton =  $queryDiv.append("button").attr({
-        type:"button",
-        class:"btn"
-      }).text("-375")
-
-      var forwardButton =  $queryDiv.append("button").attr({
-        type:"button",
-        class:"btn"
-      }).text("+375")
-
-      $baseWidthDiv = $inputOuterDiv.append("div").text("zoom:");
-
-      baseWidthInputDiv = $baseWidthDiv.append("input").attr({
+      baseWidthInputDiv = d3.select("#baseWidth").attr({
         type:"text",
         value:"1500"
-      }).attr("style", "display: none");
+      })
 
-      var zoomInButton = $baseWidthDiv.append("button").attr({
-        type:"button",
-        class:"btn"
-      }).text("+")
 
-      var zoomOutButton = $baseWidthDiv.append("button").attr({
-        type:"button",
-        class:"btn"
-      }).text("-")
 
+      //
       that.data.getAllGenes().then( function(genes) {
         geneData = genes;
         for (var gene in genes) {
@@ -733,52 +691,52 @@ define(['exports', 'd3'], function (exports, d3) {
         updateVisualization();
       }
 
-      // connect the buttons with action !!
-      requestButton.on({
-        "click":function(d){updateVisualization(); }
-      })
-      forwardButton.on({
-        "click":function(d){
-          var v = +$(startPos.node()).val();
-          var w = +$(baseWidthInput.node()).val();
-          $(startPos.node()).val(v+Math.round(w/4));
-
-          updateVisualization();
-        }
-      })
-      backwardButton.on({
-        "click":function(d){
-          var v = +$(startPos.node()).val();
-          var w = +$(baseWidthInput.node()).val();
-          $(startPos.node()).val(Math.max(v-Math.round(w/4), 1));
-
-          updateVisualization();
-        }
-      })
-
-      zoomOutButton.on({
-        "click":function(d){
-          var newWidth = +Math.round($(baseWidthInput.node()).val() * 2);
-          $(baseWidthInput.node()).val(newWidth);
-          backwardButton.text("-" + Math.round(newWidth/4))
-          forwardButton.text("+" + Math.round(newWidth/4))
-
-          updateVisualization();
-        }
-      })
-
-      zoomInButton.on({
-        "click":function(d){
-          var newWidth = +Math.round($(baseWidthInput.node()).val() / 2);
-          if (newWidth > 0) {
-            $(baseWidthInput.node()).val(newWidth);
-            backwardButton.text("-" + Math.round(newWidth/4))
-            forwardButton.text("+" + Math.round(newWidth/4))
-
-            updateVisualization();
-          }
-        }
-      })
+      //// connect the buttons with action !!
+      //requestButton.on({
+      //  "click":function(d){updateVisualization(); }
+      //})
+      //forwardButton.on({
+      //  "click":function(d){
+      //    var v = +$(startPos.node()).val();
+      //    var w = +$(baseWidthInput.node()).val();
+      //    $(startPos.node()).val(v+Math.round(w/4));
+      //
+      //    updateVisualization();
+      //  }
+      //})
+      //backwardButton.on({
+      //  "click":function(d){
+      //    var v = +$(startPos.node()).val();
+      //    var w = +$(baseWidthInput.node()).val();
+      //    $(startPos.node()).val(Math.max(v-Math.round(w/4), 1));
+      //
+      //    updateVisualization();
+      //  }
+      //})
+      //
+      //zoomOutButton.on({
+      //  "click":function(d){
+      //    var newWidth = +Math.round($(baseWidthInput.node()).val() * 2);
+      //    $(baseWidthInput.node()).val(newWidth);
+      //    backwardButton.text("-" + Math.round(newWidth/4))
+      //    forwardButton.text("+" + Math.round(newWidth/4))
+      //
+      //    updateVisualization();
+      //  }
+      //})
+      //
+      //zoomInButton.on({
+      //  "click":function(d){
+      //    var newWidth = +Math.round($(baseWidthInput.node()).val() / 2);
+      //    if (newWidth > 0) {
+      //      $(baseWidthInput.node()).val(newWidth);
+      //      backwardButton.text("-" + Math.round(newWidth/4))
+      //      forwardButton.text("+" + Math.round(newWidth/4))
+      //
+      //      updateVisualization();
+      //    }
+      //  }
+      //})
 
 
     }

@@ -18,10 +18,36 @@
 
     <script data-main="/config-gen.js?app=./app.js" src="/bower_components/requirejs/require.js"></script>
   </head>
-	<body>
+	<body style="padding-top: 10px;">
 
 
-  <div id="userinput">
+  <div id="userinput" class="container-fluid">
+    <div class="row">
+        <div class="form-group col-md-10 col-sm-10">
+          <label for="geneSelect">Select gene:</label>
+          <select class="form-control" id="geneSelect">
+          </select>
+        </div>
+    </div>
+    <div class="row">
+      <div class="form-inline col-md-12 col-sm-12">
+      <div class="form-group form-group-sm">
+        <label for="chromosomeInfo">chromosome:</label>
+        <input class="form-control" id="chromosomeInfo" type="text" placeholder="..." readonly>
+      </div>
+        <div class="form-group form-group-sm">
+          <label for="startPos">start position:</label>
+          <input class="form-control" id="startPos" type="text" placeholder="..." readonly>
+        </div>
+        <div class="form-group form-group-sm">
+          <label for="baseWidth">base width:</label>
+          <input class="form-control" id="baseWidth" type="text" placeholder="..." readonly>
+        </div>
+
+    </div>
+    </div>
+
+
 
 
   </div>
