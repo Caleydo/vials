@@ -85,6 +85,7 @@ define(['exports', 'd3'], function (exports, d3) {
         "top":"50px",
         "left":"20px",
         "position":"absolute"
+
       })
       .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 

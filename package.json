@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "dependencies": {
     "d3": "~3.4.11",
-    "js-lru": "git@github.com:rsms/js-lru.git"
+    "js-lru": "git@github.com:rsms/js-lru.git",
+    "bootstrap":"~3"
   },
   "caleydo" : {
     "plugins": [
