@@ -59,70 +59,10 @@ define(['exports', 'd3'], function (exports, d3) {
                     value:""
         })
 
-        function getCurRNAs(pos, baseWidth) {
-            var curRNAs = [];
-            var curExons = [];
-            for (var j in gene.exons) {
-                var exon = gene.exons[j];
-                // will return empty list if exon not present in view
-                var exonMin = Math.max(exon[0], pos);
-                var exonMax = Math.min(exon[1], pos+baseWidth);
-                if (exonMax > exonMin) {
-                    curExons.push([exonMin, exonMax]);
-                }
-            }
-            for (var j in gene.mRNAs) {
-                var curRNA = [];
-                var RNA = gene.mRNAs[j];
-                for (var k in RNA) {
-                    exonID = RNA[k]
-                    if (curExons[exonID]) {
-                        curRNA.push(curExons[exonID]);
-                    }
-                }
-                curRNAs.push({'exons': curRNA, 'RNASpan': [Math.max(gene.tx_start, pos), Math.min(gene.tx_end, pos+baseWidth-1)]});
-            }
-            return curRNAs;
-        }
-
-        function getCurExons(curRNAs) {
-            return curRNAs.map(function(RNA) {return RNA.exons})
-                                        .reduce(function(a, b) {
-                                                            if (a.length > b.length) {return a;}
-                                                            else {return b;}
-                                        })
-        }
-
-        function getAxisRanges(curExons, startPosVal, baseWidth, showIntrons) {
-            curExons = curExons.sort(function(a, b) {return a[0] > b[0] ? 1 : -1});
-            if (showIntrons) {
-                var ranges = [];
-                var prevExon;
-                curExons.forEach(function(exon, i) {
-                    if (prevExon) {
-                        ranges.push([prevExon[1], exon[0]])
-                    }
-                    else if (!prevExon && exon[0] > startPosVal) {
-                        ranges.push([startPosVal, exon[0]])
-                    }
-                    ranges.push(exon);
-                    prevExon = exon;
-                })
-                if (prevExon[1] < startPosVal+baseWidth) {
-                    ranges.push([prevExon[1], startPosVal+baseWidth])
-                }
-            }
-            else {
-                ranges = curExons;
-            }
-            return ranges;
-        }
-
         var requestButton = $queryDiv.append("button").attr({
                     type:"button",
                     class:"btn"
             }).text("request")
-
 
         var backwardButton =  $queryDiv.append("button").attr({
                 type:"button",
@@ -176,93 +116,6 @@ define(['exports', 'd3'], function (exports, d3) {
                 })
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-        function BrokenAxis(options) {
-                this.scaleList = [];
-                this.width = width - styles["horizAxisPadding"] * 4;
-                this.options = options;
-
-                this.splitXData = function(data) {
-                    var ranges    = this.ranges,
-                        splitData = ranges.map(function() {return []});
-                    data.forEach(function(d) {
-                        ranges.forEach(function(range, rangeIdx) {
-                            if (range[0] <= d.pos && d.pos <= range[1]) {
-                                splitData[rangeIdx].push(d);
-                            }
-                        })
-                    })
-                    return splitData;
-                }
-
-                this.update = function(geneInfo, pos, baseWidth) {
-                    this.curExons = geneInfo["curExons"];
-
-                    this.ranges = getAxisRanges(geneInfo.curExons, pos, baseWidth, this.options.showIntrons);
-
-                    var ranges = this.ranges,
-                        axisPos = 0,
-                        axisPadding = this.options.showIntrons ? 0 : 60,
-                        totalAxisWidth = ranges.reduce(function(a, b) {return a + b[1] - b[0] + 1}, 0),
-                        scaleList = [],
-                        graphWidth = this.width,
-                        pixelWidth = graphWidth - axisPadding*(ranges.length - 1);
-
-                    this.ranges.forEach(function(range, i) {
-                        var axisWidth = (range[1] - range[0] + 1)/totalAxisWidth * pixelWidth;
-                        var xScale = d3.scale.ordinal().domain(d3.range(range[0]-1, range[1]+1)).rangeBands([axisPos,axisPos+axisWidth-1]);
-                        scaleList.push(xScale);
-                        axisPos = axisPos + axisWidth + axisPadding;
-                    });
-
-                    this.scaleList = scaleList;
-
-                    if (this.g) {
-                        this.draw(this.g);
-                    }
-                }
-
-                this.draw = function() {
-                    // shouldn't have to remove each time, need to clean up
-                    this.g.selectAll(".x.axis").remove();
-
-                    this.scaleList.forEach(function(scale, i) {
-                        var rangeExtent = scale.rangeExtent(),
-                            scaleDomain = scale.domain(),
-                            domainExtent = [scaleDomain[0], scaleDomain[scaleDomain.length - 1]],
-                            xScaleCont = d3.scale.linear().domain(domainExtent).range(rangeExtent);
-
-                        var xAxis = d3.svg.axis()
-                                    .orient("bottom")
-                                    .scale(xScaleCont)
-                                    .outerTickSize(0)
-
-                        this.options.showIntrons ? xAxis.ticks((rangeExtent[1]-rangeExtent[0])/width*5)
-                                                 : xAxis.tickValues(domainExtent);
-
-                        this.g.append("g").attr({
-                                            "class": "x axis",
-                                            "transform": "translate(0," + this.g.attr("height") +")"
-                                          })
-                                     .call(xAxis);
-                    }.bind(this));
-                }
-
-                this.rangeBand = function() {
-                    // should change to just calculate this in this.update
-                    return this.scaleList.length ? this.scaleList[0].rangeBand() : 0;
-                }
-
-                this.getXPos = function(pos) {
-                    var xPos;
-                    this.scaleList.forEach(function(axis, i) {
-                        if (axis(pos)) {
-                            xPos = axis(pos);
-                        }
-                    })
-                    return xPos;
-                }
-        }
 
         function DataBar(id, axis, options) {
             this.id = id;
@@ -388,7 +241,7 @@ define(['exports', 'd3'], function (exports, d3) {
                         "class": "sampleAgg",
                         "height": styles["sampleBarHeight"],
                         "width": this.axis.width,
-                        "transform": function(c) {return "translate(" + styles["horizAxisPadding"] + "," + styles["collectionMargin"]/2 + ")"},
+                        "transform": function(c) {return "translate(0," + styles["collectionMargin"]/2 + ")"},
                     });
                 }
 
@@ -409,7 +262,7 @@ define(['exports', 'd3'], function (exports, d3) {
                             })
 
                 sampleGroups.attr({
-                    "transform": function(s, i) {return "translate(" + styles["horizAxisPadding"] + "," + samplePos(i) + ")"},
+                    "transform": function(s, i) {return "translate(0," + samplePos(i) + ")"},
                 })
 
                 sampleGroups.each(function(s) {s.g = d3.select(this);})
@@ -432,8 +285,8 @@ define(['exports', 'd3'], function (exports, d3) {
                     linesGroup.append("line")
                                    .attr({
                                        "class": "v",
-                                       "x1": width - styles["horizAxisPadding"],
-                                       "x2": width - styles["horizAxisPadding"],
+                                       "x1": this.axis.width + 20,
+                                       "x2": this.axis.width + 20,
                                        "y1": 0,
                                        "y2": this.samples.length*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + styles["collectionMargin"]/4,
                                        "stroke": "black",
@@ -442,8 +295,8 @@ define(['exports', 'd3'], function (exports, d3) {
                     linesGroup.append("line")
                                     .attr({
                                        "class": "top",
-                                       "x1": width - styles["horizAxisPadding"] - 10,
-                                       "x2": width - styles["horizAxisPadding"],
+                                       "x1": this.axis.width + 10,
+                                       "x2": this.axis.width + 20,
                                        "y1": 0,
                                        "y2": 0,
                                        "stroke": "black",
@@ -452,8 +305,8 @@ define(['exports', 'd3'], function (exports, d3) {
                     linesGroup.append("line")
                                     .attr({
                                        "class": "bottom",
-                                       "x1": width - styles["horizAxisPadding"] - 10,
-                                       "x2": width - styles["horizAxisPadding"],
+                                       "x1": this.axis.width + 10,
+                                       "x2": this.axis.width + 20,
                                        "y1": this.samples.length*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + styles["collectionMargin"]/4,
                                        "y2": this.samples.length*(styles["sampleBarHeight"]+styles["sampleBarMargin"]) + styles["collectionMargin"]/4,
                                        "stroke": "black",
@@ -485,7 +338,7 @@ define(['exports', 'd3'], function (exports, d3) {
                                                 }).on("click", this.toggleAgg)
                 }
                 linesGroup.selectAll(".buttonGroup").transition().attr({
-                    "transform": "translate(" + (-5 + width - styles["horizAxisPadding"]) + "," + (-5 + 1/2 * ((this.collapse? 1 : this.samples.length)*(styles["sampleBarHeight"]+styles["sampleBarMargin"])+styles["collectionMargin"]/4)) + ")",
+                    "transform": "translate(" + (this.axis.width + 15) + "," + (-5 + 1/2 * ((this.collapse? 1 : this.samples.length)*(styles["sampleBarHeight"]+styles["sampleBarMargin"])+styles["collectionMargin"]/4)) + ")",
                 });
                 linesGroup.selectAll(".collapseButton").transition().attr({
                     "fill": this.collapse ? "black" : "white"
@@ -519,8 +372,8 @@ define(['exports', 'd3'], function (exports, d3) {
             this.curGene = undefined;
             this.g = g;
             this.data = data;
+            this.axis = this.data.genomeAxis;
             this.options = {"showIntrons": false};
-            this.axis = new BrokenAxis(this.options);
             var that = this;
 
             this.set = function(property, value) {
@@ -533,20 +386,18 @@ define(['exports', 'd3'], function (exports, d3) {
                     pos         = parseInt($(startPos.node()).val()),
                     baseWidth   = parseInt($(baseWidthInput.node()).val());
 
-                if (geneName === this.curGene){
-                    that.data.getSamples(geneName,pos,baseWidth)
-                        .then(function (data) {
-                            that.axis.update(data["geneInfo"], pos, baseWidth);
-                            that.draw(data);
-                        })
+                if (geneName !== this.curGene){
+                    pos = null
+                    baseWidth = null
                 }
-                else{
-                    that.data.getSamples(geneName,null,null)
-                        .then(function (data) {
-                            that.axis.update(data["geneInfo"], pos, baseWidth);
-                            that.draw(data);
-                        })
-                }
+                that.data.getSamples(geneName,pos,baseWidth)
+                    .then(function (data) {
+                        var geneInfo = data["geneInfo"];
+                        that.axis.update(geneInfo,
+                                         pos || geneInfo["geneSpan"][0],
+                                         baseWidth || (geneInfo["geneSpan"][1] - geneInfo["geneSpan"][0] + 1));
+                        that.draw(data);
+                    })
             }
 
             this.joinCollections = function(indices) {
@@ -583,10 +434,10 @@ define(['exports', 'd3'], function (exports, d3) {
                     });
                 }
                 axisGroup.transition().attr({
-                    "transform": "translate(" + styles["horizAxisPadding"] + "," + (this.collections.reduce(function(memo, c) {return memo + (c.collapse ? 1 : c.samples.length)}, 0) * (styles["sampleBarHeight"] + styles["sampleBarMargin"]) + this.collections.length * styles["collectionMargin"]) + ")",
+                    "transform": "translate(0," + (this.collections.reduce(function(memo, c) {return memo + (c.collapse ? 1 : c.samples.length)}, 0) * (styles["sampleBarHeight"] + styles["sampleBarMargin"]) + this.collections.length * styles["collectionMargin"]) + ")",
                 });
-                this.axis.g = axisGroup;
-                this.axis.update(data["geneInfo"], pos, baseWidth);
+                this.axisGroup = axisGroup;
+                this.axis.draw(axisGroup);
 
                 var collectionGroups = this.g.selectAll(".collection").data(this.collections);
                 collectionGroups.exit().remove();
@@ -609,8 +460,8 @@ define(['exports', 'd3'], function (exports, d3) {
             }
         }
 
-        styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10, "horizAxisPadding": 20};
-        var sampleGroup = svg.append("g");
+        styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10};
+        var sampleGroup = svg.append("g").attr("transform", "translate(10,0)");
         this.data.getAllGenes().then(function(genes) {
             Object.keys(genes).forEach(function(gene) {
                 geneSelector.append("option").attr('value', gene).text(gene);

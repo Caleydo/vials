@@ -69,6 +69,7 @@ define(['exports', 'd3'], function (exports, d3) {
     serverOffset = this.data.serveradress;
 
     var that = this;
+    that.axis = that.data.genomeAxis;
     var head = $parent.append("div").attr({
       "class":"gv"
     })
@@ -131,33 +132,6 @@ define(['exports', 'd3'], function (exports, d3) {
       curRNAs = getCurRNAs(curGene, startPos, baseWidth);
       curExons = getCurExons(curRNAs);
 
-      // var xScale = d3.scale.ordinal().domain(d3.range(startPos, startPos + baseWidth)).rangeBands([0,width]);
-      // var xScaleCont = d3.scale.linear().domain([startPos, startPos + baseWidth]).range([0,width]);
-
-      var xScaleList = [];
-      var axisPadding = 0;
-      if (!show_introns) {
-        axisPadding = 60;
-      }
-
-      var axisRanges = getAxisRanges(curExons, startPos, baseWidth);
-
-      getXPos = function(pos, scaleList) {
-        var scales;
-        if (scaleList) {
-          scales = scaleList;
-        }
-        else {
-          scales = xScaleList;
-        }
-        var xPos;
-        scales.forEach(function(axis, i) {
-          if (axis(pos)) {
-            xPos = axis(pos);
-          }
-        })
-        return xPos;
-      }
 
       // ==========================
       // BIND DATA TO VISUALIZATION
@@ -166,17 +140,10 @@ define(['exports', 'd3'], function (exports, d3) {
       that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
         samples = d3.keys(sampleData.samples);
 
-        var totalAxisWidth = width - axisPadding*(axisRanges.length - 1);
-        var axesLength = axisRanges.reduce(function(a, b) {return a + b[1] - b[0] + 1}, 0);
-
-        var axisPos = 0;
-        axisRanges.forEach(function(axisRange, i) {
-          var axisLength = (axisRange[1] - axisRange[0] + 1)/axesLength * totalAxisWidth;
-          var xScale = d3.scale.ordinal().domain(d3.range(axisRange[0]-1, axisRange[1]+1)).rangeBands([axisPos,axisPos+axisLength-1]);
-          xScaleList.push(xScale);
-          axisPos = axisPos + axisLength + axisPadding;
-        })
-
+        var geneInfo = sampleData["geneInfo"];
+        that.axis.update(geneInfo,
+                         startPos || geneInfo["geneSpan"][0],
+                         baseWidth || (geneInfo["geneSpan"][1] - geneInfo["geneSpan"][0] + 1));
 
         var RNAHeight = 30;
         var RNAMargin = 30;
@@ -191,7 +158,7 @@ define(['exports', 'd3'], function (exports, d3) {
             if (memo.length > num.length) {return memo}
             else {return num}
           }),
-          RNAArea, xScaleList, RNAHeight, RNAMargin);
+          RNAArea, that.axis, RNAHeight, RNAMargin);
 
         drawJxns(sampleData);
 
@@ -204,15 +171,15 @@ define(['exports', 'd3'], function (exports, d3) {
 
 
 
-    function drawRNA(RNA, area, scaleList, RNAHeight, RNAMargin) {
+    function drawRNA(RNA, area, axis, RNAHeight, RNAMargin) {
 
       var RNAArea = area.append("g").attr({
         "class": "RNA"
       })
 
       RNAArea.append("line").attr({
-        "x1": getXPos(RNA.RNASpan[0], scaleList),
-        "x2": getXPos(RNA.RNASpan[1], scaleList),
+        "x1": axis.getXPos(RNA.RNASpan[0]),
+        "x2": axis.getXPos(RNA.RNASpan[1]),
         "y1": RNAHeight/2,
         "y2": RNAHeight/2,
         "class": "RNALine",
@@ -225,16 +192,16 @@ define(['exports', 'd3'], function (exports, d3) {
       exons.enter().append("rect").attr({
         "class": "exon",
         "fill": "black",
-        "x": function(d) {return getXPos(d[0], scaleList);},
+        "x": function(d) {return axis.getXPos(d[0]);},
         "y": 0,
-        "width": function(d) {return (d[1] - d[0]) * scaleList[0].rangeBand();},
+        "width": function(d) {return (d[1] - d[0]) * axis.rangeBand();},
         "height": RNAHeight
       })
 
       exons.enter().append("polygon").attr({
         "points" : function(d, i) {
-          var x1 = getXPos(d[0], scaleList);
-          var x2 = getXPos(d[1], scaleList);
+          var x1 = axis.getXPos(d[0]);
+          var x2 = axis.getXPos(d[1]);
           var x3 = getWrapperStartX(i) + getWrapperOriginPoint(i) + miniExonWidth() / 2;
           var x4 = getWrapperStartX(i) + getWrapperOriginPoint(i) - miniExonWidth() / 2;
           return [
@@ -255,8 +222,8 @@ define(['exports', 'd3'], function (exports, d3) {
         var srcExon = curExons[i];
         for (var j = i + 1; j < curExons.length; j++) {
           var destExon = curExons[j];
-          var x1 = (getXPos(srcExon[0], scaleList) + getXPos(srcExon[1], scaleList)) / 2;
-          var x2 = (getXPos(destExon[0], scaleList) + getXPos(destExon[1], scaleList)) / 2;
+          var x1 = (axis.getXPos(srcExon[0]) + axis.getXPos(srcExon[1])) / 2;
+          var x2 = (axis.getXPos(destExon[0]) + axis.getXPos(destExon[1])) / 2;
           var y1 = RNAHeight;
           var y2 = RNAHeight + RNAMargin;
           RNAEdges.append("polyline").attr({
