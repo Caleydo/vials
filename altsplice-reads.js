@@ -139,7 +139,6 @@ define(['exports', 'd3'], function (exports, d3) {
                 var avgLines = this.g.selectAll(".avgLine").data(this.splitData);
                 avgLines.exit().remove();
                 avgLines.enter().append("svg:path").attr({
-                                                       d: function(d) {return avgFunc(d)},
                                                        fill: "none",
                                                        stroke: "red",
                                                        class: "avgLine",
@@ -208,19 +207,10 @@ define(['exports', 'd3'], function (exports, d3) {
             }
 
             this.update = function(data) {
+                this.data = data;
                 var samples = this.samples;
 
                 this.sampleBars.forEach(function(s) {s.update(data["samples"][s.id]["positions"])})
-
-                if (samples.length > 1) {
-                    var aggData = data["samples"][samples[0]]["positions"].map(function(d, i) {
-                        return {
-                                "pos": d.pos,
-                                "wiggle": samples.map(function(sample) {return data["samples"][sample]["positions"][i].wiggle}),
-                            };
-                    })
-                    this.aggBar.update(aggData);
-                }
             }
 
             this.draw = function() {
@@ -253,13 +243,22 @@ define(['exports', 'd3'], function (exports, d3) {
                 }.bind(this);
                 var sampleGroups = this.g.selectAll(".sample").data(this.sampleBars, function(d) {return d.id});
                 sampleGroups.exit().remove();
-                sampleGroups.enter()
+                var sampleGroupsEnter = sampleGroups.enter()
                             .append("g")
                             .attr({
                                 "class": "sample",
                                 "height": styles["sampleBarHeight"],
                                 "width": this.axis.width,
                             })
+
+                var yScale = d3.scale.linear().domain([0, 1]).range([0, styles["sampleBarHeight"]]);
+                var yAxis = d3.svg.axis()
+                              .orient("left")
+                              .scale(yScale)
+                              .tickValues([0, 1]);
+
+                sampleGroupsEnter.append("g").call(yAxis);
+
 
                 sampleGroups.attr({
                     "transform": function(s, i) {return "translate(0," + samplePos(i) + ")"},
@@ -268,6 +267,12 @@ define(['exports', 'd3'], function (exports, d3) {
                 sampleGroups.each(function(s) {s.g = d3.select(this);})
 
                 if (this.aggregate) {
+                    var aggData = this.data["samples"][this.samples[0]]["positions"].map(function(d, i) {
+                        return {
+                                "pos": d.pos,
+                                "wiggle": samples.map(function(sample) {return data["samples"][sample]["positions"][i].wiggle}),
+                            }});
+                    this.aggBar.update(aggData);
                     sampleGroups.transition().attr("opacity", 0.2);
                     aggGroup.transition().attr("opacity", 1);
                 }
@@ -382,7 +387,6 @@ define(['exports', 'd3'], function (exports, d3) {
 
             this.update = function() {
                 var geneName     = $(geneSelector.node()).val(),
-                    // chromID_val = $(chromID.node()).val(),
                     pos         = parseInt($(startPos.node()).val()),
                     baseWidth   = parseInt($(baseWidthInput.node()).val());
 
