@@ -270,7 +270,7 @@ define(['exports', 'd3'], function (exports, d3) {
                     var aggData = this.data["samples"][this.samples[0]]["positions"].map(function(d, i) {
                         return {
                                 "pos": d.pos,
-                                "wiggle": samples.map(function(sample) {return data["samples"][sample]["positions"][i].wiggle}),
+                                "wiggle": samples.map(function(sample) {return this.data["samples"][sample]["positions"][i].wiggle}),
                             }});
                     this.aggBar.update(aggData);
                     sampleGroups.transition().attr("opacity", 0.2);
