@@ -196,7 +196,7 @@ define(['exports', 'd3'], function (exports, d3) {
             this.aggregate = false;
             this.samples = sampleNames;
             this.sampleBars = sampleNames.map(function(sampleName) {return new DataBar(sampleName, axis, options);});
-            this.aggBar = new DataBar("agg", axis, options);
+            this.aggBar = new DataBar("Group", axis, options);
             this.axis = axis;
             this.options = options;
 
@@ -225,15 +225,18 @@ define(['exports', 'd3'], function (exports, d3) {
             }
 
             this.drawSamples = function() {
-                var aggGroup = this.g.selectAll(".sampleAgg");
-                if (aggGroup.empty()) {
-                    aggGroup = this.g.append("g").attr({
-                        "class": "sampleAgg",
-                        "height": styles["sampleBarHeight"],
-                        "width": this.axis.width,
-                        "transform": function(c) {return "translate(0," + styles["collectionMargin"]/2 + ")"},
-                    });
-                }
+                var aggGroup = this.g.selectAll(".sampleAgg").data([this.aggBar]);
+                aggGroup.exit().remove();
+                var aggGroupEnter = aggGroup.enter().append("g").attr({
+                    "class": "sampleAgg",
+                    "height": styles["sampleBarHeight"],
+                    "width": this.axis.width,
+                    "transform": function(c) {return "translate(0," + styles["collectionMargin"]/2 + ")"},
+                });
+                aggGroupEnter.append("text").attr({
+                    "class": "sampleLabel",
+                    "transform": "translate(" + (this.axis.width + 10) + "," + (styles["sampleBarHeight"] + styles["sampleBarMargin"]) / 2 + ")"
+                }).text(function(d) {return d.id})
 
                 this.aggBar.g = aggGroup;
 
@@ -248,7 +251,6 @@ define(['exports', 'd3'], function (exports, d3) {
                             .attr({
                                 "class": "sample",
                                 "height": styles["sampleBarHeight"],
-                                "width": this.axis.width,
                             })
 
                 var yScale = d3.scale.linear().domain([0, 1]).range([0, styles["sampleBarHeight"]]);
@@ -259,6 +261,10 @@ define(['exports', 'd3'], function (exports, d3) {
 
                 sampleGroupsEnter.append("g").call(yAxis);
 
+                sampleGroupsEnter.append("text").attr({
+                    "class": "sampleLabel",
+                    "transform": "translate(" + (this.axis.width + 10) + "," + (styles["sampleBarHeight"] + styles["sampleBarMargin"]) / 2 + ")"
+                }).text(function(d) {return d.id})
 
                 sampleGroups.attr({
                     "transform": function(s, i) {return "translate(0," + samplePos(i) + ")"},
@@ -266,26 +272,35 @@ define(['exports', 'd3'], function (exports, d3) {
 
                 sampleGroups.each(function(s) {s.g = d3.select(this);})
 
-                if (this.aggregate) {
-                    var aggData = this.data["samples"][this.samples[0]]["positions"].map(function(d, i) {
-                        return {
-                                "pos": d.pos,
-                                "wiggle": samples.map(function(sample) {return this.data["samples"][sample]["positions"][i].wiggle}),
-                            }});
-                    this.aggBar.update(aggData);
-                    sampleGroups.transition().attr("opacity", 0.2);
-                    aggGroup.transition().attr("opacity", 1);
-                }
-                else {
-                    aggGroup.transition().attr("opacity", 0);
-                    sampleGroups.transition().attr("opacity", 1);
+                this.aggBar.g.selectAll(".avgLine").attr("visibility", "hidden")
+                this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "hidden")
+                sampleGroups.selectAll(".sampleLabel").attr("visibility", "visible")
+                sampleGroups.transition().attr("opacity", 1);
+                if (this.collapse) {
+                    sampleGroups.selectAll(".sampleLabel").attr("visibility", "hidden")
+                    this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "visible")
+                    if (this.aggregate) {
+                        var data = this.data;
+                        var aggData = data["samples"][this.samples[0]]["positions"].map(function(d, i) {
+                            return {
+                                    "pos": d.pos,
+                                    "wiggle": samples.map(function(sample) {return data["samples"][sample]["positions"][i].wiggle}),
+                                }});
+                        this.aggBar.update(aggData);
+                        sampleGroups.transition().attr("opacity", 0.2);
+                        this.aggBar.g.selectAll(".avgLine").attr("visibility", "visible")
+                    }
                 }
             }
 
             this.drawLinesGroup = function() {
+                var labelWidth = 100;
                 var linesGroup = this.g.selectAll(".linesGroup");
                 if (linesGroup.empty()) {
-                    linesGroup = this.g.append("g").attr("class", "linesGroup")
+                    linesGroup = this.g.append("g").attr({
+                        "class": "linesGroup",
+                        "transform": "translate(" + labelWidth + ",0)"
+                    });
 
                     linesGroup.append("line")
                                    .attr({
@@ -427,7 +442,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
                 var sampleObjs;
 
-                samples = [[samples[0], samples[1]], [samples[2], samples[3]]];
+                samples = [[samples[0]], [samples[1], samples[2], samples[3]]];
                 // this.collections = this.collections || samples.map(function (sample) {return new Collection([sample], this.axis, this.options)}.bind(this));
                 this.collections = this.collections || samples.map(function (sample) {return new Collection(sample, this.axis, this.options)}.bind(this));
 
