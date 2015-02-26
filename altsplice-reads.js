@@ -276,17 +276,19 @@ define(['exports', 'd3'], function (exports, d3) {
                 this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "hidden")
                 sampleGroups.selectAll(".sampleLabel").attr("visibility", "visible")
                 sampleGroups.transition().attr("opacity", 1);
+                if (this.data) {
+                    var data = this.data;
+                    var aggData = data["samples"][this.samples[0]]["positions"].map(function(d, i) {
+                        return {
+                                "pos": d.pos,
+                                "wiggle": samples.map(function(sample) {return data["samples"][sample]["positions"][i].wiggle}),
+                            }});
+                    this.aggBar.update(aggData);
+                }
                 if (this.collapse) {
                     sampleGroups.selectAll(".sampleLabel").attr("visibility", "hidden")
                     this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "visible")
                     if (this.aggregate) {
-                        var data = this.data;
-                        var aggData = data["samples"][this.samples[0]]["positions"].map(function(d, i) {
-                            return {
-                                    "pos": d.pos,
-                                    "wiggle": samples.map(function(sample) {return data["samples"][sample]["positions"][i].wiggle}),
-                                }});
-                        this.aggBar.update(aggData);
                         sampleGroups.transition().attr("opacity", 0.2);
                         this.aggBar.g.selectAll(".avgLine").attr("visibility", "visible")
                     }
