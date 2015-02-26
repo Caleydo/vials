@@ -7,7 +7,7 @@
  * Isoform + Frequency Visualization
  */
 
-define(['exports', 'd3'], function (exports, d3) {
+define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
   /**
    * a simple template class of a visualization. Up to now there is no additional logic required.
    * @param data
@@ -18,6 +18,10 @@ define(['exports', 'd3'], function (exports, d3) {
     this.data = data;
     this.parent = parent;
     this.node = this.build(d3.select(parent));
+    gui.allVisUpdates.push(function(){
+      console.log("argh", this);
+    })
+
   }
 
   /**
@@ -659,7 +663,9 @@ define(['exports', 'd3'], function (exports, d3) {
 
     function createGenDefControls(container) {
 
-      var geneSelector = d3.select("#geneSelect");
+      //var geneSelector = d3.select("#geneSelect");
+
+      var geneSelector = gui.geneSelector;
 
       var chromIDDiv = d3.select("#chromosomeInfo");
 
@@ -672,13 +678,16 @@ define(['exports', 'd3'], function (exports, d3) {
 
 
 
-      //
+
+
+      ////
       that.data.getAllGenes().then( function(genes) {
         geneData = genes;
-        for (var gene in genes) {
-          geneSelector.append("option").attr('value', gene).text(gene);
-        }
-        populateGeneData($(geneSelector.node()).val());
+        //for (var gene in genes) {
+        //  geneSelector.append("option").attr('value', gene).text(gene);
+        //}
+        //
+        //populateGeneData($(geneSelector.node()).val());
       });
 
       geneSelector.on({
@@ -688,6 +697,7 @@ define(['exports', 'd3'], function (exports, d3) {
       function populateGeneData(gene) {
         $(chromIDDiv.node()).val(geneData[gene].chromID);
         $(startPosDiv.node()).val(geneData[gene].tx_start);
+        console.log("pop",this);
         updateVisualization();
       }
 

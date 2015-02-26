@@ -1,5 +1,5 @@
 
-require(['../caleydo/data', '../caleydo/vis'], function (data, visPlugins) {
+require(['../caleydo/data', '../caleydo/vis', 'altsplice-gui'], function (data, visPlugins, gui) {
   'use strict';
   var vis;
 
@@ -8,6 +8,9 @@ require(['../caleydo/data', '../caleydo/vis'], function (data, visPlugins) {
     name: 'AltSplice',
     serveradress: '/api/genomebrowser'
   }).then(function (genome) {
+
+    gui.init(genome);
+
     var visses = visPlugins.list(genome);
 
     //console.log(document.location.search.substring(1))
@@ -29,6 +32,10 @@ require(['../caleydo/data', '../caleydo/vis'], function (data, visPlugins) {
           vis = plugin.factory(genome, document.querySelector("#vis2"));
         });
     }
+
+
+    gui.start();
+
 
   });
 });

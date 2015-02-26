@@ -26,13 +26,13 @@ define(['exports', 'd3'], function (exports, d3) {
                 "class":"gv"
         })
 
-        var ta = head.append("textarea").style({
-                "width":"800px",
-                "height":"300px",
-                "top":"920px",
-                "left":"20px",
-                "position":"relative"
-        })
+        //var ta = head.append("textarea").style({
+        //        "width":"800px",
+        //        "height":"300px",
+        //        "top":"920px",
+        //        "left":"20px",
+        //        "position":"relative"
+        //})
 
         var $inputOuterDiv = head.append("div").style({
                 "top":"1340px",
@@ -43,7 +43,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
         var $queryDiv = $inputOuterDiv.append("div").text("chromosome ID:");
 
-        var $geneDiv = $inputOuterDiv.append("div");
+        //var $geneDiv = $inputOuterDiv.append("div");
 
         var geneSelector = $inputOuterDiv.append("select");
 
