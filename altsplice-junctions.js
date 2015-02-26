@@ -31,7 +31,7 @@ define(['exports', 'd3'], function (exports, d3) {
   }
 
   var margin = {top: 40, right: 10, bottom: 20, left: 10},
-    width = 800 - margin.left - margin.right,
+    width = 640 - margin.left - margin.right,
     height = 450 - margin.top - margin.bottom;
   var dotRadius = 4;
   var defaultDotColor = "rgba(0,0,0,0.6)";
@@ -41,11 +41,11 @@ define(['exports', 'd3'], function (exports, d3) {
 
   var jxnWrapperPadding = 15;
   var jxnWrapperHeight = 300;
-  var miniExonSpacing = 5;
+  var miniExonSpacing = 10;
   var miniExonHeight = 7;
   var jxnCircleRadius = 5;
   var hoveredEdgeColor = "orange";
-  var jxnBBoxWidth = jxnCircleRadius * 3;
+  var jxnBBoxWidth = jxnCircleRadius * 2.5;
 
   var curGene;
   var curRNAs;
@@ -260,7 +260,7 @@ define(['exports', 'd3'], function (exports, d3) {
     }
 
     function getWrapperOriginPoint(exonIndex) {
-      return jxnWrapperWidth()*(exonIndex + 0.5)/curExons.length
+      return (exonIndex + 0.5) * miniExonWidth() + (exonIndex + 1) * miniExonSpacing
     }
 
     function getWrapperStartX(i) {
@@ -301,14 +301,14 @@ define(['exports', 'd3'], function (exports, d3) {
 
       jxnWrappersEnter.append("rect").attr({
         "class": "jxnWrapperBox prev",
-        "fill": "#aaa",
-        "width": function(exon) {return jxnWrapperWidth()*(getExonIdx(exon)+ 0.5)/curExons.length},
+        "fill": "#bbb",
+        "width": function(exon) {return getWrapperOriginPoint(getExonIdx(exon))},
         "height": jxnWrapperHeight
       })
 
       jxnWrappersEnter.append("rect").attr({
         "class": "jxnWrapperBox next",
-        "fill": "#ccc",
+        "fill": "#ddd",
         "height": jxnWrapperHeight,
         "width": function(exon) {return jxnWrapperWidth()*(curExons.length - getExonIdx(exon)- 0.5)/curExons.length},
         "transform": function(exon) {return "translate("+ getWrapperOriginPoint(getExonIdx(exon))+",0)"}
@@ -356,7 +356,7 @@ define(['exports', 'd3'], function (exports, d3) {
         var jxnWrapper = d3.select(this);
         var exonJxnGroups = jxnWrapper.selectAll(".exonJxnGroup").data(curExons, function(exon) {return exon});
 
-        var definingExonX = (curExonIdx + 0.5) * (miniExonSpacing+miniExonWidth());
+        var definingExonX = getWrapperOriginPoint(curExonIdx);// (curExonIdx + 0.5) * (miniExonSpacing+miniExonWidth());
 
         exonJxnGroups.exit().remove();
         var exonJxnGroupsEnter = exonJxnGroups.enter().append("g").attr({
