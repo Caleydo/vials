@@ -10,9 +10,10 @@ define(['exports','d3'],function(exports,d3){
     this.width = width;
     this.options = options;
 
-    this.getAxisRanges = function(curExons, startPosVal, baseWidth, showIntrons) {
+    this.getAxisRanges = function(curExons, startPosVal, baseWidth) {
+      console.log(this.options.showIntrons);
       curExons = curExons.sort(function(a, b) {return a[0] > b[0] ? 1 : -1});
-      if (showIntrons) {
+      if (this.options.showIntrons) {
         var ranges = [];
         var prevExon;
         curExons.forEach(function(exon, i) {
@@ -51,7 +52,7 @@ define(['exports','d3'],function(exports,d3){
     this.update = function(geneInfo, pos, baseWidth, g) {
       this.curExons = geneInfo["curExons"];
 
-      this.ranges = this.getAxisRanges(this.curExons, pos, baseWidth, this.options.showIntrons);
+      this.ranges = this.getAxisRanges(this.curExons, pos, baseWidth);
 
       var ranges = this.ranges,
         axisPos = 0,

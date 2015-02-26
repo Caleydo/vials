@@ -97,10 +97,10 @@ define(['exports', 'd3'], function (exports, d3) {
 
         var $toggleDiv = $inputOuterDiv.append("div").text("toggle:");
 
-        var toggleIntronButton = $toggleDiv.append("button").attr({
-                type:"button",
-                class:"btn"
-        }).text("introns")
+        // var toggleIntronButton = $toggleDiv.append("button").attr({
+        //         type:"button",
+        //         class:"btn"
+        // }).text("introns")
 
         var margin = {top: 40, right: 10, bottom: 20, left: 10},
                 width = 800 - margin.left - margin.right,
@@ -124,7 +124,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
 
             this.update = function(data) {
-                this.data = data;
+                this.data = data || this.data;
                 this.splitData = this.axis.splitXData(this.data)
                 this.drawLines();
                 this.drawBoxes();
@@ -433,10 +433,10 @@ define(['exports', 'd3'], function (exports, d3) {
                 var chromID_val   = $(chromID.node()).val(),
                     pos       = parseInt($(startPos.node()).val()),
                     baseWidth = parseInt($(baseWidthInput.node()).val()),
-                    data      = data || this.data,
+                    data      = data || this.readData,
                     samples   = d3.keys(data["samples"]);
 
-                this.data = data;
+                this.readData = data;
 
                 var sampleBarGraphHeight = samples.length * (styles["sampleBarHeight"] + styles["sampleBarMargin"]);
 
@@ -481,6 +481,10 @@ define(['exports', 'd3'], function (exports, d3) {
 
         styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10};
         var sampleGroup = svg.append("g").attr("transform", "translate(10,0)");
+        var toggleIntronButton = svg.append("text").attr({
+                type:"button",
+                class:"btn"
+        }).text("toggle introns")
         this.data.getAllGenes().then(function(genes) {
             Object.keys(genes).forEach(function(gene) {
                 geneSelector.append("option").attr('value', gene).text(gene);
@@ -538,8 +542,8 @@ define(['exports', 'd3'], function (exports, d3) {
 
             toggleIntronButton.on({
                 "click": function(d) {
-                                        sampleView.options.showIntrons = !sampleView.options.showIntrons;
-                                        sampleView.draw();
+                                        sampleView.axis.options.showIntrons = !sampleView.axis.options.showIntrons;
+                                        sampleView.update();
                                      }
             })
 
