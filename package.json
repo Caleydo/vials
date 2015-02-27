@@ -33,6 +33,16 @@
         "folder" : "caleydo-altsplice",
         "module" : "caleydo-altsplice/altsplice-reads"
       }
-    ]
+    ],
+    "requirejs-config": {
+      "paths": {
+        "js-lru" : "${baseUrl}/js-lru/lru"
+      },
+      "shim": {
+        "js-lru": {
+          "exports": "LRUCache"
+        }
+      }
+    }
   }
 }
