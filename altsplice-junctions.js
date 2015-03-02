@@ -18,9 +18,9 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
     this.data = data;
     this.parent = parent;
     this.node = this.build(d3.select(parent));
-    gui.allVisUpdates.push(function(){
-      console.log("argh", this);
-    })
+    //gui.allVisUpdates.push(function(){
+    //  console.log("argh", this);
+    //})
 
   }
 
@@ -57,10 +57,6 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
   var serverOffset;
   var geneData;
-
-  var startPosDiv;
-  var chromIDDiv;
-  var baseWidthInputDiv;
 
   var show_introns = false;
   var jxnArea;
@@ -121,11 +117,10 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
       return curExons;
     }
 
-    function getStartPos()  {return parseInt($(startPosDiv.node()).val())}
-    function getCromID ()  {return $(chromIDDiv.node()).val()}
-    function getBaseWidth ()  {return  parseInt($(baseWidthInputDiv.node()).val())}
+    function getStartPos()  {return gui.current.getStartPos()}
+    function getBaseWidth ()  {return  gui.current.getBaseWidth()}
 
-    var updateVisualization = function() {
+    function updateVisualization() {
       startPos = getStartPos()
       //chromID =getCromID ()
       baseWidth =getBaseWidth ()
@@ -663,91 +658,12 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
     function createGenDefControls(container) {
 
-      //var geneSelector = d3.select("#geneSelect");
-
-      var geneSelector = gui.geneSelector;
-
-      var chromIDDiv = d3.select("#chromosomeInfo");
-
-      startPosDiv = d3.select("#startPos");
-
-      baseWidthInputDiv = d3.select("#baseWidth").attr({
-        type:"text",
-        value:"1500"
-      })
-
-
-
-
-
-      ////
+      // TODO: potential runtime conditions here
       that.data.getAllGenes().then( function(genes) {
         geneData = genes;
-        //for (var gene in genes) {
-        //  geneSelector.append("option").attr('value', gene).text(gene);
-        //}
-        //
-        //populateGeneData($(geneSelector.node()).val());
       });
 
-      geneSelector.on({
-        "change": function(gene){populateGeneData(gene)}
-      })
-
-      function populateGeneData(gene) {
-        $(chromIDDiv.node()).val(geneData[gene].chromID);
-        $(startPosDiv.node()).val(geneData[gene].tx_start);
-        console.log("pop",this);
-        updateVisualization();
-      }
-
-      //// connect the buttons with action !!
-      //requestButton.on({
-      //  "click":function(d){updateVisualization(); }
-      //})
-      //forwardButton.on({
-      //  "click":function(d){
-      //    var v = +$(startPos.node()).val();
-      //    var w = +$(baseWidthInput.node()).val();
-      //    $(startPos.node()).val(v+Math.round(w/4));
-      //
-      //    updateVisualization();
-      //  }
-      //})
-      //backwardButton.on({
-      //  "click":function(d){
-      //    var v = +$(startPos.node()).val();
-      //    var w = +$(baseWidthInput.node()).val();
-      //    $(startPos.node()).val(Math.max(v-Math.round(w/4), 1));
-      //
-      //    updateVisualization();
-      //  }
-      //})
-      //
-      //zoomOutButton.on({
-      //  "click":function(d){
-      //    var newWidth = +Math.round($(baseWidthInput.node()).val() * 2);
-      //    $(baseWidthInput.node()).val(newWidth);
-      //    backwardButton.text("-" + Math.round(newWidth/4))
-      //    forwardButton.text("+" + Math.round(newWidth/4))
-      //
-      //    updateVisualization();
-      //  }
-      //})
-      //
-      //zoomInButton.on({
-      //  "click":function(d){
-      //    var newWidth = +Math.round($(baseWidthInput.node()).val() / 2);
-      //    if (newWidth > 0) {
-      //      $(baseWidthInput.node()).val(newWidth);
-      //      backwardButton.text("-" + Math.round(newWidth/4))
-      //      forwardButton.text("+" + Math.round(newWidth/4))
-      //
-      //      updateVisualization();
-      //    }
-      //  }
-      //})
-
+      gui.current.addUpdateEvent(updateVisualization)
 
     }
 

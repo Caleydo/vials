@@ -63,6 +63,27 @@ define(['exports','d3'], function(exports, d3){
     }
 
 
+
+    this.getSelectedGene = function(){
+      return $(that.geneSelector.node()).val();
+    }
+
+
+    this.addUpdateEvent= function(updateFunction){
+      that.allVisUpdates.push(updateFunction);
+    }
+
+
+    this.getStartPos = function()  {
+      return parseInt($(that.startPosDiv.node()).val())
+    }
+
+    this.getBaseWidth = function()  {
+      return  parseInt($(that.baseWidthInputDiv.node()).val())
+    }
+
+
+
   }
 
 
@@ -71,10 +92,15 @@ define(['exports','d3'], function(exports, d3){
 
 
   var globalGUI = new AltSpliceGUI();
-  exports.geneSelector = globalGUI.geneSelector;
-  exports.init = globalGUI.init;
-  exports.start = globalGUI.start;
-  exports.allVisUpdates = globalGUI.allVisUpdates;
+
+  exports.AltSpliceGUI = AltSpliceGUI;
+  exports.current = globalGUI;
+
+
+  //exports.geneSelector = globalGUI.geneSelector;
+  //exports.init = globalGUI.init;
+  //exports.start = globalGUI.start;
+  //exports.allVisUpdates = globalGUI.allVisUpdates;
 
 
 

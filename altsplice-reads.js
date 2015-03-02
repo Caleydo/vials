@@ -5,7 +5,7 @@
 /**
  * a simple template for a visualization module
  */
-define(['exports', 'd3'], function (exports, d3) {
+define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
     /**
      * a simple template class of a visualization. Up to now there is no additional logic required.
      * @param data
@@ -19,7 +19,6 @@ define(['exports', 'd3'], function (exports, d3) {
     }
 
     GenomeVis.prototype.build = function ($parent) {
-        var serverOffset = this.data.serveradress;
         var that = this;
 
         var head = $parent.append("div").attr({
@@ -33,95 +32,32 @@ define(['exports', 'd3'], function (exports, d3) {
         //        "left":"20px",
         //        "position":"relative"
         //})
+        //
+        //this.data.getBamHeader().then(function (data) {
+        //        ta.text(JSON.stringify(data, undefined, 2));
+        //});
 
-        var $inputOuterDiv = head.append("div").style({
-                "top":"1340px",
-                "left":"20px",
-                "width":"600px",
-                "position":"relative"
-        })
 
-        var $queryDiv = $inputOuterDiv.append("div").text("chromosome ID:");
-
-        //var $geneDiv = $inputOuterDiv.append("div");
-
-        var geneSelector = $inputOuterDiv.append("select");
-
-        var chromID = $queryDiv.append("input").attr({
-                    type: "text",
-                    value: "chr17"
-        })
-
-        var $queryDiv = $inputOuterDiv.append("div").text("startpos:");
-
-        var startPos = $queryDiv.append("input").attr({
-                    type:"text",
-                    value:""
-        })
-
-        var requestButton = $queryDiv.append("button").attr({
-                    type:"button",
-                    class:"btn"
-            }).text("request")
-
-        var backwardButton =  $queryDiv.append("button").attr({
-                type:"button",
-                class:"btn"
-        }).text("-375")
-
-        var forwardButton =  $queryDiv.append("button").attr({
-                type:"button",
-                class:"btn"
-        }).text("+375")
-
-        var $baseWidthDiv = $inputOuterDiv.append("div").text("zoom:");
-
-        var baseWidthInput = $baseWidthDiv.append("input").attr({
-                    type:"text",
-                    value:""
-        }).attr("style", "display: none");
-
-        var zoomInButton = $baseWidthDiv.append("button").attr({
-                type:"button",
-                class:"btn"
-        }).text("+")
-
-        var zoomOutButton = $baseWidthDiv.append("button").attr({
-                type:"button",
-                class:"btn"
-        }).text("-")
-
-        this.data.getBamHeader().then(function (data) {
-                ta.text(JSON.stringify(data, undefined, 2));
-        });
-
-        var $toggleDiv = $inputOuterDiv.append("div").text("toggle:");
-
-        // var toggleIntronButton = $toggleDiv.append("button").attr({
-        //         type:"button",
-        //         class:"btn"
-        // }).text("introns")
-
-        var margin = {top: 40, right: 10, bottom: 20, left: 10},
+        var margin = {top: 10, right: 10, bottom: 20, left: 10},
                 width = 800 - margin.left - margin.right,
-                height = 2000 - margin.top - margin.bottom;
+                height = 300 - margin.top - margin.bottom;
 
         var svg = head.append("svg")
                 .attr("width", width + margin.left + margin.right)
                 .attr("height", height + margin.top + margin.bottom)
                 .style({
-                        "top":"500px",
+                        "top":"10px",
                         "left":"20px",
-                        "position":"absolute"
+                        "position":"relative"
                 })
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        function DataBar(id, axis, options) {
+        function DataBar(id, axis, options, aggregate) {
             this.id = id;
             this.axis = axis;
             this.options = options;
-
+            this.aggregate = aggregate;
 
             this.update = function(data) {
                 this.data = data || this.data;
@@ -132,9 +68,16 @@ define(['exports', 'd3'], function (exports, d3) {
 
             this.drawLines = function() {
                 var axis = this.axis;
-                var avgFunc = d3.svg.line().x(function(d) {return axis.getXPos(d.pos) + 0.5*axis.rangeBand();})
-                                            .y(function(d) {return styles["sampleBarHeight"]*(1-(d3.mean(d.wiggle) || d.wiggle));})
-                                            .interpolate('step');
+                var aggregate = this.aggregate;
+                var avgFunc = d3.svg.line()
+                                .x(function(d) {
+                                    return axis.getXPos(d.pos) + 0.5*axis.rangeBand();
+                                })
+                                .y(function(d) {
+                                    var wiggle = aggregate ? d3.mean(d.wiggle) : d.wiggle;
+                                    return styles["sampleBarHeight"]*(1-wiggle);
+                                })
+                                .interpolate('step');
 
                 var avgLines = this.g.selectAll(".avgLine").data(this.splitData);
                 avgLines.exit().remove();
@@ -144,6 +87,41 @@ define(['exports', 'd3'], function (exports, d3) {
                                                        class: "avgLine",
                                                      })
                 avgLines.attr("d", function(d) {return avgFunc(d)});
+
+                if (this.aggregate) {
+                    // need to update d3 to use d3.deviation
+                    function std(values){
+                      var avg = d3.mean(values);
+                      var squareDiffs = values.map(function(value){
+                        var diff = value - avg;
+                        var sqrDiff = diff * diff;
+                        return sqrDiff;
+                      });
+                      var avgSquareDiff = d3.mean(squareDiffs);
+                      var stdDev = Math.sqrt(avgSquareDiff);
+                      return stdDev;
+                    }
+
+                    var stdAreaFunc = d3.svg.area()
+                        .x(function(d) {
+                            return axis.getXPos(d.pos) + 0.5*axis.rangeBand();
+                        })
+                        .y0(function(d) {
+                            return styles["sampleBarHeight"]*(1-d3.mean(d.wiggle)-std(d.wiggle));
+                        })
+                        .y1(function(d) {
+                            var val = d3.mean(d.wiggle) + std(d.wiggle);
+                            return styles["sampleBarHeight"]*(1-d3.mean(d.wiggle)+std(d.wiggle));
+                        });
+                    var stdAreas = this.g.selectAll(".stdArea").data(this.splitData);
+                    stdAreas.exit().remove();
+                    stdAreas.enter().append("svg:path").attr({
+                                                           fill: "red",
+                                                           opacity: 0.3,
+                                                           class: "stdArea",
+                                                         })
+                    stdAreas.attr("d", function(d) {return stdAreaFunc(d)});
+                }
             }
 
             this.drawBoxes = function() {
@@ -196,7 +174,7 @@ define(['exports', 'd3'], function (exports, d3) {
             this.aggregate = false;
             this.samples = sampleNames;
             this.sampleBars = sampleNames.map(function(sampleName) {return new DataBar(sampleName, axis, options);});
-            this.aggBar = new DataBar("Group", axis, options);
+            this.aggBar = new DataBar("Group", axis, options, true);
             this.axis = axis;
             this.options = options;
 
@@ -272,7 +250,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
                 sampleGroups.each(function(s) {s.g = d3.select(this);})
 
-                this.aggBar.g.selectAll(".avgLine").attr("visibility", "hidden")
+                this.aggBar.g.attr("visibility", "hidden")
                 this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "hidden")
                 sampleGroups.selectAll(".sampleLabel").attr("visibility", "visible")
                 sampleGroups.transition().attr("opacity", 1);
@@ -290,7 +268,7 @@ define(['exports', 'd3'], function (exports, d3) {
                     this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "visible")
                     if (this.aggregate) {
                         sampleGroups.transition().attr("opacity", 0.2);
-                        this.aggBar.g.selectAll(".avgLine").attr("visibility", "visible")
+                        this.aggBar.g.attr("visibility", "visible")
                     }
                 }
             }
@@ -403,9 +381,9 @@ define(['exports', 'd3'], function (exports, d3) {
             }
 
             this.update = function() {
-                var geneName     = $(geneSelector.node()).val(),
-                    pos         = parseInt($(startPos.node()).val()),
-                    baseWidth   = parseInt($(baseWidthInput.node()).val());
+                var geneName     = gui.current.getSelectedGene(),
+                    pos         = gui.current.getStartPos(),
+                    baseWidth   = gui.current.getBaseWidth();
 
                 if (geneName !== this.curGene){
                     pos = null
@@ -413,6 +391,7 @@ define(['exports', 'd3'], function (exports, d3) {
                 }
                 that.data.getSamples(geneName,pos,baseWidth)
                     .then(function (data) {
+                        globalData = data;
                         var geneInfo = data["geneInfo"];
                         that.axis.update(geneInfo,
                                          pos || geneInfo["geneSpan"][0],
@@ -432,9 +411,7 @@ define(['exports', 'd3'], function (exports, d3) {
             };
 
             this.draw = function(data) {
-                var chromID_val   = $(chromID.node()).val(),
-                    pos       = parseInt($(startPos.node()).val()),
-                    baseWidth = parseInt($(baseWidthInput.node()).val()),
+                var
                     data      = data || this.readData,
                     samples   = d3.keys(data["samples"]);
 
@@ -444,7 +421,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
                 var sampleObjs;
 
-                samples = [[samples[0]], [samples[1], samples[2], samples[3]]];
+                samples = [[samples[0], samples[1], samples[2]], [samples[3]]];
                 // this.collections = this.collections || samples.map(function (sample) {return new Collection([sample], this.axis, this.options)}.bind(this));
                 this.collections = this.collections || samples.map(function (sample) {return new Collection(sample, this.axis, this.options)}.bind(this));
 
@@ -482,75 +459,25 @@ define(['exports', 'd3'], function (exports, d3) {
         }
 
         styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10};
-        var sampleGroup = svg.append("g").attr("transform", "translate(10,0)");
+        var sampleGroup = svg.append("g").attr("transform", "translate(20,0)");
         var toggleIntronButton = svg.append("text").attr({
                 type:"button",
                 class:"btn"
         }).text("toggle introns")
-        this.data.getAllGenes().then(function(genes) {
-            Object.keys(genes).forEach(function(gene) {
-                geneSelector.append("option").attr('value', gene).text(gene);
-            });
-            var sampleView = new SampleView(sampleGroup, that.data);
-            geneSelector.on({
-                "change": sampleView.update
-            });
 
-            requestButton.on({
-                "click": sampleView.update
-            });
-            forwardButton.on({
-                "click":function(d){
-                        var v = +$(startPos.node()).val();
-                        var w = +$(baseWidthInput.node()).val();
-                        $(startPos.node()).val(v+Math.round(w/4));
+        var sampleView = new SampleView(sampleGroup, that.data);
 
-                        sampleView.update();
-                }
-            })
-            backwardButton.on({
-                "click":function(d){
-                        var v = +$(startPos.node()).val();
-                        var w = +$(baseWidthInput.node()).val();
-                        $(startPos.node()).val(Math.max(v-Math.round(w/4), 1));
 
-                        sampleView.update();
-                }
-            })
+        toggleIntronButton.on({
 
-            zoomOutButton.on({
-                "click":function(d){
-                        var newWidth = +Math.round($(baseWidthInput.node()).val() * 2);
-                        $(baseWidthInput.node()).val(newWidth);
-                        backwardButton.text("-" + Math.round(newWidth/4))
-                        forwardButton.text("+" + Math.round(newWidth/4))
+            "click": function(d) {
+                sampleView.axis.options.showIntrons = !sampleView.axis.options.showIntrons;
+                sampleView.update();
+            }
+        })
 
-                        sampleView.update();
-                }
-            })
+        gui.current.addUpdateEvent(sampleView.update);
 
-            zoomInButton.on({
-                "click":function(d){
-                        var newWidth = +Math.round($(baseWidthInput.node()).val() / 2);
-                        if (newWidth > 0) {
-                            $(baseWidthInput.node()).val(newWidth);
-                            backwardButton.text("-" + Math.round(newWidth/4))
-                            forwardButton.text("+" + Math.round(newWidth/4))
-
-                            sampleView.update();
-                        }
-                }
-            })
-
-            toggleIntronButton.on({
-                "click": function(d) {
-                                        sampleView.axis.options.showIntrons = !sampleView.axis.options.showIntrons;
-                                        sampleView.update();
-                                     }
-            })
-
-            sampleView.update();
-        });
         //do the magic
         return head.node();
     };

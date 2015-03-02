@@ -1,5 +1,5 @@
 
-require(['../caleydo/data', '../caleydo/vis', 'altsplice-gui'], function (data, visPlugins, gui) {
+require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui'], function (C,data, visPlugins, gui) {
   'use strict';
   var vis;
 
@@ -9,7 +9,7 @@ require(['../caleydo/data', '../caleydo/vis', 'altsplice-gui'], function (data, 
     serveradress: '/api/genomebrowser'
   }).then(function (genome) {
 
-    gui.init(genome);
+    gui.current.init(genome);
 
     var visses = visPlugins.list(genome);
 
@@ -17,24 +17,39 @@ require(['../caleydo/data', '../caleydo/vis', 'altsplice-gui'], function (data, 
 
     var mode = document.location.search.substring(1);
 
-    if (mode==='bilal' || mode==''){
-      var junctionVis = visses.filter(function (vis) { return vis.id === 'altsplice-junctions'})[0];
-      junctionVis.load().then(function (plugin) {
-        vis = plugin.factory(genome, document.querySelector("#vis1") );
-      });
-    }
 
+    var vis1Loaded = C.promised(function(resolve,reject){
+      if (mode==='bilal' || mode==''){
+        var junctionVis = visses.filter(function (vis) { return vis.id === 'altsplice-junctions'})[0];
+        junctionVis.load().then(function (plugin) {
+          vis = plugin.factory(genome, document.querySelector("#vis1") );
+          resolve();
+        });
+      }else{
+        resolve();
+      }
+    })
+
+    var vis2Loaded = C.promised(function(resolve,reject){
     if (mode==='joseph' || mode=='') {
         var readVis = visses.filter(function (vis) {
           return vis.id === 'altsplice-reads'
         })[0];
         readVis.load().then(function (plugin) {
           vis = plugin.factory(genome, document.querySelector("#vis2"));
+          resolve();
         });
+    }else{
+      resolve();
     }
+  });
 
 
-    gui.start();
+    C.all([vis1Loaded, vis2Loaded]).then(function () {
+      gui.current.start();
+    })
+
+
 
 
   });
