@@ -97,10 +97,10 @@ define(['exports', 'd3'], function (exports, d3) {
 
         var $toggleDiv = $inputOuterDiv.append("div").text("toggle:");
 
-        var toggleIntronButton = $toggleDiv.append("button").attr({
-                type:"button",
-                class:"btn"
-        }).text("introns")
+        // var toggleIntronButton = $toggleDiv.append("button").attr({
+        //         type:"button",
+        //         class:"btn"
+        // }).text("introns")
 
         var margin = {top: 40, right: 10, bottom: 20, left: 10},
                 width = 800 - margin.left - margin.right,
@@ -124,7 +124,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
 
             this.update = function(data) {
-                this.data = data;
+                this.data = data || this.data;
                 this.splitData = this.axis.splitXData(this.data)
                 this.drawLines();
                 this.drawBoxes();
@@ -139,7 +139,6 @@ define(['exports', 'd3'], function (exports, d3) {
                 var avgLines = this.g.selectAll(".avgLine").data(this.splitData);
                 avgLines.exit().remove();
                 avgLines.enter().append("svg:path").attr({
-                                                       d: function(d) {return avgFunc(d)},
                                                        fill: "none",
                                                        stroke: "red",
                                                        class: "avgLine",
@@ -197,7 +196,7 @@ define(['exports', 'd3'], function (exports, d3) {
             this.aggregate = false;
             this.samples = sampleNames;
             this.sampleBars = sampleNames.map(function(sampleName) {return new DataBar(sampleName, axis, options);});
-            this.aggBar = new DataBar("agg", axis, options);
+            this.aggBar = new DataBar("Group", axis, options);
             this.axis = axis;
             this.options = options;
 
@@ -208,19 +207,10 @@ define(['exports', 'd3'], function (exports, d3) {
             }
 
             this.update = function(data) {
+                this.data = data;
                 var samples = this.samples;
 
                 this.sampleBars.forEach(function(s) {s.update(data["samples"][s.id]["positions"])})
-
-                if (samples.length > 1) {
-                    var aggData = data["samples"][samples[0]]["positions"].map(function(d, i) {
-                        return {
-                                "pos": d.pos,
-                                "wiggle": samples.map(function(sample) {return data["samples"][sample]["positions"][i].wiggle}),
-                            };
-                    })
-                    this.aggBar.update(aggData);
-                }
             }
 
             this.draw = function() {
@@ -235,15 +225,18 @@ define(['exports', 'd3'], function (exports, d3) {
             }
 
             this.drawSamples = function() {
-                var aggGroup = this.g.selectAll(".sampleAgg");
-                if (aggGroup.empty()) {
-                    aggGroup = this.g.append("g").attr({
-                        "class": "sampleAgg",
-                        "height": styles["sampleBarHeight"],
-                        "width": this.axis.width,
-                        "transform": function(c) {return "translate(0," + styles["collectionMargin"]/2 + ")"},
-                    });
-                }
+                var aggGroup = this.g.selectAll(".sampleAgg").data([this.aggBar]);
+                aggGroup.exit().remove();
+                var aggGroupEnter = aggGroup.enter().append("g").attr({
+                    "class": "sampleAgg",
+                    "height": styles["sampleBarHeight"],
+                    "width": this.axis.width,
+                    "transform": function(c) {return "translate(0," + styles["collectionMargin"]/2 + ")"},
+                });
+                aggGroupEnter.append("text").attr({
+                    "class": "sampleLabel",
+                    "transform": "translate(" + (this.axis.width + 10) + "," + (styles["sampleBarHeight"] + styles["sampleBarMargin"]) / 2 + ")"
+                }).text(function(d) {return d.id})
 
                 this.aggBar.g = aggGroup;
 
@@ -253,13 +246,25 @@ define(['exports', 'd3'], function (exports, d3) {
                 }.bind(this);
                 var sampleGroups = this.g.selectAll(".sample").data(this.sampleBars, function(d) {return d.id});
                 sampleGroups.exit().remove();
-                sampleGroups.enter()
+                var sampleGroupsEnter = sampleGroups.enter()
                             .append("g")
                             .attr({
                                 "class": "sample",
                                 "height": styles["sampleBarHeight"],
-                                "width": this.axis.width,
                             })
+
+                var yScale = d3.scale.linear().domain([0, 1]).range([0, styles["sampleBarHeight"]]);
+                var yAxis = d3.svg.axis()
+                              .orient("left")
+                              .scale(yScale)
+                              .tickValues([0, 1]);
+
+                sampleGroupsEnter.append("g").call(yAxis);
+
+                sampleGroupsEnter.append("text").attr({
+                    "class": "sampleLabel",
+                    "transform": "translate(" + (this.axis.width + 10) + "," + (styles["sampleBarHeight"] + styles["sampleBarMargin"]) / 2 + ")"
+                }).text(function(d) {return d.id})
 
                 sampleGroups.attr({
                     "transform": function(s, i) {return "translate(0," + samplePos(i) + ")"},
@@ -267,20 +272,37 @@ define(['exports', 'd3'], function (exports, d3) {
 
                 sampleGroups.each(function(s) {s.g = d3.select(this);})
 
-                if (this.aggregate) {
-                    sampleGroups.transition().attr("opacity", 0.2);
-                    aggGroup.transition().attr("opacity", 1);
+                this.aggBar.g.selectAll(".avgLine").attr("visibility", "hidden")
+                this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "hidden")
+                sampleGroups.selectAll(".sampleLabel").attr("visibility", "visible")
+                sampleGroups.transition().attr("opacity", 1);
+                if (this.data) {
+                    var data = this.data;
+                    var aggData = data["samples"][this.samples[0]]["positions"].map(function(d, i) {
+                        return {
+                                "pos": d.pos,
+                                "wiggle": samples.map(function(sample) {return data["samples"][sample]["positions"][i].wiggle}),
+                            }});
+                    this.aggBar.update(aggData);
                 }
-                else {
-                    aggGroup.transition().attr("opacity", 0);
-                    sampleGroups.transition().attr("opacity", 1);
+                if (this.collapse) {
+                    sampleGroups.selectAll(".sampleLabel").attr("visibility", "hidden")
+                    this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "visible")
+                    if (this.aggregate) {
+                        sampleGroups.transition().attr("opacity", 0.2);
+                        this.aggBar.g.selectAll(".avgLine").attr("visibility", "visible")
+                    }
                 }
             }
 
             this.drawLinesGroup = function() {
+                var labelWidth = 100;
                 var linesGroup = this.g.selectAll(".linesGroup");
                 if (linesGroup.empty()) {
-                    linesGroup = this.g.append("g").attr("class", "linesGroup")
+                    linesGroup = this.g.append("g").attr({
+                        "class": "linesGroup",
+                        "transform": "translate(" + labelWidth + ",0)"
+                    });
 
                     linesGroup.append("line")
                                    .attr({
@@ -382,7 +404,6 @@ define(['exports', 'd3'], function (exports, d3) {
 
             this.update = function() {
                 var geneName     = $(geneSelector.node()).val(),
-                    // chromID_val = $(chromID.node()).val(),
                     pos         = parseInt($(startPos.node()).val()),
                     baseWidth   = parseInt($(baseWidthInput.node()).val());
 
@@ -414,16 +435,16 @@ define(['exports', 'd3'], function (exports, d3) {
                 var chromID_val   = $(chromID.node()).val(),
                     pos       = parseInt($(startPos.node()).val()),
                     baseWidth = parseInt($(baseWidthInput.node()).val()),
-                    data      = data || this.data,
+                    data      = data || this.readData,
                     samples   = d3.keys(data["samples"]);
 
-                this.data = data;
+                this.readData = data;
 
                 var sampleBarGraphHeight = samples.length * (styles["sampleBarHeight"] + styles["sampleBarMargin"]);
 
                 var sampleObjs;
 
-                samples = [[samples[0], samples[1]], [samples[2], samples[3]]];
+                samples = [[samples[0]], [samples[1], samples[2], samples[3]]];
                 // this.collections = this.collections || samples.map(function (sample) {return new Collection([sample], this.axis, this.options)}.bind(this));
                 this.collections = this.collections || samples.map(function (sample) {return new Collection(sample, this.axis, this.options)}.bind(this));
 
@@ -462,6 +483,10 @@ define(['exports', 'd3'], function (exports, d3) {
 
         styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10};
         var sampleGroup = svg.append("g").attr("transform", "translate(10,0)");
+        var toggleIntronButton = svg.append("text").attr({
+                type:"button",
+                class:"btn"
+        }).text("toggle introns")
         this.data.getAllGenes().then(function(genes) {
             Object.keys(genes).forEach(function(gene) {
                 geneSelector.append("option").attr('value', gene).text(gene);
@@ -519,8 +544,8 @@ define(['exports', 'd3'], function (exports, d3) {
 
             toggleIntronButton.on({
                 "click": function(d) {
-                                        sampleView.options.showIntrons = !sampleView.options.showIntrons;
-                                        sampleView.draw();
+                                        sampleView.axis.options.showIntrons = !sampleView.axis.options.showIntrons;
+                                        sampleView.update();
                                      }
             })
 
