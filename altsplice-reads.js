@@ -117,11 +117,11 @@ define(['exports', 'd3'], function (exports, d3) {
                 .append("g")
                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-        function DataBar(id, axis, options) {
+        function DataBar(id, axis, options, aggregate) {
             this.id = id;
             this.axis = axis;
             this.options = options;
-
+            this.aggregate = aggregate;
 
             this.update = function(data) {
                 this.data = data || this.data;
@@ -132,9 +132,16 @@ define(['exports', 'd3'], function (exports, d3) {
 
             this.drawLines = function() {
                 var axis = this.axis;
-                var avgFunc = d3.svg.line().x(function(d) {return axis.getXPos(d.pos) + 0.5*axis.rangeBand();})
-                                            .y(function(d) {return styles["sampleBarHeight"]*(1-(d3.mean(d.wiggle) || d.wiggle));})
-                                            .interpolate('step');
+                var aggregate = this.aggregate;
+                var avgFunc = d3.svg.line()
+                                .x(function(d) {
+                                    return axis.getXPos(d.pos) + 0.5*axis.rangeBand();
+                                })
+                                .y(function(d) {
+                                    var wiggle = aggregate ? d3.mean(d.wiggle) : d.wiggle;
+                                    return styles["sampleBarHeight"]*(1-wiggle);
+                                })
+                                .interpolate('step');
 
                 var avgLines = this.g.selectAll(".avgLine").data(this.splitData);
                 avgLines.exit().remove();
@@ -144,6 +151,41 @@ define(['exports', 'd3'], function (exports, d3) {
                                                        class: "avgLine",
                                                      })
                 avgLines.attr("d", function(d) {return avgFunc(d)});
+
+                if (this.aggregate) {
+                    // need to update d3 to use d3.deviation
+                    function std(values){
+                      var avg = d3.mean(values);
+                      var squareDiffs = values.map(function(value){
+                        var diff = value - avg;
+                        var sqrDiff = diff * diff;
+                        return sqrDiff;
+                      });
+                      var avgSquareDiff = d3.mean(squareDiffs);
+                      var stdDev = Math.sqrt(avgSquareDiff);
+                      return stdDev;
+                    }
+
+                    var stdAreaFunc = d3.svg.area()
+                        .x(function(d) {
+                            return axis.getXPos(d.pos) + 0.5*axis.rangeBand();
+                        })
+                        .y0(function(d) {
+                            return styles["sampleBarHeight"]*(1-d3.mean(d.wiggle)-std(d.wiggle));
+                        })
+                        .y1(function(d) {
+                            var val = d3.mean(d.wiggle) + std(d.wiggle);
+                            return styles["sampleBarHeight"]*(1-d3.mean(d.wiggle)+std(d.wiggle));
+                        });
+                    var stdAreas = this.g.selectAll(".stdArea").data(this.splitData);
+                    stdAreas.exit().remove();
+                    stdAreas.enter().append("svg:path").attr({
+                                                           fill: "red",
+                                                           opacity: 0.3,
+                                                           class: "stdArea",
+                                                         })
+                    stdAreas.attr("d", function(d) {return stdAreaFunc(d)});
+                }
             }
 
             this.drawBoxes = function() {
@@ -196,7 +238,7 @@ define(['exports', 'd3'], function (exports, d3) {
             this.aggregate = false;
             this.samples = sampleNames;
             this.sampleBars = sampleNames.map(function(sampleName) {return new DataBar(sampleName, axis, options);});
-            this.aggBar = new DataBar("Group", axis, options);
+            this.aggBar = new DataBar("Group", axis, options, true);
             this.axis = axis;
             this.options = options;
 
@@ -272,7 +314,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
                 sampleGroups.each(function(s) {s.g = d3.select(this);})
 
-                this.aggBar.g.selectAll(".avgLine").attr("visibility", "hidden")
+                this.aggBar.g.attr("visibility", "hidden")
                 this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "hidden")
                 sampleGroups.selectAll(".sampleLabel").attr("visibility", "visible")
                 sampleGroups.transition().attr("opacity", 1);
@@ -290,7 +332,7 @@ define(['exports', 'd3'], function (exports, d3) {
                     this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "visible")
                     if (this.aggregate) {
                         sampleGroups.transition().attr("opacity", 0.2);
-                        this.aggBar.g.selectAll(".avgLine").attr("visibility", "visible")
+                        this.aggBar.g.attr("visibility", "visible")
                     }
                 }
             }
@@ -413,6 +455,7 @@ define(['exports', 'd3'], function (exports, d3) {
                 }
                 that.data.getSamples(geneName,pos,baseWidth)
                     .then(function (data) {
+                        globalData = data;
                         var geneInfo = data["geneInfo"];
                         that.axis.update(geneInfo,
                                          pos || geneInfo["geneSpan"][0],
@@ -444,7 +487,7 @@ define(['exports', 'd3'], function (exports, d3) {
 
                 var sampleObjs;
 
-                samples = [[samples[0]], [samples[1], samples[2], samples[3]]];
+                samples = [[samples[0], samples[1], samples[2]], [samples[3]]];
                 // this.collections = this.collections || samples.map(function (sample) {return new Collection([sample], this.axis, this.options)}.bind(this));
                 this.collections = this.collections || samples.map(function (sample) {return new Collection(sample, this.axis, this.options)}.bind(this));
 
@@ -482,7 +525,7 @@ define(['exports', 'd3'], function (exports, d3) {
         }
 
         styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10};
-        var sampleGroup = svg.append("g").attr("transform", "translate(10,0)");
+        var sampleGroup = svg.append("g").attr("transform", "translate(20,0)");
         var toggleIntronButton = svg.append("text").attr({
                 type:"button",
                 class:"btn"
