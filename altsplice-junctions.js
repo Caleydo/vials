@@ -35,7 +35,7 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
   }
 
   var margin = {top: 40, right: 10, bottom: 20, left: 10},
-    width = 640 - margin.left - margin.right,
+    width = 750 - margin.left - margin.right,
     height = 450 - margin.top - margin.bottom;
   var dotRadius = 4;
   var defaultDotColor = "rgba(0,0,0,0.6)";
@@ -51,6 +51,10 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
   var hoveredEdgeColor = "orange";
   var jxnBBoxWidth = jxnCircleRadius * 2.5;
 
+  var RNAHeight = 30;
+  var RNAMargin = 30;
+  var isoformEdgePadding = 9;
+
   var curGene;
   var curRNAs;
   var curExons;
@@ -58,18 +62,29 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
   var serverOffset;
   var geneData;
 
-  var show_introns = false;
+
   var jxnArea;
   var cellRadius = 14;
   var cellMargin = 2;
   var cellWidth = cellRadius*2 + cellMargin;
-
+  var isoformSelector;
 
   GenomeVis.prototype.build = function ($parent) {
     serverOffset = this.data.serveradress;
 
     var that = this;
     that.axis = that.data.genomeAxis;
+
+    var selectIsoformDiv = $parent.append("div");
+    selectIsoformDiv.text("Select isoform: ")
+    isoformSelector = selectIsoformDiv.append("select");
+    isoformSelector.append("option").attr('value', null).text("<none>");
+    isoformSelector.on({
+      "change": function(){
+        selectIsoform(this.selectedIndex);
+      }
+    })
+
     var head = $parent.append("div").attr({
       "class":"gv"
     })
@@ -95,40 +110,18 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
 
 
-    var getAxisRanges = function(curExons, startPosVal, baseWidth) {
-      if (show_introns) {
-        var ranges = [];
-        var prevExon;
-        curExons.forEach(function(exon, i) {
-          if (prevExon) {
-            ranges.push([prevExon[1], exon[0]])
-          }
-          else if (!prevExon && exon[0] > startPosVal) {
-            ranges.push([startPosVal, exon[0]])
-          }
-          ranges.push(exon);
-          prevExon = exon;
-        })
-        if (prevExon[1] < startPosVal+baseWidth) {
-          ranges.push([prevExon[1], startPosVal+baseWidth])
-        }
-        return ranges;
-      }
-      return curExons;
-    }
-
-    function getStartPos()  {return gui.current.getStartPos()}
-    function getBaseWidth ()  {return  gui.current.getBaseWidth()}
-
     function updateVisualization() {
-      startPos = getStartPos()
-      //chromID =getCromID ()
-      baseWidth =getBaseWidth ()
-      //geneName     = $(geneSelector.node()).val()
-
+      var startPos = gui.current.getStartPos()
+      var baseWidth =gui.current.getBaseWidth()
 
       curGene = getCurGene(startPos, baseWidth);
       curRNAs = getCurRNAs(curGene, startPos, baseWidth);
+
+      curRNAs.forEach(function (rna, index) {
+        var span = curRNAs[0].RNASpan;
+        isoformSelector.append("option").text("isoform" + index);
+      });
+
       curExons = getCurExons(curRNAs);
 
 
@@ -146,13 +139,10 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
         var RNAHeight = 30;
         var RNAMargin = 30;
-        var RNAArea = jxnArea.selectAll("#RNAArea").data(["foo"])
-        RNAArea.exit().remove();
-        RNAArea.enter().append("g").attr({
+        var RNAArea = jxnArea.append("g").attr({
           "id": "RNAArea",
           "transform": "translate(0," + (jxnWrapperHeight+RNAMargin) + ")"
         });
-        sad = curRNAs;
         drawRNA(curRNAs.reduce(function(memo, num) {
             if (memo.length > num.length) {return memo}
             else {return num}
@@ -170,11 +160,8 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
 
 
-    function drawRNA(RNA, area, axis, RNAHeight, RNAMargin) {
+    function drawRNA(RNA, RNAArea, axis, RNAHeight, RNAMargin) {
 
-      var RNAArea = area.append("g").attr({
-        "class": "RNA"
-      })
 
       RNAArea.append("line").attr({
         "x1": axis.getXPos(RNA.RNASpan[0]),
@@ -201,8 +188,8 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
         "points" : function(d, i) {
           var x1 = axis.getXPos(d[0]);
           var x2 = axis.getXPos(d[1]);
-          var x3 = getWrapperStartX(i) + getWrapperOriginPoint(i) + miniExonWidth() / 2;
-          var x4 = getWrapperStartX(i) + getWrapperOriginPoint(i) - miniExonWidth() / 2;
+          var x3 = getWrapperStartX(i) + miniExonWidth() + miniExonSpacing;
+          var x4 = getWrapperStartX(i) + miniExonSpacing;
           return [
             x1, 0,
             x2, 0,
@@ -229,10 +216,6 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
             "groupId": "RNA",
             "startExonInd": i,
             "endExonInd": j,
-            "x1": x1,
-            "x2": x2,
-            "y1": y1,
-            "y2": y2,
             "points" : function(d, i) {
               return [
                 x1, y1,
@@ -250,20 +233,24 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
       }
     }
 
-    function jxnWrapperWidth() {
-      return (width - weightAxisCaptionWidth - (curExons.length + 1) * jxnWrapperPadding) / curExons.length
+    function jxnWrapperWidth(i) {
+      return (curExons.length - i) * (miniExonWidth() + miniExonSpacing) + miniExonSpacing
     }
 
     function miniExonWidth() {
-      return (jxnWrapperWidth() - (curExons.length + 1) * miniExonSpacing) / curExons.length;
+      return  (width - weightAxisCaptionWidth - (curExons.length + 1) * (jxnWrapperPadding + miniExonSpacing))
+        / (curExons.length * (curExons.length));
     }
 
     function getWrapperOriginPoint(exonIndex) {
-      return (exonIndex + 0.5) * miniExonWidth() + (exonIndex + 1) * miniExonSpacing
+      return jxnWrapperWidth(exonIndex)*(exonIndex + 0.5)/curExons.length
     }
 
     function getWrapperStartX(i) {
-      return i*(jxnWrapperWidth()+jxnWrapperPadding) + jxnWrapperPadding + weightAxisCaptionWidth;
+      var shift = jxnWrapperPadding + weightAxisCaptionWidth;
+      for (var j = 0; j < i; j++)
+        shift += jxnWrapperWidth(j)+jxnWrapperPadding
+      return shift;
     }
 
     function getJxnGroupX(i) {
@@ -299,18 +286,10 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
       }
 
       jxnWrappersEnter.append("rect").attr({
-        "class": "jxnWrapperBox prev",
-        "fill": "#bbb",
-        "width": function(exon) {return getWrapperOriginPoint(getExonIdx(exon))},
-        "height": jxnWrapperHeight
-      })
-
-      jxnWrappersEnter.append("rect").attr({
-        "class": "jxnWrapperBox next",
-        "fill": "#ddd",
+        "class": "jxnWrapperBox",
+        "fill": "#ccc",
         "height": jxnWrapperHeight,
-        "width": function(exon) {return jxnWrapperWidth()*(curExons.length - getExonIdx(exon)- 0.5)/curExons.length},
-        "transform": function(exon) {return "translate("+ getWrapperOriginPoint(getExonIdx(exon))+",0)"}
+        "width": function(exon, i) {return jxnWrapperWidth(i)}
       })
       var edgeAxisGroup = jxnArea.append("g")
         .attr("class", "axis")
@@ -355,251 +334,315 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
         var jxnWrapper = d3.select(this);
         var exonJxnGroups = jxnWrapper.selectAll(".exonJxnGroup").data(curExons, function(exon) {return exon});
 
-        var definingExonX = getWrapperOriginPoint(curExonIdx);// (curExonIdx + 0.5) * (miniExonSpacing+miniExonWidth());
+        var definingExonX = 0.5 * (miniExonSpacing+miniExonWidth());
 
         exonJxnGroups.exit().remove();
         var exonJxnGroupsEnter = exonJxnGroups.enter().append("g").attr({
           "class": function(exon, i) {return "exonJxnGroup" + (i == curExonIdx ? " curExon" : "")},
+
           "transform": function(exon, i) {
-            var xShift = getJxnGroupX(i);
+            var xShift = getJxnGroupX(i - curExonIdx);
 
             return "translate("+ xShift + ", 0)"
           }
         })
 
-        exonJxnGroupsEnter.append("rect").attr({
-          "class": "miniExonBox",
-          "width": miniExonWidth(),
-          "height": miniExonHeight,
-          "stroke": "black",
-          "fill": "black", // function(exon, i) {return i == curExonIdx ? "white" : "black"},
-          "transform": function(exon, i) {
-            var shiftY = jxnWrapperHeight - miniExonHeight;
-            if (i != curExonIdx)
-              shiftY -= 3 * miniExonHeight;
-            return "translate(0,"+ shiftY +")"
-          }
-        })
 
-        exonJxnGroupsEnter.append("line").attr({
-          "class": "miniExonEdge",
-          "stroke": "black",
-          "x1": function(exon, i) {
-            if (i == curExonIdx) return 0;
-            var origin = i * (miniExonSpacing + miniExonWidth()) + miniExonSpacing;
-            return definingExonX - origin;
-          },
-          "x2": function(exon, i) {return (i == curExonIdx) ? 0 : miniExonWidth()/2},
-          "y1":function(exon, i) {return (i == curExonIdx) ? 0 : jxnWrapperHeight - miniExonHeight},
-          "y2": function(exon, i) {return (i == curExonIdx) ? 0 : exonWeightsAreaHeight + miniExonHeight}
-        })
-
-
-        exonJxnGroups.selectAll(".miniExonBox").attr({
-          "width": miniExonWidth()
-        })
-
-        jxnWrapper.selectAll(".exonJxnGroup:not(.curExon)")
+        exonJxnGroups
           .each(function(exon) {
             var groupExonInd = getExonIdx(exon);
-            var exonJxnGroup = d3.select(this);
-            var exonGroupJxns = getJxnsFromSpan(curExon, exon);
-            var sortedJxns = exonGroupJxns.slice().sort(d3.ascending);
-            var firstQuartile = d3.quantile(sortedJxns, 0.25);
-            var secondQuartile = d3.quantile(sortedJxns, 0.5);
-            var thirdQuartile = d3.quantile(sortedJxns, 0.75);
-            var iqr = 1.5 * (thirdQuartile - firstQuartile);
-            var whiskerTop, whiskerDown;
-            {
-              var i = -1;
-              var j = sortedJxns.length;
-              while ((sortedJxns[++i] < firstQuartile - iqr));
-              while (sortedJxns[--j] > thirdQuartile + iqr);
-              whiskerTop =  j == sortedJxns.length - 1 ? sortedJxns[j] : thirdQuartile + iqr;
-              whiskerDown = i == 0 ? sortedJxns[i] : firstQuartile - iqr;
+            if (groupExonInd >= curExonIdx) {
+              var exonJxnGroup = d3.select(this);
+
+              exonJxnGroup.append("rect").attr({
+                "class": "miniExonBox",
+                "width": miniExonWidth(),
+                "height": miniExonHeight,
+                "stroke": "black",
+                "fill": "black", // function(exon, i) {return i == curExonIdx ? "white" : "black"},
+                "transform": function (exon, i) {
+                  var shiftY = jxnWrapperHeight - miniExonHeight;
+                  if (groupExonInd != curExonIdx)
+                    shiftY -= 3 * miniExonHeight;
+                  return "translate(0," + shiftY + ")"
+                }
+              })
+
+              exonJxnGroup.append("line").attr({
+                "class": "miniExonEdge",
+                "stroke": "black",
+                "x1": function (exon, i) {
+                  if (groupExonInd == curExonIdx) return 0;
+                  var origin = getJxnGroupX(groupExonInd - curExonIdx);
+                  return definingExonX - origin;
+                },
+                "x2": function (exon) {
+                  return (groupExonInd == curExonIdx) ? 0 : miniExonWidth() / 2
+                },
+                "y1": function (exon) {
+                  return (groupExonInd == curExonIdx) ? 0 : jxnWrapperHeight - miniExonHeight
+                },
+                "y2": function (exon) {
+                  return (groupExonInd == curExonIdx) ? 0 : exonWeightsAreaHeight + miniExonHeight
+                }
+              })
             }
+            if (groupExonInd > curExonIdx) {
 
-            exonJxnGroup.append("line").attr({
-              "class": "exonRefLine",
-              "stroke": "black",
-              "stroke-dasharray":  "5,5",
-              "x1": miniExonWidth()/2,
-              "x2": miniExonWidth()/2,
-              "y1": yScaleContJxn(whiskerDown),
-              "y2": yScaleContJxn(whiskerTop)
-            })
+              boxplotWithDots = exonJxnGroup.append("g").attr({
+                "class": "boxplotWithDots",
+                "sourceExonInd": curExonIdx,
+                "targetExonInd": groupExonInd,
 
-            exonJxnGroup.append("rect").attr({
-              "ContainingExon": curExon,
-              "GroupExon": exon,
-              "class": "jxnBBox",
-              "fill": "white",
-              "height": Math.abs(yScaleContJxn(thirdQuartile) - yScaleContJxn(firstQuartile)),
-              "width": jxnBBoxWidth,
-              "transform": "translate("+(miniExonWidth() - jxnBBoxWidth)/2+","
-              +yScaleContJxn(thirdQuartile)+")"
-            }).on('mouseover', function() {
-              d3.select(this).attr({"fill": hoveredEdgeColor})
+              })
 
-              d3.selectAll(".jxnBBox").filter(function() {
-                if (this.getAttribute("GroupExon") == curExon
-                  && this.getAttribute("ContainingExon") == exon)
-                  d3.select(this).attr({"fill": hoveredEdgeColor})
+              var exonGroupJxns = getJxnsFromSpan(curExon, exon);
+              var sortedJxns = exonGroupJxns.slice().sort(d3.ascending);
+              var firstQuartile = d3.quantile(sortedJxns, 0.25);
+              var secondQuartile = d3.quantile(sortedJxns, 0.5);
+              var thirdQuartile = d3.quantile(sortedJxns, 0.75);
+              var iqr = 1.5 * (thirdQuartile - firstQuartile);
+              var whiskerTop, whiskerDown;
+              {
+                var i = -1;
+                var j = sortedJxns.length;
+                while ((sortedJxns[++i] < firstQuartile - iqr));
+                while (sortedJxns[--j] > thirdQuartile + iqr);
+                whiskerTop =  j == sortedJxns.length - 1 ? sortedJxns[j] : thirdQuartile + iqr;
+                whiskerDown = i == 0 ? sortedJxns[i] : firstQuartile - iqr;
+              }
+
+              boxplotWithDots.append("line").attr({
+                "class": "exonRefLine",
+                "stroke": "black",
+                "stroke-dasharray":  "5,5",
+                "x1": miniExonWidth()/2,
+                "x2": miniExonWidth()/2,
+                "y1": yScaleContJxn(whiskerDown),
+                "y2": yScaleContJxn(whiskerTop)
+              })
+
+              boxplotWithDots.append("rect").attr({
+                "ContainingExon": curExon,
+                "GroupExon": exon,
+                "class": "jxnBBox",
+                "sourceExonInd": curExonIdx,
+                "targetExonInd": groupExonInd,
+                "fill": "white",
+                "height": Math.abs(yScaleContJxn(thirdQuartile) - yScaleContJxn(firstQuartile)),
+                "width": jxnBBoxWidth,
+                "transform": "translate("+(miniExonWidth() - jxnBBoxWidth)/2+","
+                +yScaleContJxn(thirdQuartile)+")"
+              }).on('mouseover', function() {
+                d3.select(this).attr({"fill": hoveredEdgeColor})
+
+                d3.selectAll(".jxnBBox").filter(function() {
+                  if (this.getAttribute("GroupExon") == curExon
+                    && this.getAttribute("ContainingExon") == exon)
+                    d3.select(this).attr({"fill": hoveredEdgeColor})
+                });
+
+                d3.selectAll(".edgeConnector").filter(function() {
+                  if ((this.getAttribute("groupId") == "average" || this.getAttribute("groupId") == "RNA")
+                    && this.getAttribute("startExonInd") == d3.min([groupExonInd, curExonIdx])
+                    && this.getAttribute("endExonInd") ==  d3.max([groupExonInd, curExonIdx])) {
+                    return true;
+                  }
+                  return false;
+                }).style({"visibility":  "visible"});
+
+              }).on('mouseout', function() {
+                d3.selectAll(".jxnBBox").attr({"fill": "white"})
+                d3.selectAll(".edgeConnector").filter(function() {
+                  return this.getAttribute("groupId") == "average" || this.getAttribute("groupId") == "RNA"
+                }).style({"visibility": "hidden"});
+              }).on("dblclick",function() {
+                expandJxn(d3.select(this))
+              })
+
+              boxplotWithDots.append("line").attr({
+
+                "x1": (miniExonWidth() - jxnBBoxWidth)/2,
+                "x2": (miniExonWidth() + jxnBBoxWidth)/2,
+                "y1": yScaleContJxn(secondQuartile),
+                "y2": yScaleContJxn(secondQuartile),
+                "stroke": "#666"
+              })
+
+              boxplotWithDots.append("line").attr({
+                "x1": (miniExonWidth() - jxnBBoxWidth)/2,
+                "x2": (miniExonWidth() + jxnBBoxWidth)/2,
+                "y1": yScaleContJxn(whiskerTop),
+                "y2": yScaleContJxn(whiskerTop),
+                "stroke": "#666"
+              })
+
+              boxplotWithDots.append("line").attr({
+                "x1": (miniExonWidth() - jxnBBoxWidth)/2,
+                "x2": (miniExonWidth() + jxnBBoxWidth)/2,
+                "y1": yScaleContJxn(whiskerDown),
+                "y2": yScaleContJxn(whiskerDown),
+                "stroke": "#666"
+              })
+
+              var x1 = (that.axis.getXPos(curExon[0]) + that.axis.getXPos(curExon[1])) / 2;
+              var x2 = (that.axis.getXPos(exon[0]) + that.axis.getXPos(exon[1])) / 2;
+              var y1 = jxnWrapperHeight + RNAMargin
+              var y2 = yScaleContJxn(secondQuartile) ;
+              polyLine =  jxnArea.append("polyline").attr({
+                "startExonInd": curExonIdx,
+                "endExonInd": groupExonInd,
+                "points" : function(d, i) {
+                  return [
+                    x1 + isoformEdgePadding, y1,
+                    x1 + isoformEdgePadding, y2,
+                    x2 - isoformEdgePadding, y2,
+                    x2 - isoformEdgePadding, y1
+                  ]},
+                "class": "isoformEdge",
+                "stroke": "orange",
+                "fill":"none",
+                "stroke-width":2,
+                "visibility": "hidden"
               });
 
-              d3.selectAll(".edgeConnector").filter(function() {
-                if ((this.getAttribute("groupId") == "average" || this.getAttribute("groupId") == "RNA")
-                  && this.getAttribute("startExonInd") == d3.min([groupExonInd, curExonIdx])
-                  && this.getAttribute("endExonInd") ==  d3.max([groupExonInd, curExonIdx])) {
-                  return true;
-                }
-                return false;
-              }).style({"visibility":  "visible"});
 
-            }).on('mouseout', function() {
-              d3.selectAll(".jxnBBox").attr({"fill": "white"})
-              d3.selectAll(".edgeConnector").filter(function() {
-                return this.getAttribute("groupId") == "average" || this.getAttribute("groupId") == "RNA"
-              }).style({"visibility": "hidden"});
-            })
-
-
-            exonJxnGroup.append("line").attr({
-              "x1": (miniExonWidth() - jxnBBoxWidth)/2,
-              "x2": (miniExonWidth() + jxnBBoxWidth)/2,
-              "y1": yScaleContJxn(secondQuartile),
-              "y2": yScaleContJxn(secondQuartile),
-              "stroke": "#666"
-            })
-
-            exonJxnGroup.append("line").attr({
-              "x1": (miniExonWidth() - jxnBBoxWidth)/2,
-              "x2": (miniExonWidth() + jxnBBoxWidth)/2,
-              "y1": yScaleContJxn(whiskerTop),
-              "y2": yScaleContJxn(whiskerTop),
-              "stroke": "#666"
-            })
-
-            exonJxnGroup.append("line").attr({
-              "x1": (miniExonWidth() - jxnBBoxWidth)/2,
-              "x2": (miniExonWidth() + jxnBBoxWidth)/2,
-              "y1": yScaleContJxn(whiskerDown),
-              "y2": yScaleContJxn(whiskerDown),
-              "stroke": "#666"
-            })
-
-            var jxnCircles = d3.select(this)
-              .selectAll(".jxnCircle")
-              .data(exonGroupJxns)
-            jxnCircles.exit().remove();
-            jxnCircles.enter().append("circle").attr({
-              "class": "jxnCircle",
-              "data-sample": function(d, i) {return samples[i]},
-              "r": jxnCircleRadius,
-              "cx": miniExonWidth()/2,
-              "cy": function(d) {return yScaleContJxn(d)},
-              "fill": function(d, i) {return defaultDotColor}
-            });
-
-            jxnCircles.on('mouseover', function(val, nodeInd) {
-              var hoveredSample = this.getAttribute("data-sample");
-//              d3.selectAll(".sampleDotConnectors").style({
-//                "visibility": function (d) {
-//                 return hoveredSample == d ? "visible" : "hidden";
-//                }
-//              });
-
-              d3.selectAll('.jxnCircle').style('fill', function (val2, nodeInd2) {
-                var sample = this.getAttribute("data-sample");
-                return (sample == hoveredSample) ? highlightedDotColor : dehighlightedDotColor;
+              var jxnCircles = boxplotWithDots
+                .selectAll(".jxnCircle")
+                .data(exonGroupJxns)
+              jxnCircles.exit().remove();
+              jxnCircles.enter().append("circle").attr({
+                "class": "jxnCircle",
+                "sourceExonInd": curExonIdx,
+                "targetExonInd": groupExonInd,
+                "data-sample": function(d, i) {return samples[i]},
+                "r": jxnCircleRadius,
+                "cx": miniExonWidth()/2,
+                "cy": function(d) {return yScaleContJxn(d)},
+                "fill": function(d, i) {return defaultDotColor}
               });
 
-              d3.selectAll(".edgeConnector").filter(function(d) {
-                if ((hoveredSample == d) || (this.getAttribute("groupId") == "RNA"
-                  && this.getAttribute("startExonInd") == d3.min([groupExonInd, curExonIdx])
-                  && this.getAttribute("endExonInd") ==  d3.max([groupExonInd, curExonIdx]))) {
-                  return true;
-                }
-                return false;
-              }).style({"visibility":  "visible"});
+              jxnCircles.on('mouseover', function(val, nodeInd) {
+                var hoveredSample = this.getAttribute("data-sample");
 
-            }).on('mouseout', function(val, dotInd, plotInd) {
-              d3.selectAll('.jxnCircle')
-                .transition()
-                .duration(100)
-                .style('fill', defaultDotColor);
-              d3.selectAll(".sampleDotConnectors").style({"visibility":  "hidden"});
-              d3.selectAll(".edgeConnector").style({"visibility": "hidden"});
+                d3.selectAll('.jxnCircle').style('fill', function (val2, nodeInd2) {
+                  var sample = this.getAttribute("data-sample");
+                  return (sample == hoveredSample) ? highlightedDotColor : dehighlightedDotColor;
+                });
 
-            });
 
-            jxnCircles.append("svg:title")
-              .text(function(d, i) {
-                return samples[i] + ": " + d;
+              }).on('mouseout', function(val, dotInd, plotInd) {
+                d3.selectAll('.jxnCircle')
+                  .transition()
+                  .duration(100)
+                  .style('fill', defaultDotColor);
+
               });
+
+              jxnCircles.append("svg:title")
+                .text(function(d, i) {
+                  return samples[i] + ": " + d;
+                })
+            }
           })
       });
+    }
 
-      var dotConnector = jxnArea.selectAll(".sampleDotConnectors").data(samples).enter().append("g").attr({
-        "class": "sampleDotConnectors",
-        "transform": "translate(0, 0)"
-      }).style({
-        "visibility": "visible"
-      });
+    function expandJxn(jxnBox) {
+      jxnBox.attr( {
+        "width" : getExpandJxnWidth()
+      }).style( {
+        "stroke" : "black"
+      })
+    }
 
+    function getExpandJxnWidth() {
+      var axis = that.axis;
+      var jxnWidth = width;
+      var x1 = (axis.getXPos(curExons[0][0]) + axis.getXPos(curExons[0][1])) / 2;
 
-
-      dotConnector.each(function(sample) {
-        createLineConnectors(
-          sample,
-          d3.select(this),
-          function(i, j) {
-            var w = getJxn(sample, curExons[i], curExons[j])
-            return yScaleContJxn(w);
-          },
-          + miniExonWidth()/2,
-          + miniExonWidth()/2,
-          "#666"
-        );
-      });
-
-      var averageConnectors = jxnArea.append("g").style({
-        "visibility": "hidden"
-      });
-      createLineConnectors(
-        "average",
-        averageConnectors,
-        function(i, j) {
-          w = d3.median(getJxnsFromSpan(curExons[i], curExons[j]))
-          return yScaleContJxn(w)
-        },
-        miniExonWidth()/2 + 3 * jxnCircleRadius / 2,
-        miniExonWidth()/2 - 3 * jxnCircleRadius / 2,
-        hoveredEdgeColor
-      );
-
-      function createLineConnectors(groupId, connectorGroup, yPosition, x1Shift, x2Shift, stroke) {
-        for (var i = 0; i < curExons.length - 1; i++) {
-          for (var j = i + 1; j < curExons.length; j++) {
-            var y = yPosition(i, j);
-            connectorGroup.append("line").attr({
-              "groupId": groupId,
-              "startExonInd": i,
-              "endExonInd": j,
-              "x1": getWrapperStartX(i) + getJxnGroupX(j) + x1Shift,
-              "x2": getWrapperStartX(j)+ getJxnGroupX(i)+ x2Shift,
-              "y1": y,
-              "y2": y,
-              "class": "edgeConnector",
-              "stroke": stroke,
-              "stroke-width":2
-            }).style({
-              "visibility": "hidden"
-            });
-          }
-        }
+      for (i = 1; i < curExons.length; i++) {
+        var x2 = (axis.getXPos(curExons[i][0]) + axis.getXPos(curExons[i][1])) / 2;
+        if (x2 - x1 < jxnWidth)
+          jxnWidth = x2 - x1;
+        x1 = x2;
       }
+      return jxnWidth - 2 * isoformEdgePadding;
+    }
 
+    function selectIsoform(index) {
+      if (index == 0){
+        d3.selectAll(".JXNAreaConnector, .jxnWrapperBox, .miniExonBox, .miniExonEdge").
+          transition().duration(200).style({
+            "opacity" : 1
+          })
+        jxnArea.selectAll(".isoformEdge").style({"visibility":  "hidden"});
+
+        d3.selectAll(".boxplotWithDots").style({
+          "opacity" : "1"
+        })
+        jxnArea.selectAll(".jxnBBox").transition().duration(200).style({
+          "fill" : "white"
+        })
+
+      }
+      else {
+        d3.selectAll(".JXNAreaConnector, .jxnWrapperBox, .miniExonBox, .miniExonEdge").transition().
+          duration(300).style({
+            "opacity" : 0.1
+          })
+
+        var isoform = curRNAs[index - 1];
+
+        /*        d3.selectAll(".jxnWrapper").transition().duration(300).style({
+         "opacity" : 0.1
+         })
+         d3.selectAll(".JXNAreaConnector").transition().duration(300).style({
+         "opacity" : 0.1
+         }) */
+
+        d3.selectAll(".boxplotWithDots").each(function() {
+          var srcExonInd = this.getAttribute("sourceExonInd");
+          var targetExonInd = this.getAttribute("targetExonInd");
+          var srcExon = curExons[srcExonInd ]
+          var targetExon= curExons[targetExonInd]
+          var ind = isoform.exons.indexOf(srcExon);
+          var groupNode = d3.select(this);
+          if (ind >= 0 && (ind < isoform.exons.length - 1) && isoform.exons[ind + 1] == targetExon) {
+            groupNode.style({
+              "opacity" : "1"
+            })
+            groupNode.selectAll(".jxnBBox").transition().duration(300).style({
+              "fill" : "orange"
+            })
+            jxnArea.selectAll(".isoformEdge").filter(function() {
+              if (this.getAttribute("startExonInd") == srcExonInd
+                && this.getAttribute("endExonInd") ==  targetExonInd) {
+                return true;
+              }
+              return false;
+            }).style({"visibility":  "visible"});
+          }
+          else {
+            groupNode.style({
+              "opacity" : "0.1"
+            })
+            groupNode.selectAll(".jxnBBox").transition().duration(300).style({
+              "fill" : "white"
+            })
+
+              jxnArea.selectAll(".isoformEdge").filter(function() {
+              if (this.getAttribute("startExonInd") == srcExonInd
+                && this.getAttribute("endExonInd") ==  targetExonInd) {
+                return true;
+              }
+              return false;
+            }).style({"visibility":  "hidden"});
+
+          }
+        })
+
+      }
 
     }
 
