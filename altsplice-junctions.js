@@ -195,10 +195,6 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
         / (curExons.length * (curExons.length));
     }
 
-    function getWrapperOriginPoint(exonIndex) {
-      return jxnWrapperWidth(exonIndex)*(exonIndex + 0.5)/curExons.length
-    }
-
     function getWrapperStartX(i) {
       var shift = jxnWrapperPadding + weightAxisCaptionWidth;
       for (var j = 0; j < i; j++)
@@ -208,6 +204,10 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
     function getJxnGroupX(i) {
       return i*(miniExonSpacing+miniExonWidth())+miniExonSpacing
+    }
+
+    function getBoxPlotXPos(srcExonInd, targetExonInd) {
+      return getWrapperStartX(srcExonInd) +getJxnGroupX(targetExonInd - srcExonInd) + miniExonWidth() / 2;
     }
 
 
@@ -363,11 +363,11 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
         for (var groupExonInd = curExonIdx + 1; groupExonInd < curExons.length; groupExonInd++) {
           var exon = curExons[groupExonInd];
 
-          boxplotWithDots = exonJxnGroup.append("g").attr({
+          var boxplotWithDots = exonJxnGroup.append("g").attr({
             "class": "boxplotWithDots",
             "sourceExonInd": curExonIdx,
             "targetExonInd": groupExonInd,
-            "transform": "translate(" + (getJxnGroupX(groupExonInd - curExonIdx) + getWrapperStartX(curExonIdx)) + ",0)"
+            "transform": "translate(" + getBoxPlotXPos(curExonIdx, groupExonInd) + ",0)"
           })
 
           var exonGroupJxns = getJxnsFromSpan(curExon, exon);
@@ -375,6 +375,8 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
           var firstQuartile = d3.quantile(sortedJxns, 0.25);
           var secondQuartile = d3.quantile(sortedJxns, 0.5);
           var thirdQuartile = d3.quantile(sortedJxns, 0.75);
+          var minVal = d3.min(sortedJxns);
+          var maxVal = d3.max(sortedJxns);
           var iqr = 1.5 * (thirdQuartile - firstQuartile);
           var whiskerTop, whiskerDown;
           {
@@ -387,11 +389,11 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
           }
 
           boxplotWithDots.append("line").attr({
-            "class": "exonRefLine",
+            "class": "boxPlotLine",
             "stroke": "black",
             "stroke-dasharray": "5,5",
-            "x1": miniExonWidth() / 2,
-            "x2": miniExonWidth() / 2,
+            "x1": 0,
+            "x2": 0,
             "y1": yScaleContJxn(whiskerDown),
             "y2": yScaleContJxn(whiskerTop)
           })
@@ -402,11 +404,16 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
             "class": "jxnBBox",
             "sourceExonInd": curExonIdx,
             "targetExonInd": groupExonInd,
+            "minVal" : minVal,
+            "firstQuartile": firstQuartile,
+            "secondQuartile": secondQuartile,
+            "thirdQuartile": thirdQuartile,
+            "vector-effect": "non-scaling-stroke",
+            "maxVal" : maxVal,
             "fill": "white",
             "height": Math.abs(yScaleContJxn(thirdQuartile) - yScaleContJxn(firstQuartile)),
             "width": jxnBBoxWidth,
-            "transform": "translate(" + (miniExonWidth() - jxnBBoxWidth) / 2 + ","
-            + yScaleContJxn(thirdQuartile) + ")"
+            "transform": "translate(" + (-jxnBBoxWidth / 2) + "," + yScaleContJxn(thirdQuartile) + ")"
           }).on('mouseover', function () {
             d3.select(this).attr({"fill": hoveredEdgeColor})
 
@@ -431,29 +438,31 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
               return this.getAttribute("groupId") == "average" || this.getAttribute("groupId") == "RNA"
             }).style({"visibility": "hidden"});
           }).on("dblclick", function () {
-            expandJxn(d3.select(this))
+            expandJxn(this, yScaleContJxn)
           })
 
           boxplotWithDots.append("line").attr({
-
-            "x1": (miniExonWidth() - jxnBBoxWidth) / 2,
-            "x2": (miniExonWidth() + jxnBBoxWidth) / 2,
+            "class": "boxPlotLine",
+            "x1": -jxnBBoxWidth / 2,
+            "x2": jxnBBoxWidth / 2,
             "y1": yScaleContJxn(secondQuartile),
             "y2": yScaleContJxn(secondQuartile),
             "stroke": "#666"
           })
 
           boxplotWithDots.append("line").attr({
-            "x1": (miniExonWidth() - jxnBBoxWidth) / 2,
-            "x2": (miniExonWidth() + jxnBBoxWidth) / 2,
+            "class": "boxPlotLine",
+            "x1": - jxnBBoxWidth / 2,
+            "x2": jxnBBoxWidth / 2,
             "y1": yScaleContJxn(whiskerTop),
             "y2": yScaleContJxn(whiskerTop),
             "stroke": "#666"
           })
 
           boxplotWithDots.append("line").attr({
-            "x1": (miniExonWidth() - jxnBBoxWidth) / 2,
-            "x2": (miniExonWidth() + jxnBBoxWidth) / 2,
+            "class": "boxPlotLine",
+            "x1": - jxnBBoxWidth / 2,
+            "x2": + jxnBBoxWidth / 2,
             "y1": yScaleContJxn(whiskerDown),
             "y2": yScaleContJxn(whiskerDown),
             "stroke": "#666"
@@ -494,7 +503,7 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
               return samples[i]
             },
             "r": jxnCircleRadius,
-            "cx": miniExonWidth() / 2,
+            "cx": 0,
             "cy": function (d) {
               return yScaleContJxn(d)
             },
@@ -529,12 +538,48 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
     }
 
-    function expandJxn(jxnBox) {
-      jxnBox.attr( {
-        "width" : getExpandJxnWidth()
-      }).style( {
-        "stroke" : "black"
+    function expandJxn(jxnBox, yScaleContJxn) {
+
+      var boxPlotGroup = jxnBox.parentNode;
+      boxPlotGroup.parentNode.appendChild(boxPlotGroup)
+
+      var srcInd = jxnBox.getAttribute("sourceExonInd");
+      var targetInd = jxnBox.getAttribute("targetExonInd");
+
+      var minVal = jxnBox.getAttribute("minVal");
+      var maxVal = jxnBox.getAttribute("maxVal");
+
+      var boxPlotXPos = getBoxPlotXPos(srcInd, targetInd);
+
+      var axis = that.axis;
+      var srcMid = (axis.getXPos(curExons[srcInd][0]) + axis.getXPos(curExons[srcInd][1])) / 2;
+      var targetMid = (axis.getXPos(curExons[targetInd][0]) + axis.getXPos(curExons[targetInd][1])) / 2;
+
+      var oldWidth = jxnBBoxWidth;
+      var oldHeight = jxnBox.getAttribute("height");
+      var newWidth  = getExpandJxnWidth()
+      var newHeight = yScaleContJxn(minVal) - yScaleContJxn(maxVal) + 2 * (jxnCircleRadius + 2)
+      var xScale = newWidth / oldWidth;
+      var yScale = newHeight / oldHeight;
+      var xShift = srcMid + (targetMid - srcMid - newWidth) / 2 - boxPlotXPos;
+      var yShift = yScaleContJxn(maxVal) - jxnCircleRadius - 2;
+
+
+      d3.select(jxnBox).transition().duration(400).attr({
+        "transform": "translate(" + xShift + ", " + yShift + ") scale(" + xScale + ", " + yScale + ")"
+      }).style({
+        "stroke" : "black",
+        "fill-opacity": 1
       })
+
+      var parentNode = d3.select(boxPlotGroup);
+      parentNode.selectAll(".boxPlotLine").style({
+        "visibility": "hidden"
+      });
+      parentNode.selectAll(".jxnCircle").transition().duration(400).attr({
+        "cx": (srcMid + targetMid) / 2 - boxPlotXPos
+      })
+
     }
 
     function getExpandJxnWidth() {
@@ -548,7 +593,7 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
           jxnWidth = x2 - x1;
         x1 = x2;
       }
-      return jxnWidth - 2 * isoformEdgePadding;
+      return jxnWidth - 4 * isoformEdgePadding;
     }
 
     function selectIsoform(index) {
