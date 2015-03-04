@@ -195,10 +195,12 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
                 this.drawSamples();
 
                 if (this.samples.length > 1) {
+                    this.g.selectAll(".selectorGroup").remove();
                     this.drawLinesGroup()
                 }
                 else {
                     this.g.selectAll(".linesGroup").remove();
+                    this.drawSelector();
                 }
             }
 
@@ -231,13 +233,13 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
                                 "height": styles["sampleBarHeight"],
                             })
 
-                var yScale = d3.scale.linear().domain([0, 1]).range([0, styles["sampleBarHeight"]]);
-                var yAxis = d3.svg.axis()
-                              .orient("left")
-                              .scale(yScale)
-                              .tickValues([0, 1]);
+                // var yScale = d3.scale.linear().domain([0, 1]).range([0, styles["sampleBarHeight"]]);
+                // var yAxis = d3.svg.axis()
+                //               .orient("left")
+                //               .scale(yScale)
+                //               .tickValues([0, 1]);
 
-                sampleGroupsEnter.append("g").call(yAxis);
+                // sampleGroupsEnter.append("g").call(yAxis);
 
                 sampleGroupsEnter.append("text").attr({
                     "class": "sampleLabel",
@@ -273,13 +275,31 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
                 }
             }
 
+            this.drawSelector = function() {
+                var selectorGroup = this.g.selectAll(".selectorGroup");
+                if (selectorGroup.empty()) {
+                    selectorGroup = this.g.append("g").attr({
+                        "class": "selectorGroup",
+                        "transform": "translate(" + (this.axis.width + styles["labelWidth"]) + ",0)"
+                    })
+
+                    selectorGroup.append("circle").attr({
+                        "class": "selectorHandle",
+                        "stroke": "red",
+                        "fill": "white",
+                        "r": 5,
+                        "cx": 0,
+                        "cy": styles["sampleBarHeight"]/2
+                    })
+                }
+            }
+
             this.drawLinesGroup = function() {
-                var labelWidth = 100;
                 var linesGroup = this.g.selectAll(".linesGroup");
                 if (linesGroup.empty()) {
                     linesGroup = this.g.append("g").attr({
                         "class": "linesGroup",
-                        "transform": "translate(" + labelWidth + ",0)"
+                        "transform": "translate(" + styles["labelWidth"] + ",0)"
                     });
 
                     linesGroup.append("line")
@@ -400,14 +420,20 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
                     })
             }
 
-            this.joinCollections = function(indices) {
-                var joinedSamples = [];
-                indices.forEach(function(i) {
-                    joinedSamples += this.collections.samples;
-                })
-                this.collections = this.collections.filter(function(c, i) {return indices.indexOf(i) < 0})
-                this.collections.push(new Collection(joinedSamples));
-                this.draw();
+            this.joinCollections = function() {
+                var numSelected = this.collections.reduce(function(memo, num) {return memo + (num.selected ? 1 : 0)}, 0)
+                if (numSelected > 1) {
+                    var joinedSamples = [];
+                    this.collections.forEach(function(c, i) {
+                        if (c.selected) {
+                            joinedSamples = joinedSamples.concat(c.samples);
+                            c.g.remove();
+                        }
+                    })
+                    this.collections = this.collections.filter(function(c, i) {return !c.selected})
+                    this.collections.push(new Collection(joinedSamples, this.axis, this.options));
+                    this.draw();
+                }
             };
 
             this.draw = function(data) {
@@ -421,9 +447,8 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
                 var sampleObjs;
 
-                samples = [[samples[0], samples[1], samples[2]], [samples[3]]];
-                // this.collections = this.collections || samples.map(function (sample) {return new Collection([sample], this.axis, this.options)}.bind(this));
-                this.collections = this.collections || samples.map(function (sample) {return new Collection(sample, this.axis, this.options)}.bind(this));
+                this.collections = this.collections || samples.map(function (sample) {return new Collection([sample], this.axis, this.options)}.bind(this));
+                // this.collections = this.collections || samples.map(function (sample) {return new Collection(sample, this.axis, this.options)}.bind(this));
 
                 var axisGroup = this.g.selectAll(".genomeAxis");
                 if (axisGroup.empty()) {
@@ -450,16 +475,87 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
                 collectionGroups.each(function(c) {
                     c.g = d3.select(this);
+                    console.log(c)
                     c.draw();
                     c.update(data)
                 });
+
+                var sampleView = this;
+                var originY;
+                var selectDrag = d3.behavior.drag()
+                    .origin(function(d, i) {
+                        var cyRel = parseInt(d3.select(this).attr("cy"));
+                        originY = i*(styles["sampleBarHeight"]+styles["collectionMargin"] + styles["sampleBarMargin"])+cyRel;
+                        return {"x": 0, "y": originY}
+                    })
+                    .on("dragstart", function(d, i) {
+                        d3.select(this).attr("fill", "red");
+                        var cyRel = parseInt(d3.select(this).attr("cy"));
+                        sampleView.g.append("line").attr({
+                            "class": "dragLine",
+                            "stroke": "red",
+                            "stroke-width": 2,
+                            "x1": sampleView.axis.width + styles["labelWidth"],
+                            "x2": sampleView.axis.width + styles["labelWidth"],
+                            "y1": i*(styles["sampleBarHeight"]+styles["collectionMargin"] + styles["sampleBarMargin"])+cyRel,
+                            "y2": i*(styles["sampleBarHeight"]+styles["collectionMargin"] + styles["sampleBarMargin"])+cyRel
+                        });
+                    })
+                    .on("drag", function(dragSample) {
+                        var dragY = d3.event.y;
+                        var cyRel = parseInt(d3.select(this).attr("cy"));
+                        sampleView.g.selectAll(".dragLine").attr({
+                            "y2": dragY
+                        })
+                        sampleView.g.selectAll(".selectorHandle").each(function(collection, i) {
+                            var cyRel = parseInt(d3.select(this).attr("cy"));
+                            var r = parseInt(d3.select(this).attr("r"));
+                            var vertCenter = i*(styles["sampleBarHeight"]+styles["collectionMargin"] + styles["sampleBarMargin"])+cyRel;
+                            if (dragY > originY) {
+                                // moving down
+                                if (dragY >= vertCenter - r && originY <= vertCenter) {
+                                    // pass top of circle
+                                    d3.select(this).attr("fill", "red");
+                                    collection.selected = true;
+                                }
+                                else {
+                                    // pass bottom of circle
+                                    d3.select(this).attr("fill", "white");
+                                    collection.selected = false;
+                                }
+                            }
+                            else if (dragY < originY) {
+                                // moving up
+                                if (dragY <= vertCenter + r && originY >= vertCenter) {
+                                    // pass top of circle
+                                    d3.select(this).attr("fill", "red");
+                                    collection.selected = true;
+                                }
+                                else {
+                                    // pass bottom of circle
+                                    d3.select(this).attr("fill", "white");
+                                    collection.selected = false;
+                                }
+                            }
+                        })
+                    })
+                    .on("dragend", function(sample){
+                        d3.selectAll(".selectorHandle").attr("fill", "white");
+                        sampleView.g.selectAll(".dragLine").remove();
+                        sampleView.joinCollections();
+                    });
+
+                this.g.selectAll(".selectorHandle").call(selectDrag);
 
                 this.set("sampleView", this);
             }
         }
 
-        styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10};
-        var sampleGroup = svg.append("g").attr("transform", "translate(20,0)");
+        styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10, "labelWidth": 100};
+        var sampleGroup = svg.append("g").attr({
+            "transform": "translate(20,0)",
+            "class": "sampleViewGroup"
+        });
         var toggleIntronButton = svg.append("text").attr({
                 type:"button",
                 class:"btn"
