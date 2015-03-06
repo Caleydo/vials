@@ -465,8 +465,6 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
                 class:"btn"
         }).text("toggle introns")
 
-        var sampleView = new SampleView(sampleGroup, that.data);
-
 
         toggleIntronButton.on({
 
@@ -476,6 +474,7 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
             }
         })
 
+        var sampleView = new SampleView(sampleGroup, that.data);
         gui.current.addUpdateEvent(sampleView.update);
 
         //do the magic

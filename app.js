@@ -44,8 +44,23 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui']
     }
   });
 
+    var vis3Loaded = C.promised(function(resolve,reject){
+      if (mode==='hen' || mode=='') {
+        var readVis = visses.filter(function (vis) {
+          return vis.id === 'altsplice-isoforms'
+        })[0];
+        readVis.load().then(function (plugin) {
+          vis = plugin.factory(genome, document.querySelector("#vis3"));
+          resolve();
+        });
+      }else{
+        resolve();
+      }
+    });
 
-    C.all([vis1Loaded, vis2Loaded]).then(function () {
+
+
+    C.all([vis1Loaded, vis2Loaded, vis3Loaded]).then(function () {
       gui.current.start();
     })
 
