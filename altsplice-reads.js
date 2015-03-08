@@ -127,40 +127,29 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
             this.drawBoxes = function() {
                 var axis        = this.axis,
                     curExons    = this.axis.curExons,
-                    g           = this.g,
-                    graphWidth  = g.attr("width"),
-                    graphHeight = g.attr("height");
+                    g           = this.g;
 
-                var sampleBox = g.selectAll(".sampleBox").data([""])
-                sampleBox.exit().remove();
-                sampleBox.enter().append("rect")
-                                .attr({
-                                    "class": "sampleBox",
-                                    "width": graphWidth,
-                                    "height": graphHeight,
-                                    "stroke": "black",
-                                    "fill": "none",
-                                });
-
-                g.selectAll(".sampleBox").transition().attr("width", graphWidth);
+                var sampleBox = g.selectAll(".sampleBox")
+                if (sampleBox.empty()) {
+                    g.append("rect")
+                            .attr({
+                                "class": "sampleBox",
+                                "width": axis.width,
+                                "height": styles["sampleBarHeight"],
+                                "stroke": "black",
+                                "fill": "none"
+                            });
+                }
+                g.selectAll(".sampleBox").transition().attr("width", this.axis.width);
 
                 var exonBoxes = g.selectAll(".exonBox").data(curExons)
                 exonBoxes.exit().remove();
                 exonBoxes.enter().append("rect").attr({
                     "class": "exonBox",
-                    "height": graphHeight,
-                    "stroke": "black",
-                    "fill": "none",
+                    "height": styles["sampleBarHeight"],
+                    "stroke": "none",
+                    "fill": "rgba(0, 0, 0, 0.05)",
                 });
-
-                if (this.options.showIntrons) {
-                    g.selectAll(".exonBox").attr("opacity", 0);
-                    g.selectAll(".sampleBox").attr("opacity", 1);
-                }
-                else {
-                    g.selectAll(".exonBox").attr("opacity", 1);
-                    g.selectAll(".sampleBox").attr("opacity", 0);
-                }
 
                 g.selectAll(".exonBox").transition().attr({
                     "width": function(exon) {return axis.getXPos(exon[1]) - axis.getXPos(exon[0])},
@@ -551,7 +540,7 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
             }
         }
 
-        styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 10, "labelWidth": 100};
+        styles = {"sampleBarHeight": 40, "sampleBarMargin": 5, "collectionMargin": 15, "labelWidth": 100};
         var sampleGroup = svg.append("g").attr({
             "transform": "translate(20,0)",
             "class": "sampleViewGroup"

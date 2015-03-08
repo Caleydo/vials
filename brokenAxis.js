@@ -5,7 +5,6 @@
 define(['exports','d3'],function(exports,d3){
 
   function BrokenAxis(width, options) {
-
     this.scaleList = [];
     this.width = width;
     this.options = options;
