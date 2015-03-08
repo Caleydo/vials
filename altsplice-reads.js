@@ -205,6 +205,7 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
             }
 
             this.drawSamples = function() {
+                var samples = this.samples;
                 var aggGroup = this.g.selectAll(".sampleAgg").data([this.aggBar]);
                 aggGroup.exit().remove();
                 var aggGroupEnter = aggGroup.enter().append("g").attr({
@@ -475,7 +476,6 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
                 collectionGroups.each(function(c) {
                     c.g = d3.select(this);
-                    console.log(c)
                     c.draw();
                     c.update(data)
                 });

@@ -141,7 +141,6 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
       that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
         samples = d3.keys(sampleData.samples);
-
         var geneInfo = sampleData["geneInfo"];
         that.axis.update(geneInfo,
                          startPos || geneInfo["geneSpan"][0],
@@ -762,8 +761,6 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
 
     //globalCallCount = 1;
     function getCurRNAs(geneName, pos, baseWidth) {
-      console.log(geneName, pos, baseWidth);
-
       if (!geneData) return [];
       //console.log(globalCallCount, geneName, geneData)
       //globalCallCount++;
