@@ -116,7 +116,11 @@ define(['exports','d3'],function(exports,d3){
       })
       return xPos;
     }
+    this.getWidth = function(){
+      return this.width;
+    }
   }
+
 
 
   exports.BrokenAxis = BrokenAxis;

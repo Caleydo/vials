@@ -7,7 +7,7 @@
  * Isoform + Frequency Visualization
  */
 
-define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
+define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports, d3, gui, event) {
   /**
    * a simple template class of a visualization. Up to now there is no additional logic required.
    * @param data
@@ -78,22 +78,37 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
     var that = this;
     that.axis = that.data.genomeAxis;
 
-    var selectIsoformDiv = $parent.append("div");
-    selectIsoformDiv.text("Select isoform: ")
-    isoformSelector = selectIsoformDiv.append("select");
-    isoformSelector.append("option").attr('value', null).text("<none>");
-    isoformSelector.on({
-      "change": function(){
-        var index = this.selectedIndex - 1;
-        if (expandedIsoform != index && expandedIsoform != -1) {
-            collapseIsoform(expandedIsoform, function() {
-              selectIsoform(index);
-            })
-        }
-        else
-          selectIsoform(index)
+    //var selectIsoformDiv = $parent.append("div");
+    //selectIsoformDiv.text("Select isoform: ")
+    //isoformSelector = selectIsoformDiv.append("select");
+    //isoformSelector.append("option").attr('value', null).text("<none>");
+    //isoformSelector.on({
+    //  "change": function(){
+    //    var index = this.selectedIndex - 1;
+    //    if (expandedIsoform != index && expandedIsoform != -1) {
+    //        collapseIsoform(expandedIsoform, function() {
+    //          selectIsoform(index);
+    //        })
+    //    }
+    //    else
+    //      selectIsoform(index)
+    //  }
+    //})
+
+    event.on("isoFormSelect", function(ev,data){
+      var index  = data.index;
+
+      if (expandedIsoform != index && expandedIsoform != -1) {
+          collapseIsoform(expandedIsoform, function() {
+            selectIsoform(index);
+          })
+       }
+       else{
+        selectIsoform(index)
       }
-    })
+
+    });
+
 
     var head = $parent.append("div").attr({
       "class":"gv"
@@ -127,10 +142,10 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
       curGene = getCurGene(startPos, baseWidth);
       curRNAs = getCurRNAs(curGene, startPos, baseWidth);
 
-      curRNAs.forEach(function (rna, index) {
-        var span = curRNAs[0].RNASpan;
-        isoformSelector.append("option").text("isoform" + index);
-      });
+      //curRNAs.forEach(function (rna, index) {
+      //  var span = curRNAs[0].RNASpan;
+      //  isoformSelector.append("option").text("isoform" + index);
+      //});
 
       curExons = getCurExons(curRNAs);
 

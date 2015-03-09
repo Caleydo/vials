@@ -32,3 +32,26 @@
   }
 
 }
+
+.isoform {
+  .exon{
+    fill-opacity: .5;
+    pointer-events: none;
+  }
+  .background{
+
+    fill:white;
+
+  }
+  .selected{
+    stroke:orange;
+  }
+  .fixed{
+    fill:orange;
+  }
+
+  .sampleDot
+    {
+    fill-opacity: .5;
+  }
+}

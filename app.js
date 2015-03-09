@@ -1,5 +1,5 @@
 
-require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui'], function (C,data, visPlugins, gui) {
+require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui', '../caleydo/event'], function (C,data, visPlugins, gui, event) {
   'use strict';
   var vis;
 
@@ -63,7 +63,6 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui']
     C.all([vis1Loaded, vis2Loaded, vis3Loaded]).then(function () {
       gui.current.start();
     })
-
 
 
 
