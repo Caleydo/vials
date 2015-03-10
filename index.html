@@ -12,7 +12,7 @@
 		<!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
 		<!-- build:css(.tmp) styles/main.css -->
     <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
+    <!--<link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap-theme.min.css">-->
 		<link rel="stylesheet" href="style.css">
 		<!-- endbuild -->
 
@@ -46,12 +46,20 @@
 
     </div>
     </div>
+    <div class="row" style="padding-top: 10px;">
+      <div class="form-inline col-md-12 col-sm-12">
+        <div class="form-group col-md-10 col-sm-10">
+          <!--<label for="toggleIntrons">Select gene:</label>-->
+          <button class="btn btn-sm btn-primary" id="toggleIntrons"> shrink Introns</button>
+        </div>
+      </div>
+    </div>
 
 
 
 
   </div>
-
+  <hr/>
   <div id="vis3"></div>
   <div id="vis1"></div>
   <div id="vis2"></div>

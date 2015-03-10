@@ -2,7 +2,7 @@
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 2/25/15.
  */
 
-define(['exports','d3'], function(exports, d3){
+define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
 
   function AltSpliceGUI(){
     var that = this;
@@ -12,6 +12,8 @@ define(['exports','d3'], function(exports, d3){
     this.chromIDDiv = d3.select("#chromosomeInfo");
 
     this.startPosDiv = d3.select("#startPos");
+
+    this.toggleIntrons = d3.select("#toggleIntrons")
 
     this.baseWidthInputDiv = d3.select("#baseWidth").attr({
       type:"text",
@@ -23,6 +25,17 @@ define(['exports','d3'], function(exports, d3){
 
     this.init = function (genomeDataLink) {
       that.genomeDataLink = genomeDataLink;
+      d3.select("#toggleIntrons").on({
+        click: function () {
+          var el = d3.select(this);
+          if (el.classed("btn-primary")){
+            // de-activate
+            el.classed("btn-primary", false);
+          }else{
+           el.classed("btn-primary", true);
+          }
+        }
+      })
     }
 
 
