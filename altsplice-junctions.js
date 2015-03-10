@@ -42,7 +42,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var dehighlightedDotColor = "rgba(0,0,0,0.2)";
   var highlightedDotColor = "red";
   var weightAxisCaptionWidth = 25;
-
+  var exonWeightsAreaHeight;
   var jxnWrapperPadding = 15;
   var jxnWrapperHeight = 300;
   var miniExonSpacing = 10;
@@ -67,6 +67,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
   var jxnArea;
   var yScaleContJxn;
+  var xJxnBoxScale = d3.scale.linear();
   var cellRadius = 14;
   var cellMargin = 2;
   var cellWidth = cellRadius*2 + cellMargin;
@@ -182,7 +183,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         for (sample in sampleData.samples) {
           maxJxnReads = Math.max(sampleData.samples[sample]["jxns"].reduce(function(a, b) {return Math.max(a, b[1])}, 0), maxJxnReads);
         }
-        var exonWeightsAreaHeight = jxnWrapperHeight - 4 * miniExonHeight; // the lower part is the mini exon legend
+        exonWeightsAreaHeight = jxnWrapperHeight - 4 * miniExonHeight; // the lower part is the mini exon legend
         yScaleContJxn = d3.scale.linear().domain([0, maxJxnReads]).range([exonWeightsAreaHeight- jxnCircleRadius, 2 * jxnCircleRadius]);
         var yAxisJxn = d3.svg.axis()
           .orient("left")
@@ -392,33 +393,36 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       });
     }
 
+
+    function getJxnsFromSpan(data, curExon, otherExon) {
+      var jxns = [];
+      for (var sample in data.samples) {
+        data.samples[sample]["jxns"].forEach(function(jxn, i) {
+          if ((curExon[1] == jxn[0][0] && otherExon[0] == jxn[0][1]) ||
+            (otherExon[1] == jxn[0][0] && curExon[0] == jxn[0][1])) {
+            jxns.push(jxn[1]);
+          }
+        });
+      }
+      return jxns
+    }
+
+    /*      function getExonIdx(exon) {
+     var idx;
+     curExons.forEach(function(curExon, i) {if (curExon[0] == exon[0] && curExon[1] == exon[1]) {idx = i}});
+     return idx;
+     }
+     */
+
     function drawJxns(exonJxnGroup, data,yScaleContJxn) {
+      var expandedWidth  = getExpandJxnWidth()
 
-      function getExonIdx(exon) {
-        var idx;
-        curExons.forEach(function(curExon, i) {if (curExon[0] == exon[0] && curExon[1] == exon[1]) {idx = i}});
-        return idx;
-      }
-
-
-      function getJxnsFromSpan(curExon, otherExon) {
-        var jxns = [];
-        for (var sample in data.samples) {
-          data.samples[sample]["jxns"].forEach(function(jxn, i) {
-            if ((curExon[1] == jxn[0][0] && otherExon[0] == jxn[0][1]) ||
-              (otherExon[1] == jxn[0][0] && curExon[0] == jxn[0][1])) {
-              jxns.push(jxn[1]);
-            }
-          });
-        }
-        return jxns
-      }
       for (var curExonIdx = 0; curExonIdx < curExons.length - 1; curExonIdx++) {
         var curExon = curExons[curExonIdx];
         for (var groupExonInd = curExonIdx + 1; groupExonInd < curExons.length; groupExonInd++) {
           var exon = curExons[groupExonInd];
 
-          var exonGroupJxns = getJxnsFromSpan(curExon, exon);
+          var exonGroupJxns = getJxnsFromSpan(data, curExon, exon);
           var sortedJxns = exonGroupJxns.slice().sort(d3.ascending);
           var firstQuartile = d3.quantile(sortedJxns, 0.25);
           var secondQuartile = d3.quantile(sortedJxns, 0.5);
@@ -458,15 +462,46 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "visibility": "hidden"
           });
 
-
+          var boxPlotXPos = getBoxPlotXPos(curExonIdx, groupExonInd);
           var boxplotWithDots = exonJxnGroup.append("g").attr({
             "class": "boxplotWithDots",
             "sourceExonInd": curExonIdx,
             "targetExonInd": groupExonInd,
-            "transform": "translate(" + getBoxPlotXPos(curExonIdx, groupExonInd) + ",0)"
+            "ActiveIsoform": -1,
+            "ContainingExon": curExon,
+            "GroupExon": exon,
+            "minVal" : minVal,
+            "firstQuartile": firstQuartile,
+            "secondQuartile": secondQuartile,
+            "thirdQuartile": thirdQuartile,
+            "maxVal" : maxVal,
+            "transform": "translate(" + boxPlotXPos + ",0)"
           })
 
-          boxplotWithDots.append("line").attr({
+          // expanded Box
+          var axis = that.axis;
+          var srcMid = (axis.getXPos(curExons[curExonIdx][0]) + axis.getXPos(curExons[curExonIdx][1])) / 2;
+          var targetMid = (axis.getXPos(curExons[groupExonInd][0]) + axis.getXPos(curExons[groupExonInd][1])) / 2;
+          var xShift = srcMid + (targetMid - srcMid - expandedWidth) / 2 - boxPlotXPos;
+          boxplotWithDots.append("rect").attr({
+            "class": "jxnContainer",
+            "fill": "white",
+            "vector-effect": "non-scaling-stroke",
+            stroke: "black",
+            "height": jxnWrapperHeight,
+            "width": expandedWidth,
+            "transform": "translate(" + xShift + ", 0)"
+          }).style({
+              "opacity": 0,
+              "visibility": "hidden"
+          }).on("click", function () {
+              sortDots(data, this.parentNode);
+          })
+
+          var boxplot = boxplotWithDots.append("g").attr({
+            "class": "boxplotWithoutDots"
+          });
+          boxplot.append("line").attr({
             "class": "boxPlotLine",
             "stroke": "black",
             "stroke-dasharray": "5,5",
@@ -476,29 +511,19 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "y2": yScaleContJxn(whiskerTop)
           })
 
-          boxplotWithDots.append("rect").attr({
-            "ContainingExon": curExon,
-            "GroupExon": exon,
+
+          boxplot.append("rect").attr({
             "class": "jxnBBox",
-            "sourceExonInd": curExonIdx,
-            "targetExonInd": groupExonInd,
-            "minVal" : minVal,
-            "firstQuartile": firstQuartile,
-            "secondQuartile": secondQuartile,
-            "thirdQuartile": thirdQuartile,
-            "vector-effect": "non-scaling-stroke",
-            "maxVal" : maxVal,
-            "ActiveIsoform": -1,
             "fill": "white",
+            stroke: "black",
             "height": Math.abs(yScaleContJxn(thirdQuartile) - yScaleContJxn(firstQuartile)),
             "width": jxnBBoxWidth,
             "transform": "translate(" + (-jxnBBoxWidth / 2) + "," + yScaleContJxn(thirdQuartile) + ")"
           }).on('mouseover', function () {
-            d3.select(this).attr({"fill": hoveredEdgeColor})
-            var srcExon = this.getAttribute("sourceExonInd");
-            var targetExon = this.getAttribute("targetExonInd");
-
             if (selectedIsoform < 0) {
+              d3.select(this).style({"fill": hoveredEdgeColor})
+              var srcExon = this.parentNode.parentNode.getAttribute("sourceExonInd");
+              var targetExon = this.parentNode.parentNode.getAttribute("targetExonInd");
               d3.selectAll(".edgeConnector").filter(function () {
                 if ((this.getAttribute("groupId") == "average" || this.getAttribute("groupId") == "RNA")
                   && this.getAttribute("startExonInd") == d3.min([srcExon, targetExon])
@@ -508,29 +533,35 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                 return false;
               }).style({"visibility": "visible"});
             }
-
           }).on('mouseout', function () {
-            d3.selectAll(".jxnBBox").attr({"fill": "white"})
-            d3.selectAll(".edgeConnector").filter(function () {
-              return this.getAttribute("groupId") == "average" || this.getAttribute("groupId") == "RNA"
-            }).style({"visibility": "hidden"});
+            if (selectedIsoform < 0) {
+              d3.selectAll(".jxnBBox").style({"fill": "white"})
+              d3.selectAll(".edgeConnector").filter(function () {
+                return this.getAttribute("groupId") == "average" || this.getAttribute("groupId") == "RNA"
+              }).style({"visibility": "hidden"});
+            }
           }).on("dblclick", function () {
-            var activeIsoform = this.getAttribute("ActiveIsoform");
+            var activeIsoform = this.parentNode.parentNode.getAttribute("ActiveIsoform");
             if (expandedIsoform >= 0 && activeIsoform == expandedIsoform) {
               collapseIsoform(expandedIsoform)
             }
             else if (activeIsoform >= 0) {
-              d3.selectAll(".jxnBBox").each(function () {
-                if (this.getAttribute("ActiveIsoform") == activeIsoform) {
-                  expandJxn(this)
-                }
-              })
-              expandedIsoform = activeIsoform;
+              expandIsoform(activeIsoform)
+              sortDots(data, this.parentNode.parentNode)
             }
           })
 
-          boxplotWithDots.append("line").attr({
-            "class": "boxPlotLine",
+          boxplot.append("line").attr({
+            "class": "boxPlotQLine",
+            "x1": -jxnBBoxWidth / 2,
+            "x2": jxnBBoxWidth / 2,
+            "y1": yScaleContJxn(firstQuartile),
+            "y2": yScaleContJxn(firstQuartile),
+            "stroke": "#666"
+          })
+
+          boxplot.append("line").attr({
+            "class": "boxPlotQLine",
             "x1": -jxnBBoxWidth / 2,
             "x2": jxnBBoxWidth / 2,
             "y1": yScaleContJxn(secondQuartile),
@@ -538,8 +569,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "stroke": "#666"
           })
 
-          boxplotWithDots.append("line").attr({
-            "class": "boxPlotLine",
+          boxplot.append("line").attr({
+            "class": "boxPlotQLine",
+            "x1": -jxnBBoxWidth / 2,
+            "x2": jxnBBoxWidth / 2,
+            "y1": yScaleContJxn(thirdQuartile),
+            "y2": yScaleContJxn(thirdQuartile),
+            "stroke": "#666"
+          })
+
+          boxplot.append("line").attr({
+            "class": "boxPlotQLine",
             "x1": - jxnBBoxWidth / 2,
             "x2": jxnBBoxWidth / 2,
             "y1": yScaleContJxn(whiskerTop),
@@ -547,8 +587,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "stroke": "#666"
           })
 
-          boxplotWithDots.append("line").attr({
-            "class": "boxPlotLine",
+          boxplot.append("line").attr({
+            "class": "boxPlotQLine",
             "x1": - jxnBBoxWidth / 2,
             "x2": + jxnBBoxWidth / 2,
             "y1": yScaleContJxn(whiskerDown),
@@ -603,84 +643,101 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     }
 
-    function expandJxn(jxnBox, callback) {
+    function expandJxn(boxPlotGroup, callback) {
 
-      var boxPlotGroup = jxnBox.parentNode;
-      boxPlotGroup.parentNode.appendChild(boxPlotGroup)
+      var srcInd = boxPlotGroup.getAttribute("sourceExonInd");
+      var targetInd = boxPlotGroup.getAttribute("targetExonInd");
 
-      var srcInd = jxnBox.getAttribute("sourceExonInd");
-      var targetInd = jxnBox.getAttribute("targetExonInd");
+      var minVal = boxPlotGroup.getAttribute("minVal");
+      var maxVal = boxPlotGroup.getAttribute("maxVal");
 
-      var minVal = jxnBox.getAttribute("minVal");
-      var maxVal = jxnBox.getAttribute("maxVal");
-
-      var boxPlotXPos = getBoxPlotXPos(srcInd, targetInd);
-
-      var axis = that.axis;
-      var srcMid = (axis.getXPos(curExons[srcInd][0]) + axis.getXPos(curExons[srcInd][1])) / 2;
-      var targetMid = (axis.getXPos(curExons[targetInd][0]) + axis.getXPos(curExons[targetInd][1])) / 2;
-
-      var oldWidth = jxnBBoxWidth;
-      var oldHeight = jxnBox.getAttribute("height");
-      var newWidth  = getExpandJxnWidth()
-      var newHeight = yScaleContJxn(minVal) - yScaleContJxn(maxVal) + 2 * (jxnCircleRadius + 2)
-      var xScale = newWidth / oldWidth;
-      var yScale = newHeight / oldHeight;
-      var xShift = srcMid + (targetMid - srcMid - newWidth) / 2 - boxPlotXPos;
-      var yShift = yScaleContJxn(maxVal) - jxnCircleRadius - 2;
-
-
-      d3.select(jxnBox).attr({
-      }).transition().duration(400).attr({
-        "transform": "translate(" + xShift + ", " + yShift + ") scale(" + xScale + ", " + yScale + ")"
-      }).style({
-        "stroke" : "black",
-        "fill-opacity": 1
-      }).each("end", callback);
+      boxPlotGroup.parentNode.appendChild(boxPlotGroup);
 
       var parentNode = d3.select(boxPlotGroup);
-      parentNode.selectAll(".boxPlotLine").style({
-        "visibility": "hidden"
+      var transformation, containerWidth;
+      parentNode.selectAll(".jxnContainer").style({"visibility": "visible"})
+        .transition().duration(400).style({
+        "opacity": 1,
+        "visibility": "visible"
+      }).each(function() {
+          transformation = this.getAttribute("transform")
+          containerWidth = this.getAttribute("width")
+        }).each("end", callback);
+
+      var boxplots = parentNode.selectAll(".boxplotWithoutDots");
+
+      boxplots.transition().duration(400).attr({
+        "transform": transformation,
       });
-      parentNode.selectAll(".jxnCircle").transition().duration(400).attr({
-        "cx": (srcMid + targetMid) / 2 - boxPlotXPos
-      })
+      boxplots.selectAll(".boxPlotQLine").
+        style({"stroke-dasharray": "5,5"})
+        .transition().duration(400).attr({"x2": containerWidth});
+
+
+//      boxPlotGroup.selectAll(".boxPlotLine").style({
+//        "visibility": "hidden"
+//      });
     }
 
-    function collapseJxn(jxnBox, callback) {
-
+    function collapseJxn(parentNode, callback) {
+      /*
       var xShift =  -jxnBBoxWidth / 2;
-      var yShift = yScaleContJxn(jxnBox.getAttribute("thirdQuartile"));
-
-      d3.select(jxnBox).attr({
-      }).transition().duration(400).attr({
+      var yShift = yScaleContJxn(boxPlotGroup.getAttribute("thirdQuartile"));
+    .attr({
         "transform": "translate(" + xShift + ", " + yShift + ") scale(1, 1)"
-      }).style({
-        "stroke" : "black",
-        "fill-opacity": 1
+      })
+      */
+
+      parentNode.selectAll(".jxnContainer").transition().duration(400).style({
+        "opacity": 0,
       }).each("end", callback);
 
-      var parentNode = d3.select(jxnBox.parentNode);
-      parentNode.selectAll(".jxnCircle").transition().duration(400).attr({
-        "cx": 0
+
+      var boxplots = parentNode.selectAll(".boxplotWithoutDots");
+
+      boxplots.transition().duration(400).attr({
+        "transform": ""
       })
-      parentNode.transition().delay(400).selectAll(".boxPlotLine").style({
-        "visibility": "visible"
-      });
+      boxplots.selectAll(".boxPlotQLine")
+        .transition().duration(400).attr({"x2": jxnBBoxWidth / 2}).each("end", function() {
+          d3.select(this).style({"stroke-dasharray": ""})
+        });
+
+      parentNode.selectAll(".jxnCircle").transition().duration(400).attr({
+        "cx": 0,
+        "transform": ""
+      })
+//      parentNode.transition().delay(400).selectAll(".boxPlotLine").style({
+//        "visibility": "visible"
+//      });
 
     }
 
-    function collapseIsoform(index, callback) {
-      var selection = d3.selectAll(".jxnBBox").filter(function (d, i) {
+  function expandIsoform(activeIsoform) {
+    d3.selectAll(".boxplotWithDots").each(function () {
+      if (this.getAttribute("ActiveIsoform") == activeIsoform) {
+        expandJxn(this)
+      }
+    })
+    expandedIsoform = activeIsoform;
+  }
+
+  function collapseIsoform(index, callback) {
+      var selection = d3.selectAll(".boxplotWithDots").filter(function (d, i) {
         return (this.getAttribute("ActiveIsoform") == index);
       })
       var size = 0;
       selection.each(function() { size++; });
       selection.each(function (d, i) {
-        if (i == size - 1)
-          collapseJxn(this, callback)
-        else
-          collapseJxn(this)
+        var parentNode = d3.select(this)
+
+        collapseJxn(parentNode, function () {
+          parentNode.selectAll(".jxnContainer").style({
+            "visibility": "hidden",
+          })
+          if ((i == size - 1)&& callback)
+            callback()
+        })
       })
       expandedIsoform = -1;
     }
@@ -696,7 +753,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           jxnWidth = x2 - x1;
         x1 = x2;
       }
-      return jxnWidth - 4 * isoformEdgePadding;
+      return jxnWidth - 4 * isoformEdgePadding - jxnBBoxWidth;
     }
 
     function selectIsoform(index) {
@@ -707,12 +764,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           })
         jxnArea.selectAll(".isoformEdge").style({"visibility":  "hidden"});
 
-        d3.selectAll(".boxplotWithDots").style({
+        d3.selectAll(".boxplotWithDots").attr({
+          "ActiveIsoform" : -1
+        }).style({
           "opacity" : "1"
         })
+
         jxnArea.selectAll(".jxnBBox").transition().duration(200).style({
-          "fill" : "white",
-          "ActiveIsoform" : -1
+          "fill" : "white"
         })
 
       }
@@ -734,16 +793,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         d3.selectAll(".boxplotWithDots").each(function() {
           var srcExonInd = this.getAttribute("sourceExonInd");
           var targetExonInd = this.getAttribute("targetExonInd");
+          this.setAttribute("ActiveIsoform", index);
           var srcExon = curExons[srcExonInd ]
           var targetExon= curExons[targetExonInd]
           var ind = isoform.exons.indexOf(srcExon);
           var groupNode = d3.select(this);
           if (ind >= 0 && (ind < isoform.exons.length - 1) && isoform.exons[ind + 1] == targetExon) {
-            groupNode.style({
+            groupNode.transition().duration(300).style({
               "opacity" : "1"
             })
-            groupNode.selectAll(".jxnBBox").attr({
-              "ActiveIsoform" : index,
+            groupNode.selectAll(".jxnBBox").transition().duration(300).style({
               "stroke": "black"
             })
 
@@ -753,25 +812,65 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             }).style({"visibility":  "visible"});
           }
           else {
-            groupNode.style({
-              "opacity" : "0.1"
+            this.setAttribute("ActiveIsoform", -1);
+            groupNode.transition().duration(300).style({
+              "opacity": "0.1"
             })
-            groupNode.selectAll(".jxnBBox").attr({
-              "ActiveIsoform" : -1
-
-            }).transition().duration(300).style({
-              "fill" : "white",
-            })
-
-              jxnArea.selectAll(".isoformEdge").filter(function() {
-                return this.getAttribute("startExonInd") == srcExonInd
-                && this.getAttribute("endExonInd") ==  targetExonInd
-            }).style({"visibility":  "hidden"});
-
+            jxnArea.selectAll(".isoformEdge").filter(function () {
+              return this.getAttribute("startExonInd") == srcExonInd
+                && this.getAttribute("endExonInd") == targetExonInd
+            }).style({"visibility": "hidden"});
           }
         })
       }
       selectedIsoform = index;
+    }
+
+    function sortDots(data, parentNode) {
+
+      var isoformInd = parentNode.getAttribute("ActiveIsoform");
+
+      var srcExonInd = parentNode.getAttribute("sourceExonInd");
+      var targetExonInd = parentNode.getAttribute("targetExonInd");
+
+      var activeJxnWeights = getJxnsFromSpan(data, curExons[srcExonInd], curExons[targetExonInd])
+
+      var indices = [];
+      for (var i = 0; i < activeJxnWeights.length; ++i) indices.push(i);
+        indices.sort(function (a, b) { return activeJxnWeights[a] < activeJxnWeights[b] ? -1 : 1; });
+
+      var effectiveWidth = getExpandJxnWidth() - 3 * dotRadius - jxnBBoxWidth;
+
+      d3.selectAll(".boxplotWithDots").filter(function() {
+        return this.getAttribute("ActiveIsoform") == isoformInd;
+      }).each(function() {
+
+        var thisNode = d3.select(this);
+        var transformation;
+        thisNode.selectAll(".jxnContainer").each(function()
+        {transformation = this.getAttribute("transform")});
+
+        var srcExonInd = this.getAttribute("sourceExonInd");
+        var targetExonInd = this.getAttribute("targetExonInd");
+
+        xJxnBoxScale.domain([0, samples.length - 1]).range([jxnBBoxWidth + 3 * dotRadius, effectiveWidth])
+
+        thisNode.selectAll(".jxnCircle").transition().duration(400).attr({
+          "cx": function(d, i) {
+            return xJxnBoxScale(indices[i])
+          },
+          "transform" : transformation
+        })
+
+/*        var axis = that.axis;
+        var srcMid = (axis.getXPos(curExons[srcExonInd][0]) + axis.getXPos(curExons[srcExonInd][1])) / 2;
+        var targetMid = (axis.getXPos(curExons[targetExonInd][0]) + axis.getXPos(curExons[targetExonInd][1])) / 2;
+        var plotMid = (srcMid + targetMid) / 2;
+
+
+
+ */
+      })
     }
 
     //globalCallCount = 1;
