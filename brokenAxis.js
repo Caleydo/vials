@@ -5,7 +5,6 @@
 define(['exports','d3'],function(exports,d3){
 
   function BrokenAxis(width, options) {
-
     this.scaleList = [];
     this.width = width;
     this.options = options;
@@ -56,7 +55,7 @@ define(['exports','d3'],function(exports,d3){
 
       var ranges = this.ranges,
         axisPos = 0,
-        axisPadding = this.options.showIntrons ? 0 : 60,
+        axisPadding = this.options.showIntrons ? 0 : 10,
         totalAxisWidth = ranges.reduce(function(a, b) {return a + b[1] - b[0] + 1}, 0),
         scaleList = [],
         graphWidth = width,

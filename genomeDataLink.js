@@ -20,8 +20,8 @@ define(['exports', '../caleydo/main', '../caleydo/datatype', 'd3', '../bower_com
         if (!res){
           //console.log("cahce miss");
           var parameters = ["geneName="+encodeURIComponent(gene)];
-          if (startPos) parameters.push("pos="+encodeURIComponent(startPos));
-          if (baseWidth) parameters.push("baseWidth="+encodeURIComponent(baseWidth))
+          // if (startPos) parameters.push("pos="+encodeURIComponent(startPos));
+          // if (baseWidth) parameters.push("baseWidth="+encodeURIComponent(baseWidth))
 
           res = $.getJSON(this.serveradress+ "/pileup?"+parameters.join("&"));
 

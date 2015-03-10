@@ -33,7 +33,6 @@ define(['exports','d3'], function(exports, d3){
         $(that.chromIDDiv.node()).val(geneData[geneID].chromID);
         $(that.startPosDiv.node()).val(geneData[geneID].tx_start);
 
-        console.log("avu", that, that.allVisUpdates);
         //observer
         that.allVisUpdates.forEach(function (update) {
           update();
@@ -51,10 +50,9 @@ define(['exports','d3'], function(exports, d3){
         }
         that.populateGeneData($(that.geneSelector.node()).val());
 
-
         // activate GeneSelector
         that.geneSelector.on({
-          "change": function(gene){that.populateGeneData(gene)}
+          "change": function(gene){that.populateGeneData($(that.geneSelector.node()).val())}
         })
 
       });
