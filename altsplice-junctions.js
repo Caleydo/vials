@@ -155,7 +155,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       // BIND DATA TO VISUALIZATION
       // ==========================
 
-      that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
+      // that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
+      that.data.getTestSamples("pileup ENSG00000150782.json").then(function(sampleData) {
         samples = d3.keys(sampleData.samples);
         var geneInfo = sampleData["geneInfo"];
         that.axis.update(geneInfo,
