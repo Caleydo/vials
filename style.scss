@@ -3,6 +3,13 @@
  * Created by Hendrik Strobelt 10/10/14
  */
 
+// Wes Anderson Color Palette from http://wesandersonpalettes.tumblr.com/ - Fantastic Mr. Fox
+$wes-gray: B9B09F;
+$wes-yellow: E8C95D;
+$wes-green: A9D8C8;
+$wes-violet: 433447;
+$wes-red: D16B54;
+
 //by convention create a namespace for your own plugin
 .gv {
   //  textarea{
@@ -44,10 +51,10 @@
 
   }
   .selected{
-    stroke:orange;
+    stroke:$wes-yellow;
   }
   .fixed{
-    fill:orange;
+    fill:$wes-yellow;
   }
 
   .sampleDot
