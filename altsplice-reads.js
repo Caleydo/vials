@@ -399,7 +399,8 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
                     pos = null
                     baseWidth = null
                 }
-                that.data.getSamples(geneName,pos,baseWidth)
+                // that.data.getSamples(geneName,pos,baseWidth)
+                that.data.getTestSamples("pileup ENSG00000150782.json")
                     .then(function (data) {
                         globalData = data;
                         var geneInfo = data["geneInfo"];
