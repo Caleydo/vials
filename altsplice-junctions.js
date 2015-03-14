@@ -71,8 +71,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var cellMargin = 2;
   var cellWidth = cellRadius*2 + cellMargin;
   var showDotGroups = false;
-  var groups = [{"samples": ["heartWT1", "heartWT2"]},
-    {"samples": ["heartKOa", "heartKOb"]}];
+  var groups = [{"samples": ["heartWT1", "heartWT2"], "color": "#a6cee3"},
+    {"samples": ["heartKOa", "heartKOb"], "color": "#b2df8a"}];
 
   GenomeVis.prototype.build = function ($parent) {
     serverOffset = this.data.serveradress;
@@ -633,12 +633,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }
         var boxplotData = computeBoxPlot(jxns);
         var xShift = jxnBBoxWidth / 2 + effectiveWidth * (gr + 1) / (groups.length + 1);
-        createBoxPlot(subplotsContainer, "subboxplot", boxplotData.whiskerDown, boxplotData.whiskerTop, boxplotData.Q).attr({
+        var boxplot = createBoxPlot(subplotsContainer, "subboxplot",
+          boxplotData.whiskerDown, boxplotData.whiskerTop, boxplotData.Q).attr({
           "transform": transformation +
           " translate(" + xShift + ", 0)"
-        });
+        }).style({
+            "opacity": 0
+          });
+        boxplot.selectAll(".jxnBBox").style({
+          "fill" : groups[gr].color
+        })
+        boxplot.transition().duration(400).style({
+            "opacity": 1
+          });
         parentNode.selectAll(".jxnCircle").filter(function () {
-          return $.inArray(this.getAttribute("data-sample"), groups[gr].samples) >= 0
+          return groups[gr].samples.indexOf(this.getAttribute("data-sample")) >= 0
         }).transition().duration(400).attr({
           "cx": function(d, i) {
             return xShift
@@ -773,8 +782,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       var boxplots = parentNode.selectAll(".boxplot");
 
-      parentNode.selectAll(".subboxplot").remove();
-
+      parentNode.selectAll(".subboxplot").transition().duration(400).style({
+        "opacity":0
+      })
+      .each("end", function() {
+        d3.select(this).remove()
+      })
 
       boxplots.transition().duration(400).attr({
         "transform": ""
