@@ -21,7 +21,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     //gui.allVisUpdates.push(function(){
     //  console.log("argh", this);
     //})
-
   }
 
   /**
@@ -71,13 +70,27 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var cellRadius = 14;
   var cellMargin = 2;
   var cellWidth = cellRadius*2 + cellMargin;
-  var isoformSelector;
+  var showDotGroups = false;
+  var groups = [{"samples": ["heartWT1", "heartWT2"]},
+    {"samples": ["heartKOa", "heartKOb"]}];
 
   GenomeVis.prototype.build = function ($parent) {
     serverOffset = this.data.serveradress;
 
     var that = this;
     that.axis = that.data.genomeAxis;
+
+    var viewOptionsDiv = $parent.append("div").style({
+      "left": "20px"
+    });
+
+    $('<input />', { type: 'checkbox', id: 'cb', value: "showGroups" }).appendTo(viewOptionsDiv);
+    $('<label />', { 'for': 'cb', text: "Show groups" }).appendTo(viewOptionsDiv);
+    $('#cb').change(function() {
+      showDotGroups = $(this).is(":checked")
+      console.log(showDotGroups)
+    });
+
 
     //var selectIsoformDiv = $parent.append("div");
     //selectIsoformDiv.text("Select isoform: ")
@@ -155,8 +168,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       // BIND DATA TO VISUALIZATION
       // ==========================
 
-      // that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
-      that.data.getTestSamples("pileup ENSG00000150782.json").then(function(sampleData) {
+      that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
+        // that.data.getTestSamples("pileup ENSG00000150782.json").then(function(sampleData) {
         samples = d3.keys(sampleData.samples);
         var geneInfo = sampleData["geneInfo"];
         that.axis.update(geneInfo,
@@ -203,7 +216,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         var overlay = jxnArea.append("g");
 
-        drawJxns(overlay, sampleData, yScaleContJxn)
+        drawJxns(overlay, sampleData)
 
       });
       //// should trigger a cache hit
@@ -415,7 +428,28 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
      }
      */
 
-    function drawJxns(exonJxnGroup, data,yScaleContJxn) {
+    function computeBoxPlot(values) {
+      var sortedJxns = values.sort(d3.ascending);
+      var Q = new Array(5);
+      Q[0] = d3.min(sortedJxns);
+      Q[4] = d3.max(sortedJxns);
+      Q[1] = d3.quantile(sortedJxns, 0.25);
+      Q[2] = d3.quantile(sortedJxns, 0.5);
+      Q[3] = d3.quantile(sortedJxns, 0.75);
+      var iqr = 1.5 * (Q[3] - Q[1]);
+      var whiskerTop, whiskerDown;
+      {
+        var i = -1;
+        var j = sortedJxns.length;
+        while ((sortedJxns[++i] < Q[1] - iqr));
+        while (sortedJxns[--j] > Q[3] + iqr);
+        whiskerTop = j == sortedJxns.length - 1 ? sortedJxns[j] : Q[3] + iqr;
+        whiskerDown = i == 0 ? sortedJxns[i] : Q[1] - iqr;
+      }
+      return {"whiskerTop": whiskerTop, "whiskerDown": whiskerDown, "Q": Q};
+    }
+
+    function drawJxns(exonJxnGroup, data) {
       var expandedWidth  = getExpandJxnWidth()
 
       for (var curExonIdx = 0; curExonIdx < curExons.length - 1; curExonIdx++) {
@@ -424,28 +458,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var exon = curExons[groupExonInd];
 
           var exonGroupJxns = getJxnsFromSpan(data, curExon, exon);
-          var sortedJxns = exonGroupJxns.slice().sort(d3.ascending);
-          var firstQuartile = d3.quantile(sortedJxns, 0.25);
-          var secondQuartile = d3.quantile(sortedJxns, 0.5);
-          var thirdQuartile = d3.quantile(sortedJxns, 0.75);
-          var minVal = d3.min(sortedJxns);
-          var maxVal = d3.max(sortedJxns);
-          var iqr = 1.5 * (thirdQuartile - firstQuartile);
-          var whiskerTop, whiskerDown;
-          {
-            var i = -1;
-            var j = sortedJxns.length;
-            while ((sortedJxns[++i] < firstQuartile - iqr));
-            while (sortedJxns[--j] > thirdQuartile + iqr);
-            whiskerTop = j == sortedJxns.length - 1 ? sortedJxns[j] : thirdQuartile + iqr;
-            whiskerDown = i == 0 ? sortedJxns[i] : firstQuartile - iqr;
-          }
+          var boxplotData = computeBoxPlot(exonGroupJxns.slice());
+          var Q = boxplotData.Q;
 
+          // edge to show when an isoform is selected
           var x1 = (that.axis.getXPos(curExon[0]) + that.axis.getXPos(curExon[1])) / 2;
           var x2 = (that.axis.getXPos(exon[0]) + that.axis.getXPos(exon[1])) / 2;
           var y1 = jxnWrapperHeight + RNAMargin
-          var y2 = yScaleContJxn(secondQuartile);
-          polyLine = exonJxnGroup.append("polyline").attr({
+          var y2 = yScaleContJxn(Q[2]);
+          var polyLine = exonJxnGroup.append("polyline").attr({
             "startExonInd": curExonIdx,
             "endExonInd": groupExonInd,
             "points": function (d, i) {
@@ -471,11 +492,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "ActiveIsoform": -1,
             "ContainingExon": curExon,
             "GroupExon": exon,
-            "minVal" : minVal,
-            "firstQuartile": firstQuartile,
-            "secondQuartile": secondQuartile,
-            "thirdQuartile": thirdQuartile,
-            "maxVal" : maxVal,
+            "minVal" : Q[0],
+            "firstQuartile": Q[1],
+            "secondQuartile": Q[2],
+            "thirdQuartile": Q[3],
+            "maxVal" : Q[4],
             "transform": "translate(" + boxPlotXPos + ",0)"
           })
 
@@ -496,31 +517,19 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               "opacity": 0,
               "visibility": "hidden"
           }).on("click", function () {
+            if (!showDotGroups)
               sortDots(data, this.parentNode);
           })
 
-          var boxplot = boxplotWithDots.append("g").attr({
-            "class": "boxplotWithoutDots"
-          });
-          boxplot.append("line").attr({
-            "class": "boxPlotLine",
-            "stroke": "black",
-            "stroke-dasharray": "5,5",
-            "x1": 0,
-            "x2": 0,
-            "y1": yScaleContJxn(whiskerDown),
-            "y2": yScaleContJxn(whiskerTop)
+          boxplotWithDots.append("g").attr({
+            "id": "subboxplots",
+            "class": "subboxplots",
           })
 
 
-          boxplot.append("rect").attr({
-            "class": "jxnBBox",
-            "fill": "white",
-            stroke: "black",
-            "height": Math.abs(yScaleContJxn(thirdQuartile) - yScaleContJxn(firstQuartile)),
-            "width": jxnBBoxWidth,
-            "transform": "translate(" + (-jxnBBoxWidth / 2) + "," + yScaleContJxn(thirdQuartile) + ")"
-          }).on('mouseover', function () {
+          var boxplot = createBoxPlot(boxplotWithDots, "boxplot",boxplotData.whiskerDown, boxplotData.whiskerTop, Q);
+          boxplot.select(".jxnBBox")
+            .on('mouseover', function () {
             if (selectedIsoform < 0) {
               d3.select(this).style({"fill": hoveredEdgeColor})
               var srcExon = this.parentNode.parentNode.getAttribute("sourceExonInd");
@@ -547,54 +556,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               collapseIsoform(expandedIsoform)
             }
             else if (activeIsoform >= 0) {
-              expandIsoform(activeIsoform)
-              sortDots(data, this.parentNode.parentNode)
+              expandIsoform(activeIsoform, data)
             }
-          })
-
-          boxplot.append("line").attr({
-            "class": "boxPlotQLine",
-            "x1": -jxnBBoxWidth / 2,
-            "x2": jxnBBoxWidth / 2,
-            "y1": yScaleContJxn(firstQuartile),
-            "y2": yScaleContJxn(firstQuartile),
-            "stroke": "#666"
-          })
-
-          boxplot.append("line").attr({
-            "class": "boxPlotQLine",
-            "x1": -jxnBBoxWidth / 2,
-            "x2": jxnBBoxWidth / 2,
-            "y1": yScaleContJxn(secondQuartile),
-            "y2": yScaleContJxn(secondQuartile),
-            "stroke": "#666"
-          })
-
-          boxplot.append("line").attr({
-            "class": "boxPlotQLine",
-            "x1": -jxnBBoxWidth / 2,
-            "x2": jxnBBoxWidth / 2,
-            "y1": yScaleContJxn(thirdQuartile),
-            "y2": yScaleContJxn(thirdQuartile),
-            "stroke": "#666"
-          })
-
-          boxplot.append("line").attr({
-            "class": "boxPlotQLine",
-            "x1": - jxnBBoxWidth / 2,
-            "x2": jxnBBoxWidth / 2,
-            "y1": yScaleContJxn(whiskerTop),
-            "y2": yScaleContJxn(whiskerTop),
-            "stroke": "#666"
-          })
-
-          boxplot.append("line").attr({
-            "class": "boxPlotQLine",
-            "x1": - jxnBBoxWidth / 2,
-            "x2": + jxnBBoxWidth / 2,
-            "y1": yScaleContJxn(whiskerDown),
-            "y2": yScaleContJxn(whiskerDown),
-            "stroke": "#666"
           })
 
           var jxnCircles = boxplotWithDots
@@ -644,6 +607,120 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     }
 
+    function createSubBoxPlots(parent, data, groups) {
+      var transformation;
+      var parentNode = d3.select(parent);
+      parentNode.selectAll(".jxnContainer").each(function() {
+          transformation = this.getAttribute("transform")
+        })
+
+      var effectiveWidth = getExpandJxnWidth() -  jxnBBoxWidth;
+      var subplotsContainer = parentNode.select(".subboxplots");
+
+      var curExon = curExons[parent.getAttribute("sourceExonInd")];
+      var otherExon = curExons[parent.getAttribute("targetExonInd")];
+      for (var gr = 0; gr < groups.length; gr++) {
+        var jxns = []
+
+        for (var sInd in groups[gr].samples) {
+          var sample = groups[gr].samples[sInd];
+          data.samples[sample]["jxns"].forEach(function(jxn, i) {
+            if ((curExon[1] == jxn[0][0] && otherExon[0] == jxn[0][1]) ||
+              (otherExon[1] == jxn[0][0] && curExon[0] == jxn[0][1])) {
+              jxns.push(jxn[1]);
+            }
+          });
+        }
+        var boxplotData = computeBoxPlot(jxns);
+        var xShift = jxnBBoxWidth / 2 + effectiveWidth * (gr + 1) / (groups.length + 1);
+        createBoxPlot(subplotsContainer, "subboxplot", boxplotData.whiskerDown, boxplotData.whiskerTop, boxplotData.Q).attr({
+          "transform": transformation +
+          " translate(" + xShift + ", 0)"
+        });
+        parentNode.selectAll(".jxnCircle").filter(function () {
+          return $.inArray(this.getAttribute("data-sample"), groups[gr].samples) >= 0
+        }).transition().duration(400).attr({
+          "cx": function(d, i) {
+            return xShift
+          },
+          "transform" : transformation
+        })
+
+      }
+    }
+
+    function createBoxPlot(container, boxplotClass, whiskerDown, whiskerTop, Q) {
+      var boxplot = container.append("g").attr({
+        "class": boxplotClass
+      });
+      boxplot.append("line").attr({
+        "class": "boxPlotLine",
+        "stroke": "black",
+        "stroke-dasharray": "5,5",
+        "x1": 0,
+        "x2": 0,
+        "y1": yScaleContJxn(whiskerDown),
+        "y2": yScaleContJxn(whiskerTop)
+      })
+
+      boxplot.append("rect").attr({
+        "class": "jxnBBox",
+        "fill": "white",
+        stroke: "black",
+        "height": Math.abs(yScaleContJxn(Q[3]) - yScaleContJxn(Q[1])),
+        "width": jxnBBoxWidth,
+        "transform": "translate(" + (-jxnBBoxWidth / 2) + "," + yScaleContJxn(Q[3]) + ")"
+      })
+
+      boxplot.append("line").attr({
+        "class": "boxPlotQLine",
+        "x1": -jxnBBoxWidth / 2,
+        "x2": jxnBBoxWidth / 2,
+        "y1": yScaleContJxn(Q[1]),
+        "y2": yScaleContJxn(Q[1]),
+        "stroke": "#666"
+      })
+
+      boxplot.append("line").attr({
+        "class": "boxPlotQLine",
+        "x1": -jxnBBoxWidth / 2,
+        "x2": jxnBBoxWidth / 2,
+        "y1": yScaleContJxn(Q[2]),
+        "y2": yScaleContJxn(Q[2]),
+        "stroke": "#666"
+      })
+
+      boxplot.append("line").attr({
+        "class": "boxPlotQLine",
+        "x1": -jxnBBoxWidth / 2,
+        "x2": jxnBBoxWidth / 2,
+        "y1": yScaleContJxn(Q[3]),
+        "y2": yScaleContJxn(Q[3]),
+        "stroke": "#666"
+      })
+
+      boxplot.append("line").attr({
+        "class": "boxPlotQLine",
+        "x1": - jxnBBoxWidth / 2,
+        "x2": jxnBBoxWidth / 2,
+        "y1": yScaleContJxn(whiskerTop),
+        "y2": yScaleContJxn(whiskerTop),
+        "stroke": "#666"
+      })
+
+      boxplot.append("line").attr({
+        "class": "boxPlotQLine",
+        "x1": - jxnBBoxWidth / 2,
+        "x2": + jxnBBoxWidth / 2,
+        "y1": yScaleContJxn(whiskerDown),
+        "y2": yScaleContJxn(whiskerDown),
+        "stroke": "#666"
+      })
+
+      return  boxplot;
+
+    }
+
     function expandJxn(boxPlotGroup, callback) {
 
       var srcInd = boxPlotGroup.getAttribute("sourceExonInd");
@@ -665,7 +742,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           containerWidth = this.getAttribute("width")
         }).each("end", callback);
 
-      var boxplots = parentNode.selectAll(".boxplotWithoutDots");
+      var boxplots = parentNode.selectAll(".boxplot");
 
       boxplots.transition().duration(400).attr({
         "transform": transformation,
@@ -694,7 +771,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       }).each("end", callback);
 
 
-      var boxplots = parentNode.selectAll(".boxplotWithoutDots");
+      var boxplots = parentNode.selectAll(".boxplot");
+
+      parentNode.selectAll(".subboxplot").remove();
+
 
       boxplots.transition().duration(400).attr({
         "transform": ""
@@ -714,13 +794,28 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     }
 
-  function expandIsoform(activeIsoform) {
+  function expandIsoform(activeIsoform, data) {
     d3.selectAll(".boxplotWithDots").each(function () {
       if (this.getAttribute("ActiveIsoform") == activeIsoform) {
         expandJxn(this)
+        if (showDotGroups) {
+
+          var jxnGroup = d3.select(this);
+
+          createSubBoxPlots(this, data, groups);
+
+          jxnGroup.select(".subboxplots").transition()
+            .duration(400).style({
+              "opacity": 1
+            })
+        }
+        else {
+          sortDots(data, this)
+        }
       }
     })
     expandedIsoform = activeIsoform;
+
   }
 
   function collapseIsoform(index, callback) {
