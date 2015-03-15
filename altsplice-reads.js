@@ -5,7 +5,7 @@
 /**
  * a simple template for a visualization module
  */
-define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
+define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports, d3, gui, event) {
     /**
      * a simple template class of a visualization. Up to now there is no additional logic required.
      * @param data
@@ -399,8 +399,8 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
                     pos = null
                     baseWidth = null
                 }
-                // that.data.getSamples(geneName,pos,baseWidth)
-                that.data.getTestSamples("pileup ENSG00000150782.json")
+                that.data.getSamples(geneName,pos,baseWidth)
+                // that.data.getTestSamples("pileup ENSG00000150782.json")
                     .then(function (data) {
                         globalData = data;
                         var geneInfo = data["geneInfo"];
@@ -423,6 +423,7 @@ define(['exports', 'd3', 'altsplice-gui'], function (exports, d3, gui) {
                     })
                     this.collections = this.collections.filter(function(c, i) {return !c.selected})
                     this.collections.push(new Collection(joinedSamples, this.axis, this.options));
+                  event.fire("GroupingChanged", {collections: this.collections});
                     this.draw();
                 }
             };

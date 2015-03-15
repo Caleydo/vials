@@ -120,8 +120,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               el.classed("fixed", false);
               currentlySelectedIsoform = null;
               event.fire("isoFormSelect", {isoform:d, index:-1});
-
-            }else{
+            } else{
               el.classed("fixed", true);
               if (currentlySelectedIsoform) currentlySelectedIsoform.classed("fixed", false);
               currentlySelectedIsoform = el;
