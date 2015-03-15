@@ -69,6 +69,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var xJxnBoxScale = d3.scale.linear();
   var cellRadius = 14;
   var cellMargin = 2;
+  var data;
   var cellWidth = cellRadius*2 + cellMargin;
   var showDotGroups = false;
   var groups = [{"samples": ["heartWT1", "heartWT2"], "color": "#a6cee3"},
@@ -88,7 +89,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     $('<label />', { 'for': 'cb', text: "Show groups" }).appendTo(viewOptionsDiv);
     $('#cb').change(function() {
       showDotGroups = $(this).is(":checked")
-      console.log(showDotGroups)
+      if (expandedIsoform >= 0) {
+        expandIsoform(expandedIsoform, data);
+      }
     });
 
 
@@ -169,7 +172,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       // ==========================
 
       that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
-        // that.data.getTestSamples("pileup ENSG00000150782.json").then(function(sampleData) {
+        data = sampleData;
+
+          // that.data.getTestSamples("pileup ENSG00000150782.json").then(function(sampleData) {
         samples = d3.keys(sampleData.samples);
         var geneInfo = sampleData["geneInfo"];
         that.axis.update(geneInfo,
@@ -766,28 +771,26 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 //      });
     }
 
-    function collapseJxn(parentNode, callback) {
-      /*
-      var xShift =  -jxnBBoxWidth / 2;
-      var yShift = yScaleContJxn(boxPlotGroup.getAttribute("thirdQuartile"));
-    .attr({
-        "transform": "translate(" + xShift + ", " + yShift + ") scale(1, 1)"
+    function removeSubboxplots(parentNode) {
+      parentNode.selectAll(".subboxplot").transition().duration(400).style({
+        "opacity":0
       })
-      */
+        .each("end", function() {
+          d3.select(this).remove()
+        })
+
+
+    }
+
+    function collapseJxn(parentNode, callback) {
 
       parentNode.selectAll(".jxnContainer").transition().duration(400).style({
         "opacity": 0,
       }).each("end", callback);
 
+      removeSubboxplots(parentNode)
 
       var boxplots = parentNode.selectAll(".boxplot");
-
-      parentNode.selectAll(".subboxplot").transition().duration(400).style({
-        "opacity":0
-      })
-      .each("end", function() {
-        d3.select(this).remove()
-      })
 
       boxplots.transition().duration(400).attr({
         "transform": ""
@@ -823,6 +826,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             })
         }
         else {
+          removeSubboxplots(d3.select(this));
           sortDots(data, this)
         }
       }
