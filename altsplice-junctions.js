@@ -69,17 +69,34 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var xJxnBoxScale = d3.scale.linear();
   var cellRadius = 14;
   var cellMargin = 2;
-  var data;
   var cellWidth = cellRadius*2 + cellMargin;
   var showDotGroups = false;
-  var groups = [{"samples": ["heartWT1", "heartWT2"], "color": "#a6cee3"},
-    {"samples": ["heartKOa", "heartKOb"], "color": "#b2df8a"}];
+/*  var groups = [{"samples": ["heartWT1", "heartWT2"], "color": "#a6cee3"},
+    {"samples": ["heartKOa", "heartKOb"], "color": "#b2df8a"}]; */
+  var groups = [];
 
-  GenomeVis.prototype.build = function ($parent) {
+  var groupColors = [
+    "#a6cee3",
+  "#1f78b4",
+  "#b2df8a",
+  "#33a02c",
+  "#fb9a99",
+  "#e31a1cv",
+  "#fdbf6f",
+  "#ff7f00",
+  "#cab2d6",
+"#6a3d9a",
+
+  ];
+
+    GenomeVis.prototype.build = function ($parent) {
     serverOffset = this.data.serveradress;
 
     var that = this;
     that.axis = that.data.genomeAxis;
+
+    var sampleDataSet;
+
 
     var viewOptionsDiv = $parent.append("div").style({
       "left": "20px"
@@ -90,7 +107,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     $('#cb').change(function() {
       showDotGroups = $(this).is(":checked")
       if (expandedIsoform >= 0) {
-        expandIsoform(expandedIsoform, data);
+        expandIsoform(expandedIsoform, sampleDataSet);
       }
     });
 
@@ -116,14 +133,36 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var index  = data.index;
 
       if (expandedIsoform != index && expandedIsoform != -1) {
-          collapseIsoform(expandedIsoform, function() {
-            selectIsoform(index);
-          })
-       }
-       else{
+        collapseIsoform(expandedIsoform, function() {
+          selectIsoform(index);
+        })
+      }
+      else{
         selectIsoform(index)
       }
 
+    });
+
+    event.on("GroupingChanged", function(ev,data){
+      groups = []
+      var otherSamples = []
+        for (var i = 0; i < data.collections.length; i++) {
+          var col = data.collections[i]
+          if (col.samples.length > 1) {
+            groups.push({"samples": col.samples, "color": groupColors[i]})
+          }
+          else {
+            otherSamples.push(col.samples[0])
+          }
+        }
+      if (groups.length > 0) {
+        if (otherSamples.length > 0)
+          groups.push({"samples": otherSamples, "color": "gray"})
+        if (showDotGroups && (expandedIsoform >= 0)) {
+          createSubBoxPlots(this, data, groups);
+
+        }
+      }
     });
 
 
@@ -172,7 +211,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       // ==========================
 
       that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
-        data = sampleData;
+        sampleDataSet = sampleData;
 
           // that.data.getTestSamples("pileup ENSG00000150782.json").then(function(sampleData) {
         samples = d3.keys(sampleData.samples);
@@ -816,14 +855,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         expandJxn(this)
         if (showDotGroups) {
 
-          var jxnGroup = d3.select(this);
-
           createSubBoxPlots(this, data, groups);
-
-          jxnGroup.select(".subboxplots").transition()
-            .duration(400).style({
-              "opacity": 1
-            })
         }
         else {
           removeSubboxplots(d3.select(this));
