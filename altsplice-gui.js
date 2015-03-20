@@ -7,6 +7,8 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
   function AltSpliceGUI(){
     var that = this;
 
+    this.projectSelector = d3.select("#projectSelect");
+
     this.geneSelector = d3.select("#geneSelect");
 
     this.chromIDDiv = d3.select("#chromosomeInfo");
@@ -39,12 +41,10 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
     }
 
 
-    this.populateGeneData= function(geneID){
-      console.log("pop", geneID);
-
-      that.genomeDataLink.getAllGenes().then(function(geneData){
-        $(that.chromIDDiv.node()).val(geneData[geneID].chromID);
-        $(that.startPosDiv.node()).val(geneData[geneID].tx_start);
+    this.populateGeneData= function(project, geneName){
+      that.genomeDataLink.getGeneData(project, geneName).then(function(geneData){
+        $(that.chromIDDiv.node()).val(geneData.gene.chromID);
+        $(that.startPosDiv.node()).val(geneData.gene.start);
 
         //observer
         that.allVisUpdates.forEach(function (update) {
@@ -52,26 +52,55 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
         })
       })
 
-    }
+    };
 
 
-    this.start = function(){
-      that.genomeDataLink.getAllGenes().then( function(genes) {
-        //geneData = genes;
-        for (var gene in genes) {
+    function updateGeneSelector(selectedProject) {
+      console.log(that.genomeDataLink.getAllGenes(selectedProject));
+      that.genomeDataLink.getAllGenes(selectedProject).then(function (genes) {
+
+
+        genes.forEach(function (gene) {
+          that.geneSelector.selectAll("option").remove();
           that.geneSelector.append("option").attr('value', gene).text(gene);
-        }
-        that.populateGeneData($(that.geneSelector.node()).val());
+        })
+        that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
 
         // activate GeneSelector
         that.geneSelector.on({
-          "change": function(gene){that.populateGeneData($(that.geneSelector.node()).val())}
+          "change": function () {
+            that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
+          }
         })
 
       });
-
-
     }
+
+    this.start = function(selectedProject){
+      that.genomeDataLink.getAllProjects().then(function (projects) {
+        console.log("allProjects", projects);
+
+        selectedProject = selectedProject || Object.keys(projects)[0]
+
+        Object.keys(projects).forEach(function (projectID, index) {
+
+          that.projectSelector.append("option")
+            .attr("selected", (projectID==selectedProject)?true:null)
+            .attr("value", projectID)
+            .text(projectID + " ("+projects[projectID].data[0]["data_type"]+")")
+
+        });
+
+        that.projectSelector.on({
+          "change": function () {
+            updateGeneSelector($(that.projectSelector.node()).val())
+          }
+        });
+
+        updateGeneSelector(selectedProject);
+      })
+
+    };
 
 
 
