@@ -532,6 +532,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         startX += groupWidth * jxnGroups[jxnGpInd].groups.length + jxnWrapperPadding;
       }
 
+      linesGroup.each(function() {
+        this.parentNode.appendChild(this);
+      })
+
     }
 
 
