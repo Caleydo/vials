@@ -631,8 +631,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "type" : "donor",
             "loc": loc,
             "xStart": axisLoc - 10,
-            "xEnd": axisLoc,
-            "xStartDesired": axisLoc,
+            "xEnd": axisLoc ,
+            "xStartDesired": axisLoc - 10,
             "xEndDesired": axisLoc,
             "firstGroupBucket": i,
             "lastGroupBucket": i
@@ -646,8 +646,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "loc": loc,
             "xStart": axisLoc,
             "xEnd": axisLoc + 10,
-            "xStartDesired": axisLoc + 10,
-            "xEndDesired": axisLoc,
+            "xStartDesired": axisLoc,
+            "xEndDesired": axisLoc + 10,
             "firstGroupBucket": 0,
             }
           }
@@ -661,8 +661,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           while(shift < 0 && ind > 0 && (buckets[ind].xStart < buckets[ind - 1].xEnd + sitePadding)) {
             var firstInd = buckets[ind - 1].firstGroupBucket;
             var overlap = buckets[ind - 1].xEnd + sitePadding - buckets[ind].xStart;
-            buckets[i].xStart += overlap
-            buckets[i].xEnd += overlap
+            for (var j = ind; j <= i ; ++j) {
+              buckets[j].xStart += overlap
+              buckets[j].xEnd += overlap
+              buckets[j].firstGroupBucket = firstInd
+            }
             var leftGap = buckets[firstInd].xStartDesired - buckets[firstInd].xStart;
             var rightGap = buckets[i].xStart - buckets[i].xStartDesired;
             shift = (leftGap - rightGap) / 2;
@@ -670,7 +673,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             for (var j = firstInd; j <= i ; ++j) {
               buckets[j].xStart += shift
               buckets[j].xEnd += shift
-              buckets[j].firstGroupBucket = firstInd
             }
             ind = firstInd;
           }
