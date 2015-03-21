@@ -46,9 +46,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var jxnWrapperHeight = 250;
   var miniExonSpacing = 10;
   var miniExonHeight = 8;
-  var jxnCircleRadius = 5;
+  var jxnCircleRadius = 3;
   var hoveredEdgeColor = "orange";
-  var jxnBBoxWidth = jxnCircleRadius * 2.5;
+  var jxnBBoxWidth = jxnCircleRadius * 4;
 
   var RNAHeight = 80;
   var RNAMargin = 50;
@@ -437,14 +437,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var acceptorX;
           for (var i = 0; i < buckets.length; i++) {
             if (buckets[i].type == "receptor"  && buckets[i].loc == acceptorLoc)
-              acceptorX = buckets[i].xEnd;
+              acceptorX = buckets[i].xStart;
           }
           var donorY = jxnWrapperHeight + RNAMargin + RNAHeight/2 - 5;
           var RNA_Y = jxnWrapperHeight + RNAMargin + RNAHeight;
 
-
           groupNode.append("rect").attr({
             "class": "edgeAnchor",
+            "startLoc": group.startLoc,
+            "endLoc": group.endLoc,
             "fill": "red",
             "stroke": "black",
             "height": 5,
@@ -452,16 +453,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "transform": "translate(" + groupWidth / 4 + ", " + (jxnWrapperHeight - 6) + ")"
           })
 
-
           linesGroup.append("line").attr({
             "x1": startX + (groupInd + 0.5) * groupWidth,
             "x2": acceptorX,
+            "startLoc": group.startLoc,
+            "endLoc": group.endLoc,
             "y1": jxnWrapperHeight,
             "y2": donorY,
             "class": "edgeConnector",
             "stroke": "red"
-          });
-
+          })
 
           var sampleLength = Object.keys(allSamples).length;
           var boxPlotData = new Array(sampleLength);
@@ -475,8 +476,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var boxplotData = computeBoxPlot(boxPlotData, 1);
           var boxplot = createBoxPlot(dotsGroup, "boxplot",
             boxplotData.whiskerDown, boxplotData.whiskerTop, boxplotData.Q).attr({
-              "transform": " translate(" + groupWidth / 2 + ", 0)"
-
+              "transform": " translate(" + groupWidth / 2 + ", 0)",
             }).style({
             });
 
@@ -489,7 +489,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               "targetExonInd": jxnData.end,
               "data-sample": jxnData.sample,
               "r": jxnCircleRadius,
-              "cx": groupWidth / 2,
+              "cx": groupWidth / 2 + (4 - 8 * Math.random()),
               "cy": yScaleContJxn(jxnData.weight),
               "fill": function (d, i) {
                 return defaultDotColor
@@ -523,7 +523,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var donorX;
         for (var i = 0; i < buckets.length; i++) {
           if (buckets[i].type == "donor"  && buckets[i].loc == donorLoc)
-            donorX = buckets[i].xStart;
+            donorX = buckets[i].xEnd;
         }
         var donorXonRNA = RNAScale(donorLoc);
         var donorY = jxnWrapperHeight + RNAMargin + RNAHeight/2 - 5;
@@ -535,6 +535,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               donorX, donorY,
               donorX , donorY
             ],
+          "loc": donorLoc,
           "class": "JXNAreaConnector",
           "stroke": "#ccc",
           "fill":"#ccc"
@@ -629,10 +630,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             buckets[i] = {
             "type" : "donor",
             "loc": loc,
-            "xStart": axisLoc,
-            "xEnd": axisLoc + 10,
-            "xStartDesired": axisLoc,
-            "xEndDesired": axisLoc + 10,
+            "xStart": axisLoc - 10,
+            "xEnd": axisLoc ,
+            "xStartDesired": axisLoc - 10,
+            "xEndDesired": axisLoc,
             "firstGroupBucket": i,
             "lastGroupBucket": i
             }
@@ -643,10 +644,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             buckets[i] = {
             "type" : "receptor",
             "loc": loc,
-            "xStart": axisLoc - 10,
-            "xEnd": axisLoc,
-            "xStartDesired": axisLoc - 10,
-            "xEndDesired": axisLoc,
+            "xStart": axisLoc,
+            "xEnd": axisLoc + 10,
+            "xStartDesired": axisLoc,
+            "xEndDesired": axisLoc + 10,
             "firstGroupBucket": 0,
             }
           }
@@ -660,8 +661,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           while(shift < 0 && ind > 0 && (buckets[ind].xStart < buckets[ind - 1].xEnd + sitePadding)) {
             var firstInd = buckets[ind - 1].firstGroupBucket;
             var overlap = buckets[ind - 1].xEnd + sitePadding - buckets[ind].xStart;
-            buckets[i].xStart += overlap
-            buckets[i].xEnd += overlap
+            for (var j = ind; j <= i ; ++j) {
+              buckets[j].xStart += overlap
+              buckets[j].xEnd += overlap
+              buckets[j].firstGroupBucket = firstInd
+            }
             var leftGap = buckets[firstInd].xStartDesired - buckets[firstInd].xStart;
             var rightGap = buckets[i].xStart - buckets[i].xStartDesired;
             shift = (leftGap - rightGap) / 2;
@@ -669,7 +673,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             for (var j = firstInd; j <= i ; ++j) {
               buckets[j].xStart += shift
               buckets[j].xEnd += shift
-              buckets[j].firstGroupBucket = firstInd
             }
             ind = firstInd;
           }
@@ -682,8 +685,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "fill": function (d, i) {return d.type == "donor" ? "blue" : "red"},
           "stroke": "black",
           "points": function (d, i) {
-            var x1 =  d.type == "donor" ? d.xEnd : d.xStart;
-            var x2 =  d.type == "donor" ? d.xStart : d.xEnd;
+            var x1 =  d.type == "donor" ? d.xStart : d.xEnd;
+            var x2 =  d.type == "donor" ? d.xEnd : d.xStart;
             return [
               x1, RNAHeight/2,
               x2, RNAHeight/2 - 5,
@@ -691,13 +694,57 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               x1, RNAHeight/2,
             ]
           }
-        })
+        }).on('mouseover', function (d1, i1) {
+
+          RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2, i2) {
+            d3.select(this).style({
+              "opacity" : d1 == d2 ? 1 : 0.1
+            })
+          })
+
+          d3.selectAll(".JXNAreaConnector").each(function() {
+            d3.select(this).style({
+              "opacity" : (this.getAttribute("loc") == d1.loc) ? 1 : 0.1
+            })
+          })
+
+          d3.selectAll(".edgeAnchor, .edgeConnector").each(function() {
+            var classAttr = this.getAttribute("class");
+            var startLoc = this.getAttribute("startLoc");
+            var endLoc = this.getAttribute("endLoc");
+            if (startLoc != d1.loc &&  endLoc != d1.loc) {
+              d3.select(this).style({"opacity" : 0})
+            }
+            else if (classAttr == "edgeConnector") {
+              var otherLoc = startLoc == d1.loc ? endLoc : startLoc;
+              RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2) {
+                if (d2.loc == otherLoc) {
+                  d3.select(this).style({"opacity" : 1})
+                }
+              })
+              d3.selectAll(".JXNAreaConnector").each(function (d2) {
+                if (this.getAttribute("loc") == otherLoc) {
+                  d3.select(this).style({"opacity" : 1})
+                }
+              })
+            }
+          })
+
+
+        }).on('mouseout', function () {
+          d3.selectAll(".RNASites, .JXNAreaConnector, .RNASiteConnector, .edgeAnchor, .edgeConnector").each(function (d2, i2) {
+            d3.select(this).style({
+              "opacity" : 1
+            })
+          })
+        });
+
         RNASites.enter().append("polyline").attr({
           "class": "RNASiteConnector",
           "fill":"none",
           "stroke": function (d, i) {return d.type == "donor" ? "blue" : "red"},
           "points": function (d, i) {
-            var x1 =  d.type == "donor" ? d.xStart : d.xEnd;
+            var x1 =  d.type == "donor" ? d.xEnd : d.xStart;
             return [
               x1, RNAHeight/2 + 5,
               x1, RNAHeight/2 + 10,
