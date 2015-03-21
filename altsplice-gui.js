@@ -71,6 +71,10 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
         $(that.chromIDDiv.node()).val(geneData.gene.chromID);
         $(that.startPosDiv.node()).val(geneData.gene.start);
 
+        that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start,geneData.gene.end)
+
+
+        console.log(that.genomeDataLink.genomeAxis.arrayPosToScreenPos(2), that.genomeDataLink.genomeAxis.arrayPosToGenePos(10));
         //observer
         that.allVisUpdates.forEach(function (update) {
           update();
