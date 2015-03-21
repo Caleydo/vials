@@ -45,7 +45,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var jxnWrapperPadding = 6;
   var jxnWrapperHeight = 250;
   var miniExonSpacing = 10;
-  var miniExonHeight = 7;
+  var miniExonHeight = 8;
   var jxnCircleRadius = 5;
   var hoveredEdgeColor = "orange";
   var jxnBBoxWidth = jxnCircleRadius * 2.5;
@@ -65,6 +65,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
   var jxnsData;
+  var allSamples;
   var jxnGroups = [];
   var edgeCount;
   var RNAScale;
@@ -240,7 +241,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
 
         jxnsData = sampleData.measures.jxns;
-
+        allSamples = sampleData.samples;
         // TODO: Hen: workaround for missing update cycle
         jxnArea.remove();
         jxnArea = d3.select("#exploreArea").append("g").attr("id", "jxnArea");
@@ -402,6 +403,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
         edgeGroups.each(function(group, groupInd) {
+          var groupNode = d3.select(this);
           var dotsGroup = d3.select(this).append("g");
           /*
           jxnArea.append("polyline").attr({
@@ -440,6 +442,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var donorY = jxnWrapperHeight + RNAMargin + RNAHeight/2 - 5;
           var RNA_Y = jxnWrapperHeight + RNAMargin + RNAHeight;
 
+
+          groupNode.append("rect").attr({
+            "class": "edgeAnchor",
+            "fill": "red",
+            "stroke": "black",
+            "height": 5,
+            "width": groupWidth / 2,
+            "transform": "translate(" + groupWidth / 4 + ", " + (jxnWrapperHeight - 6) + ")"
+          })
+
+
           linesGroup.append("line").attr({
             "x1": startX + (groupInd + 0.5) * groupWidth,
             "x2": acceptorX,
@@ -448,6 +461,25 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class": "edgeConnector",
             "stroke": "red"
           });
+
+
+          var sampleLength = Object.keys(allSamples).length;
+          var boxPlotData = new Array(sampleLength);
+          var nonZeroStartIndex = sampleLength - (group.end - group.start + 1);
+          for (var i = 0; i < sampleLength; i++) {
+            if (i < nonZeroStartIndex)
+              boxPlotData[i] = 0;
+            else
+              boxPlotData[i] = jxnsData.weights[group.start + i - nonZeroStartIndex].weight;
+          }
+          var boxplotData = computeBoxPlot(boxPlotData, 1);
+          var boxplot = createBoxPlot(dotsGroup, "boxplot",
+            boxplotData.whiskerDown, boxplotData.whiskerTop, boxplotData.Q).attr({
+              "transform": " translate(" + groupWidth / 2 + ", 0)"
+
+            }).style({
+            });
+
 
           for (var ind = group.start; ind <= group.end; ind++) {
             var jxnData = jxnsData.weights[ind];
@@ -633,6 +665,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             var leftGap = buckets[firstInd].xStartDesired - buckets[firstInd].xStart;
             var rightGap = buckets[i].xStart - buckets[i].xStartDesired;
             shift = (leftGap - rightGap) / 2;
+            shift = Math.min(shift, axis(endCoord) - buckets[i].xEnd)
             for (var j = firstInd; j <= i ; ++j) {
               buckets[j].xStart += shift
               buckets[j].xEnd += shift
