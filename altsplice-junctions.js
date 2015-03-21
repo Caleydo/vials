@@ -193,50 +193,58 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
       //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var exploreArea = svg.append("g").attr("transform", "translate(20, 20)");
+    var exploreArea = svg.append("g").attr("transform", "translate(20, 20)").attr("id","exploreArea");
     jxnArea = exploreArea.append("g").attr("id", "jxnArea");
 
 
 
     function updateVisualization() {
-      var startPos = gui.current.getStartPos()
-      var baseWidth =gui.current.getBaseWidth()
+      var startPos = gui.current.getStartPos();
+      var baseWidth =gui.current.getBaseWidth();
 
-      curGene = getCurGene(startPos, baseWidth);
-      curRNAs = getCurRNAs(curGene, startPos, baseWidth);
+      curGene = gui.current.getSelectedGene();
+      var curProject = gui.current.getSelectedProject();
+//      curRNAs = getCurRNAs(curGene, startPos, baseWidth);
+//
+//      //curRNAs.forEach(function (rna, index) {
+//      //  var span = curRNAs[0].RNASpan;
+//      //  isoformSelector.append("option").text("isoform" + index);
+//      //});
+//
+//      curExons = getCurExons(curRNAs);
+//
+//
+//      // ==========================
+//      // BIND DATA TO VISUALIZATION
+//      // ==========================
+//
+//        that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
+//
+//          sampleDataSet = sampleData;
+//
+//          // that.data.getTestSamples("pileup ENSG00000150782.json").then(function(sampleData) {
+//    /*      samples = d3.keys(sampleData.samples);
+//          var geneInfo = sampleData["geneInfo"];
+//          that.axis.update(geneInfo,
+//            startPos || geneInfo["geneSpan"][0],
+//            baseWidth || (geneInfo["geneSpan"][1] - geneInfo["geneSpan"][0] + 1));
+//*/
+//
+////          drawJxnsLegend();
+//
+//
+//
+//        })
 
-      //curRNAs.forEach(function (rna, index) {
-      //  var span = curRNAs[0].RNASpan;
-      //  isoformSelector.append("option").text("isoform" + index);
-      //});
+      //console.log("ppp", curProject, curGene );
+      that.data.getGeneData(curProject, curGene).then(function(sampleData) {
 
-      curExons = getCurExons(curRNAs);
-
-
-      // ==========================
-      // BIND DATA TO VISUALIZATION
-      // ==========================
-
-        that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
-
-          sampleDataSet = sampleData;
-
-          // that.data.getTestSamples("pileup ENSG00000150782.json").then(function(sampleData) {
-    /*      samples = d3.keys(sampleData.samples);
-          var geneInfo = sampleData["geneInfo"];
-          that.axis.update(geneInfo,
-            startPos || geneInfo["geneSpan"][0],
-            baseWidth || (geneInfo["geneSpan"][1] - geneInfo["geneSpan"][0] + 1));
-*/
-
-//          drawJxnsLegend();
-
-
-
-        })
-
-      that.data.getTestSamples("response_tp53_v3.json").then(function(sampleData) {
         jxnsData = sampleData.measures.jxns;
+
+        // TODO: Hen: workaround for missing update cycle
+        jxnArea.remove();
+        jxnArea = d3.select("#exploreArea").append("g").attr("id", "jxnArea");
+
 
         computeJxnGroups();
         drawJxnAxis();
@@ -1290,19 +1298,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       }
     }
 
-    function createGenDefControls(container) {
 
-      // TODO: potential runtime conditions here
-      that.data.getAllGenes().then( function(genes) {
-        geneData = genes;
-      });
+
 
       gui.current.addUpdateEvent(updateVisualization)
-
-    }
-
-
-    updateVisualization();
+    //updateVisualization();
     return head.node();
   };
 
