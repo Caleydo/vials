@@ -103,6 +103,9 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
     };
 
 
+    this.getSelectedProject = function(){
+      return $(that.projectSelector.node()).val();
+    }
 
     this.getSelectedGene = function(){
       return $(that.geneSelector.node()).val();
