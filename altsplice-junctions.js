@@ -256,7 +256,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         });
         startCoord = d3.min(jxnsData.all_starts);
         endCoord = d3.max(jxnsData.all_ends);
-        RNAScale = d3.scale.linear().domain([startCoord, endCoord]).range([10, width - 5]);
+        RNAScale = d3.scale.linear().domain([startCoord, endCoord]).range([10, width - 10]);
 
         drawRNA(RNAArea, RNAScale, RNAHeight, RNAMargin);
 
@@ -334,17 +334,19 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 //        console.log("Whole Gruoup: (" + startLoc + " " + startInd + " - " + ind)
       }
       subGroups.push({"start":prevEnd, "end":ind - 1, "startLoc" : startLoc, "endLoc": endLoc})
+      edgeCount++
       jxnGroups.push({"start":prevStart, "end":ind - 1, "groups": subGroups});
 
     }
 
     function drawJxns(container) {
 
-      var groupWidth =  (width - 2 * weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
+      var groupWidth =  (width - weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
 
       var linesGroup = jxnArea.append("g").style({
         "visibility": "visible"
       })
+
 
       var startX = weightAxisCaptionWidth + jxnWrapperPadding;
       for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
