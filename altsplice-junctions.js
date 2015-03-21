@@ -442,9 +442,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var donorY = jxnWrapperHeight + RNAMargin + RNAHeight/2 - 5;
           var RNA_Y = jxnWrapperHeight + RNAMargin + RNAHeight;
 
-
           groupNode.append("rect").attr({
             "class": "edgeAnchor",
+            "startLoc": group.startLoc,
             "endLoc": group.endLoc,
             "fill": "red",
             "stroke": "black",
@@ -453,17 +453,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "transform": "translate(" + groupWidth / 4 + ", " + (jxnWrapperHeight - 6) + ")"
           })
 
-
           linesGroup.append("line").attr({
             "x1": startX + (groupInd + 0.5) * groupWidth,
             "x2": acceptorX,
+            "startLoc": group.startLoc,
             "endLoc": group.endLoc,
             "y1": jxnWrapperHeight,
             "y2": donorY,
             "class": "edgeConnector",
             "stroke": "red"
-          });
-
+          })
 
           var sampleLength = Object.keys(allSamples).length;
           var boxPlotData = new Array(sampleLength);
@@ -536,7 +535,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               donorX, donorY,
               donorX , donorY
             ],
-          "startLoc": jxnGroup.start,
+          "loc": donorLoc,
           "class": "JXNAreaConnector",
           "stroke": "#ccc",
           "fill":"#ccc"
@@ -701,19 +700,34 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             })
           })
 
-          d3.selectAll(".edgeAnchor, .edgeConnector").each(function(d2,i2) {
+          d3.selectAll(".JXNAreaConnector").each(function() {
             d3.select(this).style({
-              "opacity" : this.getAttribute("endLoc") == d1.loc ? 1 : 0.1
+              "opacity" : (this.getAttribute("loc") == d1.loc) ? 1 : 0.1
             })
           })
 
-          d3.selectAll(".JXNAreaConnector").each(function(d2,i2) {
-            var ind = this.getAttribute("startLoc");
-            var loc = jxnsData.weights[ind].start;
-            d3.select(this).style({
-              "opacity" : loc == d1.loc ? 1 : 0.1
-            })
+          d3.selectAll(".edgeAnchor, .edgeConnector").each(function() {
+            var classAttr = this.getAttribute("class");
+            var startLoc = this.getAttribute("startLoc");
+            var endLoc = this.getAttribute("endLoc");
+            if (startLoc != d1.loc &&  endLoc != d1.loc) {
+              d3.select(this).style({"opacity" : 0})
+            }
+            else if (classAttr == "edgeConnector") {
+              var otherLoc = startLoc == d1.loc ? endLoc : startLoc;
+              RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2) {
+                if (d2.loc == otherLoc) {
+                  d3.select(this).style({"opacity" : 1})
+                }
+              })
+              d3.selectAll(".JXNAreaConnector").each(function (d2) {
+                if (this.getAttribute("loc") == otherLoc) {
+                  d3.select(this).style({"opacity" : 1})
+                }
+              })
+            }
           })
+
 
         }).on('mouseout', function () {
           d3.selectAll(".RNASites, .JXNAreaConnector, .RNASiteConnector, .edgeAnchor, .edgeConnector").each(function (d2, i2) {
