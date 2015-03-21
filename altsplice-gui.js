@@ -25,6 +25,11 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
     this.allVisUpdates= [];
 
 
+    // TODO: delete this after iso implementation
+    this.isoForm = null;
+
+
+
     this.init = function (genomeDataLink) {
       that.genomeDataLink = genomeDataLink;
       d3.select("#toggleIntrons").on({
@@ -38,6 +43,26 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
           }
         }
       })
+
+
+      d3.select("#testIso").on({
+        click: function(){
+          event.fire("isoFormSelect", {isoform:"uc003tqh.2", index:0});
+        }
+      })
+
+      d3.select("#testIso2").on({
+        click: function(){
+          event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:0});
+        }
+      })
+
+      d3.select("#testIso3").on({
+        click: function(){
+          event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:-1});
+        }
+      })
+
     }
 
 
