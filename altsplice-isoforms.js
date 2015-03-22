@@ -157,6 +157,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
 
+
         /*
         * reactive background
         * */
@@ -185,6 +186,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
 
+        isoform.select(".background").attr({
+          width:width+margin.right-2
+        })
 
 
       /*
@@ -280,6 +284,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
     function updateData(){
+
+      console.log("updateIso");
       var
         curGene = gui.current.getSelectedGene(),
         startPos = gui.current.getStartPos(),
@@ -288,6 +294,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
         //d3.nest().key(function(k){return k.key}).map(a)
+
+        console.log("updateIso_ 2");
 
         var minMax = d3.extent(sampleData.measures.isoforms, function (d) {
           return d.weight;

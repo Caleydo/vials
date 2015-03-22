@@ -150,7 +150,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
        * reactive background
        * */
       abundanceEnter.append("rect").attr({
-        width:that.axis.getWidth(),
         height:exonHeight,
         class:"background"
       }).on({
@@ -173,14 +172,24 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
       abundanceEnter.append("path").attr({
-            "class":"abundanceGraph",
-            "d":function(d){return that.lineFunction(d.weights)}
+            "class":"abundanceGraph"
       })
 
       abundanceEnter.append("text").attr({
           "class": "sampleLabel",
           "transform": "translate(" + (that.axis.getWidth() + 10) + "," + exonHeight + ")"
       }).text(function(d) {return d.sample})
+
+
+      // update !!!
+
+      abundance.select(".abundanceGraph").attr({
+        "d":function(d){return that.lineFunction(d.weights)}
+      })
+
+      abundance.select(".background").attr({
+        width:that.axis.getWidth()
+      })
 
 
       //
@@ -471,7 +480,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           readData.forEach(function(d, i) {
             sampleGroups.push({"sampleData": [d], "collapse": false});
           })
-        }        
+        }
         joinGroups([0, 1, 2]);
         joinGroups([4, 5, 6, 7]);
 

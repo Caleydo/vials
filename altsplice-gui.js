@@ -94,9 +94,8 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
       console.log(that.genomeDataLink.getAllGenes(selectedProject));
       that.genomeDataLink.getAllGenes(selectedProject).then(function (genes) {
 
-
+        that.geneSelector.selectAll("option").remove();
         genes.forEach(function (gene) {
-          that.geneSelector.selectAll("option").remove();
           that.geneSelector.append("option").attr('value', gene).text(gene);
         })
         that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
