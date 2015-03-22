@@ -80,7 +80,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var cellRadius = 14;
   var cellMargin = 2;
   var cellWidth = cellRadius*2 + cellMargin;
+  var showAllDots = false;
   var showDotGroups = false;
+  var jitterDots = false;
 /*  var groups = [{"samples": ["heartWT1", "heartWT2"], "color": "#a6cee3"},
     {"samples": ["heartKOa", "heartKOb"], "color": "#b2df8a"}]; */
   var groups = [];
@@ -111,34 +113,30 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       "left": "20px"
     });
 
-    $('<input />', { type: 'checkbox', id: 'cb', value: "showGroups" }).appendTo(viewOptionsDiv);
-    $('<label />', { 'for': 'cb', text: "Show groups" }).appendTo(viewOptionsDiv);
-    $('#cb').change(function() {
-      showDotGroups = $(this).is(":checked")
-      if (expandedIsoform >= 0) {
-        expandIsoform(expandedIsoform, sampleDataSet);
-      }
-    });
+      $('<input />', { type: 'checkbox', id: 'cbshowGroups', value: "showGroups" }).appendTo(viewOptionsDiv);
+      $('<label />', { 'for': 'cb', text: "Show groups" }).appendTo(viewOptionsDiv);
+      $('#cbshowGroups').change(function() {
+        showDotGroups = $(this).is(":checked")
+        if (expandedIsoform >= 0) {
+          expandIsoform(expandedIsoform, sampleDataSet);
+        }
+      });
 
+      $('<input />', { type: 'checkbox', id: 'cbDotVisibility', value: "DotVisibility" }).appendTo(viewOptionsDiv);
+      $('<label />', { 'for': 'cb', text: "Show all dots" }).appendTo(viewOptionsDiv);
+      $('#cbDotVisibility').change(function() {
+        showAllDots = $(this).is(":checked")
+        updateDotVisibility();
+      });
 
-    //var selectIsoformDiv = $parent.append("div");
-    //selectIsoformDiv.text("Select isoform: ")
-    //isoformSelector = selectIsoformDiv.append("select");
-    //isoformSelector.append("option").attr('value', null).text("<none>");
-    //isoformSelector.on({
-    //  "change": function(){
-    //    var index = this.selectedIndex - 1;
-    //    if (expandedIsoform != index && expandedIsoform != -1) {
-    //        collapseIsoform(expandedIsoform, function() {
-    //          selectIsoform(index);
-    //        })
-    //    }
-    //    else
-    //      selectIsoform(index)
-    //  }
-    //})
+      $('<input />', { type: 'checkbox', id: 'cbJitterDots', value: "jitterDots" }).appendTo(viewOptionsDiv);
+      $('<label />', { 'for': 'cb', text: "Jitter dots" }).appendTo(viewOptionsDiv);
+      $('#cbJitterDots').change(function() {
+        jitterDots = $(this).is(":checked")
+        updateDotJitter();
+      });
 
-    event.on("isoFormSelect", function(ev,data){
+      event.on("isoFormSelect", function(ev,data){
       var index  = data.index;
 
       if (expandedIsoform != index && expandedIsoform != -1) {
@@ -192,12 +190,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "position":"relative"
 
       })
-      //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
     var exploreArea = svg.append("g").attr("transform", "translate(20, 20)").attr("id","exploreArea");
     jxnArea = exploreArea.append("g").attr("id", "jxnArea");
-
-
 
     function updateVisualization() {
       var startPos = gui.current.getStartPos();
@@ -205,16 +200,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       curGene = gui.current.getSelectedGene();
       var curProject = gui.current.getSelectedProject();
-//      curRNAs = getCurRNAs(curGene, startPos, baseWidth);
-//
-//      //curRNAs.forEach(function (rna, index) {
-//      //  var span = curRNAs[0].RNASpan;
-//      //  isoformSelector.append("option").text("isoform" + index);
-//      //});
-//
-//      curExons = getCurExons(curRNAs);
-//
-//
+
 //      // ==========================
 //      // BIND DATA TO VISUALIZATION
 //      // ==========================
@@ -250,7 +236,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         computeJxnGroups();
         drawJxnAxis();
 
-        var RNAArea = jxnArea.append("g").attr({
+        var RNAArea = exploreArea.append("g").attr({
           "id": "RNAArea",
           "transform": "translate(0," + (jxnWrapperHeight+RNAMargin) + ")"
         });
@@ -258,19 +244,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         endCoord = d3.max(jxnsData.all_ends);
         RNAScale = d3.scale.linear().domain([startCoord, endCoord]).range([10, width - 10]);
 
-        drawRNA(RNAArea, RNAScale, RNAHeight, RNAMargin);
+        drawRNA(RNAArea);
 
-        // drawJxns(overlay, sampleData)
-
-        drawJxns(jxnArea.append("g"));
+        drawJxns();
 
       })
-        /* drawRNA(curRNAs.reduce(function(memo, num) {
-            if (memo.length > num.length) {return memo}
-            else {return num}
-          }),
-          RNAArea, that.axis, RNAHeight, RNAMargin);
-*/
       //// should trigger a cache hit
       //that.data.getSamples(chromID,startPos,baseWidth);
     }
@@ -339,7 +317,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     }
 
-    function drawJxns(container) {
+    function drawJxns() {
 
       var groupWidth =  (width - weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
 
@@ -375,64 +353,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           }
         });
 
-        /*
-        edgeGroups.append("polyline").attr({
-          "class": "miniAcceptorSites",
-          "fill": "white",
-          "stroke": "black",
-          "points": function () {
-            var xMid = groupWidth / 2;
-            return [
-              xMid, jxnWrapperHeight - 12,
-              xMid - 5, jxnWrapperHeight - 2,
-              xMid + 5, jxnWrapperHeight - 2,
-              xMid, jxnWrapperHeight - 12,
-            ]
-          }
-        }).on('mouseover', function (val, nodeInd) {
-          var hoveredSample = this.getAttribute("data-sample");
-          d3.selectAll('.jxnCircle').style('fill', function (val2, nodeInd2) {
-            var sample = this.getAttribute("data-sample");
-            return (sample == hoveredSample) ? highlightedDotColor : dehighlightedDotColor;
-          });
-        }).on('mouseout', function (val, dotInd, plotInd) {
-          d3.selectAll('.jxnCircle')
-            .transition()
-            .duration(100)
-            .style('fill', defaultDotColor);
-
-        }); */
-
-
         edgeGroups.each(function(group, groupInd) {
           var groupNode = d3.select(this);
           var dotsGroup = d3.select(this).append("g");
-          /*
-          jxnArea.append("polyline").attr({
-            "groupId": "RNA",
-            "points" : function(d, i) {
-              return [
-                x1, y1,
-                x1, y2,
-                x2, y2,
-                x2, y1
-              ]},
-            "class": "edgeConnector",
-            "stroke": hoveredEdgeColor,
-            "fill":"none",
-            "stroke-width":2,
-          });
-          var lineData = [ { "x": x1,   "y": y1},  { "x": x1,  "y": y2},
-                           { "x": x2,  "y": y2}, { "x": x2,  "y": y1 + 10 }];
-          var lineFunction = d3.svg.line()
-                                   .x(function(d) { return d.x; })
-                                   .y(function(d) { return d.y; })
-                                   .interpolate("basis");
-          var lineGraph = jxnArea.append("path")
-                                      .attr("d", lineFunction(lineData))
-                                      .attr("stroke", "black")
-                                      .attr("fill", "none");
-           */
+
           var y1 = jxnWrapperHeight + RNAMargin + RNAHeight/2;
           var y2 = y1 + 2 * RNAMargin;
           var acceptorLoc = group.endLoc;
@@ -491,8 +415,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               "targetExonInd": jxnData.end,
               "data-sample": jxnData.sample,
               "r": jxnCircleRadius,
-              "cx": groupWidth / 2 + (4 - 8 * Math.random()),
+              "cx": groupWidth / 2,
               "cy": yScaleContJxn(jxnData.weight),
+              "outlier": jxnData.weight < boxplotData.whiskerDown || jxnData.weight > boxplotData.whiskerTop,
               "fill": function (d, i) {
                 return defaultDotColor
               }
@@ -527,9 +452,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           if (buckets[i].type == "donor"  && buckets[i].loc == donorLoc)
             donorX = buckets[i].xEnd;
         }
-        var donorXonRNA = RNAScale(donorLoc);
         var donorY = jxnWrapperHeight + RNAMargin + RNAHeight/2 - 5;
-        var RNA_Y = jxnWrapperHeight + RNAMargin + RNAHeight;
         jxnArea.append("polygon").attr({
           "points" : [
               startX +1, jxnWrapperHeight,
@@ -542,370 +465,176 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "stroke": "#ccc",
           "fill":"#ccc"
         })
-        /*
-        var lineFunction = d3.svg.line()
-          .x(function(d) { return d.x; })
-          .y(function(d) { return d.y; })
-          .interpolate("linear");
-        jxnArea.append("path")
-          .attr("d", lineFunction([
-            { "x": startX + wrapperWidth,   "y": jxnWrapperHeight},
-//            { "x": startX+ wrapperWidth /3,   "y": jxnWrapperHeight},
-            { "x": startX,   "y": jxnWrapperHeight},
-//            { "x": startX,   "y": jxnWrapperHeight + 10},
-            { "x": donorX,  "y": donorY},
-//            { "x": donorX,  "y": donorY + 10},
-//            { "x": donorXonRNA,  "y": RNA_Y},
-          ]))
-          .attr("stroke", "blue")
-          .attr("fill", "none");
-        */
-        /*
-        jxnArea.append("line").attr({
-          "x1": startX,
-          "x2": donorX,
-          "y1": jxnWrapperHeight,
-          "y2": donorY,
-          "class": "JXNAreaConnector",
-          "stroke": "back"
-        });
-        */
-
-
         startX += groupWidth * jxnGroups[jxnGpInd].groups.length + jxnWrapperPadding;
       }
 
       linesGroup.each(function() {
         this.parentNode.appendChild(this);
       })
+    }
+
+    function updateDotVisibility() {
+      d3.selectAll(".jxnCircle").style({
+        "visibility": function(d, i) {
+          return showAllDots  || (this.getAttribute("outlier") == "true") ? "visible" : "hidden";
+          // this.getAttribute("outlier") ? "visible" : "hidden";
+        }
+      })
 
     }
 
-
-    function jxnWrapperWidth(i) {
-      return (curExons.length - i) * (miniExonWidth() + miniExonSpacing) + miniExonSpacing
+    function updateDotJitter() {
+      d3.selectAll(".jxnCircle").attr({
+        "transform": function(d, i) {
+          var xShift = jitterDots ? 4 - 8 * Math.random() : 0;
+          return "translate(" + xShift + ", 0)"
+        }
+      })
     }
 
-    function miniExonWidth() {
-      return  (width - weightAxisCaptionWidth - (curExons.length + 1) * (jxnWrapperPadding + miniExonSpacing))
-        / (curExons.length * (curExons.length));
-    }
+    function drawRNA(RNAArea) {
 
-    function getWrapperStartX(i) {
-      var shift = jxnWrapperPadding + weightAxisCaptionWidth;
-      for (var j = 0; j < i; j++)
-        shift += jxnWrapperWidth(j)+jxnWrapperPadding
-      return shift;
-    }
+      RNAArea.append("line").attr({
+        "x1": RNAScale(startCoord),
+        "x2": RNAScale(endCoord),
+        "y1": RNAHeight,
+        "y2": RNAHeight,
+        "class": "RNALine",
+        "stroke": "#666"
+      });
 
-    function getJxnGroupX(i) {
-      return i*(miniExonSpacing+miniExonWidth())+miniExonSpacing
-    }
-
-    function getBoxPlotXPos(srcExonInd, targetExonInd) {
-           return getWrapperStartX(srcExonInd) +getJxnGroupX(targetExonInd - srcExonInd) + miniExonWidth() / 2;
-    }
-
-
-      function drawRNA(RNAArea, axis, RNAHeight, RNAMargin) {
-
-        RNAArea.append("line").attr({
-          "x1": axis(startCoord),
-          "x2": axis(endCoord),
-          "y1": RNAHeight,
-          "y2": RNAHeight,
-          "class": "RNALine",
-          "stroke": "#666"
-        });
-
-//        var allLocations = new Array(jxnsData.all_starts.length + jxnsData.all_ends.length);
-//        for (var i = 0; i < jxnsData.all_starts.length; i++)
-//          allLocations[i] = jxnsData.all_starts[i]
-//        for (var i = 0; i < jxnsData.all_ends.length; i++)
-//          allLocations[jxnsData.all_starts.length + i] =  jxnsData.all_ends[i]
-//        var indices = [];
-        buckets = new Array(jxnsData.all_starts.length + jxnsData.all_ends.length);
-        for (var i = 0; i < buckets.length; ++i) {
-          if(i < jxnsData.all_starts.length) {
-            var loc = jxnsData.all_starts[i];
-            var axisLoc = axis(loc);
-            buckets[i] = {
-            "type" : "donor",
-            "loc": loc,
-            "xStart": axisLoc - 10,
-            "xEnd": axisLoc ,
-            "xStartDesired": axisLoc - 10,
-            "xEndDesired": axisLoc,
-            "firstGroupBucket": i,
-            "lastGroupBucket": i
-            }
-          }
-          else {
-            var loc = jxnsData.all_ends[i - jxnsData.all_starts.length];
-            var axisLoc = axis(loc);
-            buckets[i] = {
-            "type" : "receptor",
-            "loc": loc,
-            "xStart": axisLoc,
-            "xEnd": axisLoc + 10,
-            "xStartDesired": axisLoc,
-            "xEndDesired": axisLoc + 10,
-            "firstGroupBucket": 0,
-            }
+      buckets = new Array(jxnsData.all_starts.length + jxnsData.all_ends.length);
+      for (var i = 0; i < buckets.length; ++i) {
+        if(i < jxnsData.all_starts.length) {
+          var loc = jxnsData.all_starts[i];
+          var axisLoc = RNAScale(loc);
+          buckets[i] = {
+          "type" : "donor",
+          "loc": loc,
+          "xStart": axisLoc - 10,
+          "xEnd": axisLoc ,
+          "xStartDesired": axisLoc - 10,
+          "xEndDesired": axisLoc,
+          "firstGroupBucket": i,
+          "lastGroupBucket": i
           }
         }
-        buckets.sort(function (a, b) {return a.loc < b.loc ? -1 : a.loc == b.loc ? 0 : 1});
-        var sitePadding = 4;
-        for (var i = 1; i < buckets.length; ++i) {
-          buckets[i].firstGroupBucket = i;
-          var ind = i;
-          var shift = -1;
-          while(shift < 0 && ind > 0 && (buckets[ind].xStart < buckets[ind - 1].xEnd + sitePadding)) {
-            var firstInd = buckets[ind - 1].firstGroupBucket;
-            var overlap = buckets[ind - 1].xEnd + sitePadding - buckets[ind].xStart;
-            for (var j = ind; j <= i ; ++j) {
-              buckets[j].xStart += overlap
-              buckets[j].xEnd += overlap
-              buckets[j].firstGroupBucket = firstInd
-            }
-            var leftGap = buckets[firstInd].xStartDesired - buckets[firstInd].xStart;
-            var rightGap = buckets[i].xStart - buckets[i].xStartDesired;
-            shift = (leftGap - rightGap) / 2;
-            shift = Math.min(shift, axis(endCoord) - buckets[i].xEnd)
-            for (var j = firstInd; j <= i ; ++j) {
-              buckets[j].xStart += shift
-              buckets[j].xEnd += shift
-            }
-            ind = firstInd;
+        else {
+          var loc = jxnsData.all_ends[i - jxnsData.all_starts.length];
+          var axisLoc = RNAScale(loc);
+          buckets[i] = {
+          "type" : "receptor",
+          "loc": loc,
+          "xStart": axisLoc,
+          "xEnd": axisLoc + 10,
+          "xStartDesired": axisLoc,
+          "xEndDesired": axisLoc + 10,
+          "firstGroupBucket": 0,
           }
         }
-
-        var RNASites = RNAArea.selectAll(".RNASites").data(buckets);
-        RNASites .exit().remove();
-        RNASites.enter().append("polyline").attr({
-          "class": "RNASites",
-          "fill": function (d, i) {return d.type == "donor" ? "blue" : "red"},
-          "stroke": "black",
-          "points": function (d, i) {
-            var x1 =  d.type == "donor" ? d.xStart : d.xEnd;
-            var x2 =  d.type == "donor" ? d.xEnd : d.xStart;
-            return [
-              x1, RNAHeight/2,
-              x2, RNAHeight/2 - 5,
-              x2, RNAHeight/2 + 5,
-              x1, RNAHeight/2,
-            ]
+      }
+      buckets.sort(function (a, b) {return a.loc < b.loc ? -1 : a.loc == b.loc ? 0 : 1});
+      var sitePadding = 4;
+      for (var i = 1; i < buckets.length; ++i) {
+        buckets[i].firstGroupBucket = i;
+        var ind = i;
+        var shift = -1;
+        while(shift < 0 && ind > 0 && (buckets[ind].xStart < buckets[ind - 1].xEnd + sitePadding)) {
+          var firstInd = buckets[ind - 1].firstGroupBucket;
+          var overlap = buckets[ind - 1].xEnd + sitePadding - buckets[ind].xStart;
+          for (var j = ind; j <= i ; ++j) {
+            buckets[j].xStart += overlap
+            buckets[j].xEnd += overlap
+            buckets[j].firstGroupBucket = firstInd
           }
-        }).on('mouseover', function (d1, i1) {
-
-          RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2, i2) {
-            d3.select(this).style({
-              "opacity" : d1 == d2 ? 1 : 0.1
-            })
-          })
-
-          d3.selectAll(".JXNAreaConnector").each(function() {
-            d3.select(this).style({
-              "opacity" : (this.getAttribute("loc") == d1.loc) ? 1 : 0.1
-            })
-          })
-
-          d3.selectAll(".edgeAnchor, .edgeConnector").each(function() {
-            var classAttr = this.getAttribute("class");
-            var startLoc = this.getAttribute("startLoc");
-            var endLoc = this.getAttribute("endLoc");
-            if (startLoc != d1.loc &&  endLoc != d1.loc) {
-              d3.select(this).style({"opacity" : 0})
-            }
-            else if (classAttr == "edgeConnector") {
-              var otherLoc = startLoc == d1.loc ? endLoc : startLoc;
-              RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2) {
-                if (d2.loc == otherLoc) {
-                  d3.select(this).style({"opacity" : 1})
-                }
-              })
-              d3.selectAll(".JXNAreaConnector").each(function (d2) {
-                if (this.getAttribute("loc") == otherLoc) {
-                  d3.select(this).style({"opacity" : 1})
-                }
-              })
-            }
-          })
-
-
-        }).on('mouseout', function () {
-          d3.selectAll(".RNASites, .JXNAreaConnector, .RNASiteConnector, .edgeAnchor, .edgeConnector").each(function (d2, i2) {
-            d3.select(this).style({
-              "opacity" : 1
-            })
-          })
-        });
-
-        RNASites.enter().append("polyline").attr({
-          "class": "RNASiteConnector",
-          "fill":"none",
-          "stroke": function (d, i) {return d.type == "donor" ? "blue" : "red"},
-          "points": function (d, i) {
-            var x1 =  d.type == "donor" ? d.xEnd : d.xStart;
-            return [
-              x1, RNAHeight/2 + 5,
-              x1, RNAHeight/2 + 10,
-              axis(d.loc), RNAHeight,
-            ]
+          var leftGap = buckets[firstInd].xStartDesired - buckets[firstInd].xStart;
+          var rightGap = buckets[i].xStart - buckets[i].xStartDesired;
+          shift = (leftGap - rightGap) / 2;
+          shift = Math.min(shift, RNAScale(endCoord) - buckets[i].xStart)
+          for (var j = firstInd; j <= i ; ++j) {
+            buckets[j].xStart += shift
+            buckets[j].xEnd += shift
           }
-        })
-/*
-        var acceptorSites = RNAArea.selectAll(".acceptorSites").data(jxnsData.all_ends);
-      acceptorSites .exit().remove();
-      acceptorSites.enter().append("polyline").attr({
-        "class": "acceptorSites",
-        "fill": "white",
+          ind = firstInd;
+        }
+      }
+
+      var RNASites = RNAArea.selectAll(".RNASites").data(buckets);
+      RNASites .exit().remove();
+      RNASites.enter().append("polyline").attr({
+        "class": "RNASites",
+        "fill": function (d, i) {return d.type == "donor" ? "blue" : "red"},
         "stroke": "black",
         "points": function (d, i) {
-          var xLoc = axis(d);
+          var x1 =  d.type == "donor" ? d.xStart : d.xEnd;
+          var x2 =  d.type == "donor" ? d.xEnd : d.xStart;
           return [
-            xLoc - 10, RNAHeight/2 + 25,
-            xLoc, RNAHeight/2 + 20,
-            xLoc, RNAHeight/2 + 30,
-            xLoc - 10, RNAHeight/2 + 25,
+            x1, RNAHeight/2,
+            x2, RNAHeight/2 - 5,
+            x2, RNAHeight/2 + 5,
+            x1, RNAHeight/2,
+          ]
+        }
+      }).on('mouseover', function (d1, i1) {
+
+        RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2, i2) {
+          d3.select(this).style({
+            "opacity" : d1 == d2 ? 1 : 0.1
+          })
+        })
+
+        d3.selectAll(".JXNAreaConnector").each(function() {
+          d3.select(this).style({
+            "opacity" : (this.getAttribute("loc") == d1.loc) ? 1 : 0.1
+          })
+        })
+
+        d3.selectAll(".edgeAnchor, .edgeConnector").each(function() {
+          var classAttr = this.getAttribute("class");
+          var startLoc = this.getAttribute("startLoc");
+          var endLoc = this.getAttribute("endLoc");
+          if (startLoc != d1.loc &&  endLoc != d1.loc) {
+            d3.select(this).style({"opacity" : 0})
+          }
+          else if (classAttr == "edgeConnector") {
+            var otherLoc = startLoc == d1.loc ? endLoc : startLoc;
+            RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2) {
+              if (d2.loc == otherLoc) {
+                d3.select(this).style({"opacity" : 1})
+              }
+            })
+            d3.selectAll(".JXNAreaConnector").each(function (d2) {
+              if (this.getAttribute("loc") == otherLoc) {
+                d3.select(this).style({"opacity" : 1})
+              }
+            })
+          }
+        })
+
+
+      }).on('mouseout', function () {
+        d3.selectAll(".RNASites, .JXNAreaConnector, .RNASiteConnector, .edgeAnchor, .edgeConnector").each(function (d2, i2) {
+          d3.select(this).style({
+            "opacity" : 1
+          })
+        })
+      });
+
+      RNASites.enter().append("polyline").attr({
+        "class": "RNASiteConnector",
+        "fill":"none",
+        "stroke": function (d, i) {return d.type == "donor" ? "blue" : "red"},
+        "points": function (d, i) {
+          var x1 =  d.type == "donor" ? d.xEnd : d.xStart;
+          return [
+            x1, RNAHeight/2 + 5,
+            x1, RNAHeight/2 + 10,
+            RNAScale(d.loc), RNAHeight,
           ]
         }
       })
-*/
-/*      exons.enter().append("polygon").attr({
-        "points" : function(d, i) {
-          var x1 = axis.getXPos(d[0]);
-          var x2 = axis.getXPos(d[1]);
-          var x3 = getWrapperStartX(i) + miniExonWidth() + miniExonSpacing;
-          var x4 = getWrapperStartX(i) + miniExonSpacing;
-          return [
-            x1, 0,
-            x2, 0,
-            x3, -RNAMargin,
-            x4, -RNAMargin
-          ]},
-        "class": "JXNAreaConnector",
-        "stroke": "#ccc",
-        "fill":"#ccc"
-      })
 
-      var RNAEdges = RNAArea.append("g").style({
-      });
-
-      for (var i = 0; i < curExons.length - 1; i++) {
-        var srcExon = curExons[i];
-        for (var j = i + 1; j < curExons.length; j++) {
-          var destExon = curExons[j];
-          var x1 = (axis.getXPos(srcExon[0]) + axis.getXPos(srcExon[1])) / 2;
-          var x2 = (axis.getXPos(destExon[0]) + axis.getXPos(destExon[1])) / 2;
-          var y1 = RNAHeight;
-          var y2 = RNAHeight + RNAMargin;
-          RNAEdges.append("polyline").attr({
-            "groupId": "RNA",
-            "startExonInd": i,
-            "endExonInd": j,
-            "points" : function(d, i) {
-              return [
-                x1, y1,
-                x1, y2,
-                x2, y2,
-                x2, y1
-              ]},
-            "class": "edgeConnector",
-            "stroke": hoveredEdgeColor,
-            "fill":"none",
-            "stroke-width":2,
-            "visibility": "hidden"
-          });
-        }
-      }
-      */
-    }
-
-
-
-    function drawJxnsLegend() {
-
-      var jxnWrappers = jxnArea.selectAll(".jxnWrapper").data(curExons);
-      jxnWrappers.exit().remove();
-      var jxnWrappersEnter = jxnWrappers.enter().append("g").attr({
-        "class": "jxnWrapper",
-        "transform": function(exon, i) {return "translate("+ getWrapperStartX(i)+",0)"}
-      });
-      jxnWrappersEnter.append("rect").attr({
-        "class": "jxnWrapperBox",
-        "fill": "#ccc",
-        "height": jxnWrapperHeight,
-        "width": function(exon, i) {return jxnWrapperWidth(i)}
-      })
-
-
-      jxnWrappers.each(function(curExon, curExonIdx) {
-        var jxnWrapper = d3.select(this);
-        var definingExonX = 0.5 * (miniExonSpacing+miniExonWidth());
-        for (var groupExonInd  = curExonIdx; groupExonInd  < curExons.length; groupExonInd ++) {
-          jxnWrapper.append("rect").attr({
-            "class": "miniExonBox",
-            "width": miniExonWidth(),
-            "sourceExonInd": curExonIdx,
-            "targetExonInd": groupExonInd,
-            "height": miniExonHeight,
-            "stroke": "black",
-            "fill": "black", // function(exon, i) {return i == curExonIdx ? "white" : "black"},
-            "transform": function (exon, i) {
-              var shiftY = jxnWrapperHeight - miniExonHeight;
-              if (groupExonInd != curExonIdx)
-                shiftY -= 3 * miniExonHeight;
-              return "translate(" + getJxnGroupX(groupExonInd  - curExonIdx) + "," + shiftY + ")"
-            }
-          }).on('mouseover', function () {
-            if (selectedIsoform == -1) {
-              var miniExonInd = this.getAttribute("targetExonInd");
-              var miniExonSrcInd = this.getAttribute("srcExonInd");
-              d3.selectAll(".boxplotWithDots, .miniExonBox").each(function () {
-                var srcExonInd = this.getAttribute("sourceExonInd");
-                var targetExonInd = this.getAttribute("targetExonInd");
-                var groupNode = d3.select(this);
-                groupNode.style({
-                  "opacity": srcExonInd == miniExonInd || targetExonInd == miniExonInd ||
-                  srcExonInd == miniExonSrcInd || targetExonInd == miniExonSrcInd ? 1 : 0.1,
-                  "fill": targetExonInd == miniExonInd ? "orange" : "black"
-                })
-                d3.selectAll(".miniExonEdge").style({
-                  "opacity": 0.1
-                })
-              })
-            }
-          }).on('mouseout', function () {
-            if (selectedIsoform == -1) {
-              d3.selectAll(".boxplotWithDots").style({
-                "opacity": 1,
-                "fill": "white"
-              })
-              d3.selectAll(".miniExonBox, .miniExonEdge").style({
-                "opacity": 1,
-                "fill": "black"
-              })
-            }
-          });
-
-          if (groupExonInd  > curExonIdx) {
-          jxnWrapper.append("line").attr({
-            "class": "miniExonEdge",
-            "stroke": "black",
-            "x1": function (exon, i) {
-              if (groupExonInd == curExonIdx) return 0;
-              return definingExonX;
-            },
-            "x2": getJxnGroupX(groupExonInd  - curExonIdx) + miniExonWidth() / 2,
-            "y1": jxnWrapperHeight - miniExonHeight,
-            "y2": jxnWrapperHeight - 3 * miniExonHeight
-          })
-          }
-        }
-      });
-    }
-
+  }
 
     function getJxnsFromSpan(data, curExon, otherExon) {
       var jxns = [];
@@ -919,13 +648,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       }
       return jxns
     }
-
-    /*      function getExonIdx(exon) {
-     var idx;
-     curExons.forEach(function(curExon, i) {if (curExon[0] == exon[0] && curExon[1] == exon[1]) {idx = i}});
-     return idx;
-     }
-     */
 
     function computeBoxPlot(values) {
       var sortedJxns = values.sort(d3.ascending);
@@ -947,7 +669,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       }
       return {"whiskerTop": whiskerTop, "whiskerDown": whiskerDown, "Q": Q};
     }
-
 
     function createSubBoxPlots(parent, data, groups) {
       var transformation;
@@ -1146,57 +867,56 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     }
 
-
-      function expandIsoform(activeIsoform, data) {
-        d3.selectAll(".boxplotWithDots").each(function () {
-          if (this.getAttribute("ActiveIsoform") == activeIsoform) {
-            expandJxn(this)
-            if (showDotGroups && (groups.length > 0)) {
-              createSubBoxPlots(this, data, groups);
-            }
-            else {
-              removeSubboxplots(d3.select(this));
-              sortDots(data, this)
-            }
+    function expandIsoform(activeIsoform, data) {
+      d3.selectAll(".boxplotWithDots").each(function () {
+        if (this.getAttribute("ActiveIsoform") == activeIsoform) {
+          expandJxn(this)
+          if (showDotGroups && (groups.length > 0)) {
+            createSubBoxPlots(this, data, groups);
           }
-        })
-        expandedIsoform = activeIsoform;
-
-      }
-
-      function createGroups(activeIsoform, data) {
-        d3.selectAll(".boxplotWithDots").each(function () {
-          if (this.getAttribute("ActiveIsoform") == activeIsoform) {
+          else {
             removeSubboxplots(d3.select(this));
-            if (showDotGroups && (groups.length > 0)) {
-              createSubBoxPlots(this, data, groups);
-            }
-            else {
-              sortDots(data, this)
-            }
+            sortDots(data, this)
           }
-        })
-      }
-
-      function collapseIsoform(index, callback) {
-      var selection = d3.selectAll(".boxplotWithDots").filter(function (d, i) {
-        return (this.getAttribute("ActiveIsoform") == index);
+        }
       })
-      var size = 0;
-      selection.each(function() { size++; });
-      selection.each(function (d, i) {
-        var parentNode = d3.select(this)
+      expandedIsoform = activeIsoform;
 
-        collapseJxn(parentNode, function () {
-          parentNode.selectAll(".jxnContainer").style({
-            "visibility": "hidden",
-          })
-          if ((i == size - 1)&& callback)
-            callback()
-        })
-      })
-      expandedIsoform = -1;
     }
+
+    function createGroups(activeIsoform, data) {
+      d3.selectAll(".boxplotWithDots").each(function () {
+        if (this.getAttribute("ActiveIsoform") == activeIsoform) {
+          removeSubboxplots(d3.select(this));
+          if (showDotGroups && (groups.length > 0)) {
+            createSubBoxPlots(this, data, groups);
+          }
+          else {
+            sortDots(data, this)
+          }
+        }
+      })
+    }
+
+    function collapseIsoform(index, callback) {
+    var selection = d3.selectAll(".boxplotWithDots").filter(function (d, i) {
+      return (this.getAttribute("ActiveIsoform") == index);
+    })
+    var size = 0;
+    selection.each(function() { size++; });
+    selection.each(function (d, i) {
+      var parentNode = d3.select(this)
+
+      collapseJxn(parentNode, function () {
+        parentNode.selectAll(".jxnContainer").style({
+          "visibility": "hidden",
+        })
+        if ((i == size - 1)&& callback)
+          callback()
+      })
+    })
+    expandedIsoform = -1;
+  }
 
     function getExpandJxnWidth() {
       var axis = that.axis;
@@ -1330,60 +1050,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     //globalCallCount = 1;
-    function getCurRNAs(geneName, pos, baseWidth) {
-      if (!geneData) return [];
-      //console.log(globalCallCount, geneName, geneData)
-      //globalCallCount++;
-      var gene = geneData[geneName];
-      //console.log(gene);
-      var curRNAs = [];
-      var curExons = [];
-      for (var j in gene.exons) {
-        var exon = gene.exons[j];
-        // will return empty list if exon not present in view
-        var exonMin = Math.max(exon[0], pos);
-        var exonMax = Math.min(exon[1], pos+baseWidth);
-        if (exonMax > exonMin) {
-          curExons.push([exonMin, exonMax]);
-        }
-      }
-      for (var j in gene.mRNAs) {
-        var curRNA = [];
-        var RNA = gene.mRNAs[j];
-        for (var k in RNA) {
-          exonID = RNA[k]
-          if (curExons[exonID]) {
-            curRNA.push(curExons[exonID]);
-          }
-        }
-        curRNAs.push({'exons': curRNA, 'RNASpan': [Math.max(gene.tx_start, pos), Math.min(gene.tx_end, pos+baseWidth-1)]});
-      }
-      return curRNAs;
-    }
 
-    function getCurExons(curRNAs) {
-      return curRNAs.map(function(RNA) {return RNA.exons})
-        .reduce(function(a, b) {
-          if (a.length > b.length) {return a;}
-          else {return b;}
-        }, 0)
-    }
-
-    function getCurGene(pos, baseWidth) {
-
-      for (var geneName in geneData) {
-        geneInfo = geneData[geneName]
-        if ((geneInfo.tx_start >= pos && geneInfo.tx_start <= pos + baseWidth) ||
-          (geneInfo.tx_end >= pos && geneInfo.tx_end <= pos + baseWidth)) {
-          return geneName;
-        }
-      }
-    }
-
-
-
-
-      gui.current.addUpdateEvent(updateVisualization)
+    gui.current.addUpdateEvent(updateVisualization)
     //updateVisualization();
     return head.node();
   };
