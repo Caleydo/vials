@@ -38,8 +38,13 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
           if (el.classed("btn-primary")){
             // de-activate
             el.classed("btn-primary", false);
+            that.genomeDataLink.genomeAxis.shrinkIntrons(false);
+            event.fire("axisChange");
+
           }else{
            el.classed("btn-primary", true);
+            that.genomeDataLink.genomeAxis.shrinkIntrons(true);
+            event.fire("axisChange");
           }
         }
       })
@@ -72,6 +77,7 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
         $(that.startPosDiv.node()).val(geneData.gene.start);
 
         that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start,geneData.gene.end)
+        that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"])
 
 
         console.log(that.genomeDataLink.genomeAxis.arrayPosToScreenPos(2), that.genomeDataLink.genomeAxis.arrayPosToGenePos(10));

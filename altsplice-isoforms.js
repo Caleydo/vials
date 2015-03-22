@@ -66,20 +66,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
-    function drawIsoForms(geneInfo, samples, geneInformation){
+    function drawIsoforms(isoformList, minMaxValues){
+        console.log("list", isoformList);
 
         var exonHeight = 15;
         var scatterWidth = 200;
         var axisOffset =  that.axis.getWidth() + 10;
-        var noIsoforms = geneInformation.mRNAs.length;
+        var noIsoforms = isoformList.length;
 
         width = axisOffset+ scatterWidth;
-        height = exonHeight*noIsoforms;
+        height = (exonHeight+3)*noIsoforms;
         svg.attr("height", height+margin.top+margin.bottom)
           .attr("width", width + margin.left + margin.right);
 
         var scaleY = function(x){ return x*(exonHeight+3)};
-        var scaleXScatter = d3.scale.linear().domain([0,1]).range([axisOffset, width])
+        var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, width])
 
 
 
@@ -89,7 +90,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         * Manage .isoform - Groups
         * =========================
         * */
-        var isoform = gIso.selectAll(".isoform").data(geneInformation.mRNAs);
+        var isoform = gIso.selectAll(".isoform").data(isoformList, function (d) {return d.id });
         isoform.exit().remove();
 
         // --- adding Element to class isoform
@@ -99,7 +100,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         // --- changing nodes for isoform
         isoform.attr({
-            "transform":function(d,i) {return "translate("+10+","+scaleY(i)+")";}
+            "transform":function(d,i) {return "translate("+0+","+scaleY(i)+")";}
         })
 
 
@@ -107,24 +108,24 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         * reactive background
         * */
         isoformEnter.append("rect").attr({
-          width:width,
+          width:width+margin.right-2,
           height:exonHeight,
           class:"background"
         }).on({
-          "mouseover": function(d){d3.select(this).classed("selected", true);},
-          "mouseout": function(d){d3.select(this).classed("selected", false);},
+          "mouseover": function(){d3.select(this).classed("selected", true);},
+          "mouseout": function(){d3.select(this).classed("selected", false);},
           "click":function(d, i){
             console.log(d,i);
             var el = d3.select(this);
             if (el.classed("fixed")){
               el.classed("fixed", false);
               currentlySelectedIsoform = null;
-              event.fire("isoFormSelect", {isoform:d, index:-1});
+              event.fire("isoFormSelect", {isoform: d.id, index:-1});
             } else{
               el.classed("fixed", true);
               if (currentlySelectedIsoform) currentlySelectedIsoform.classed("fixed", false);
               currentlySelectedIsoform = el;
-              event.fire("isoFormSelect", {isoform:d, index:i})
+              event.fire("isoFormSelect", {isoform: d.id, index:i})
             }
 
           }
@@ -138,11 +139,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
        * Draw exon abstractions
        * =========================
        * */
-        var exonInfo = geneInformation.exons;
-        var exon = isoform.selectAll(".exon").data(function(d){
-          //console.log(d);
-          return d.map(function(index){return exonInfo[index]})});
-        exons.exit().remove();
+
+        var exon = isoform.selectAll(".exon").data(function(d){return d.ranges});
+        exon.exit().remove();
 
         // --- adding Element to class exons
         var exonEnter = exon.enter().append("rect").attr({
@@ -154,11 +153,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         // --- changing nodes for exons
         exon.attr({
           width: function(d,i){
-            //console.log(d,i);
-            //return (d[1]- d[0]) * that.axis.rangeBand();
-            return that.axis.getXPos(d[1])- that.axis.getXPos(d[0]);
+            return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)
           },
-          x:function(d){return that.axis.getXPos(d[0]);}
+          x:function(d){return that.axis.genePosToScreenPos(d.start);}
         })
 
 
@@ -171,25 +168,22 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       //console.log(that.axis);
 
 
-        var sampleDot = isoform.selectAll(".sampleDot").data(
-          function(d,i){return samples.map(
-            function(sample){
-              //console.log( "sample",sample);
-              return sample.psis[i]
-            })
-          });
+        var sampleDot = isoform.selectAll(".sampleDot").data( function(d,i){return d.weights} );
         sampleDot.exit().remove();
 
         // --- adding Element to class sampleDot
         var sampleDotEnter = sampleDot.enter().append("circle").attr({
-            "class":"sampleDot",
+            "class":function(d){return "sampleDot "+ d.sample;},
             r:5
 
+        }).on({
+          "mouseover":function(d){svg.selectAll("."+ d.sample).classed("highlighted", true);},
+          "mouseout":function(d){svg.selectAll("."+ d.sample).classed("highlighted", false);}
         })
 
         // --- changing nodes for sampleDot
         sampleDot.attr({
-            cx: function(d){return  scaleXScatter(d)},
+            cx: function(d){return  scaleXScatter(d.weight)},
             cy: exonHeight/2
         })
 
@@ -197,43 +191,58 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
+    function axisUpdate(){
+
+      var exon =svg.selectAll(".exon");
+
+      // --- changing nodes for exons
+      exon.transition().attr({
+        width: function(d,i){
+          return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)
+        },
+        x:function(d){return that.axis.genePosToScreenPos(d.start);}
+      })
+    }
+
+
 
     function updateData(){
       var
         curGene = gui.current.getSelectedGene(),
         startPos = gui.current.getStartPos(),
-        baseWidth = gui.current.getBaseWidth();
+        baseWidth = gui.current.getBaseWidth(),
+        curProject = gui.current.getSelectedProject();
 
-      that.data.getSamples(curGene,startPos,baseWidth).then(function(sampleData) {
-        that.data.getAllGenes().then(function(allGenes){
-          console.log("allGenes", allGenes[curGene]);
-          //console.log(sampleData);
-          // TODO: generated fake data here for PSIs
-          var noIsoforms = allGenes[curGene].mRNAs.length;
-          Object.keys(sampleData.samples).forEach(function(sampleKey){
-            //console.log(sampleData.samples[sampleKey]);
+      that.data.getGeneData(curProject, curGene).then(function(sampleData) {
+        //d3.nest().key(function(k){return k.key}).map(a)
 
-            var sumPsi = 0;
-            var psis = d3.range(0,noIsoforms).map(function(){
-              var psi = Math.random();
-              sumPsi += psi;
-              return psi;
-            })
-            if (sumPsi>0){
-              psis.map(function(d){return d/sumPsi;});
-              sampleData.samples[sampleKey].psis = psis;
-            }
-
-          })
-          // -- end of fake ---
-
-          drawIsoForms(
-            sampleData.geneInfo,
-            Object.keys(sampleData.samples).map(function(sampleKey){return sampleData.samples[sampleKey]}),
-            allGenes[curGene]
-          );
+        var minMax = d3.extent(sampleData.measures.isoforms, function (d) {
+          return d.weight;
         })
 
+        var usedIsoforms = d3.nest()
+          .key(function(measure){return measure.id})
+          .map(sampleData.measures.isoforms);
+
+        var allIsoforms = sampleData.gene.isoforms;
+        var allExons = sampleData.gene.exons;
+
+
+        var usedIsoformsList =  Object.keys(usedIsoforms).map(function(isokey){
+          var res = {weights:usedIsoforms[isokey], id: isokey}
+          res.ranges =
+            allIsoforms[isokey].exons.map(function(exKey){
+              var ex = allExons[exKey];
+              return {"start": ex.start, "end": ex.end}
+            });
+
+          return res;
+
+        })
+
+        console.log("used iso:",usedIsoforms, minMax);
+
+        drawIsoforms(usedIsoformsList, minMax);
 
       })
 
@@ -241,6 +250,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
     gui.current.addUpdateEvent(updateData);
+
+
+    event.on("axisChange", axisUpdate)
 
     return head.node();
 
