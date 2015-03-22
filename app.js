@@ -38,7 +38,7 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui',
     var vis2Loaded = C.promised(function(resolve,reject){
     if (!options.mode || options.mode==='joseph') {
         var readVis = visses.filter(function (vis) {
-          return vis.id === 'altsplice-reads'
+          return vis.id === 'altsplice-reads-simple'
         })[0];
         readVis.load().then(function (plugin) {
           vis = plugin.factory(genomeDataLink, document.querySelector("#vis2"));

@@ -60,7 +60,7 @@ define(['exports','d3'],function(exports,d3){
       if (shrink){
 
         this.scale_genePosToScreenPos.domain(that.brokenDomain).range(that.brokenRange);
-        that.scale_arrayPosToGenePos.domain(
+        that.scale_arrayPosToScreenPos.domain(
           that.brokenDomain.map(that.scale_arrayPosToGenePos.invert)
         ).range(that.brokenRange);
 

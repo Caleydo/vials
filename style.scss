@@ -67,3 +67,27 @@ $wes-red: #D16B54;
     fill:$wes-red;
   }
 }
+
+.abundances{
+
+  .abundanceGraph{
+    //fill-opacity: .8;
+    pointer-events: none;
+    stroke:$wes-violet;
+    stroke-width: 1px;
+    fill:none;
+  }
+  .background{
+
+    fill:white;
+
+  }
+  .selected{
+    stroke:$wes-yellow;
+  }
+  .fixed{
+    fill:$wes-yellow;
+  }
+
+
+}

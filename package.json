@@ -42,6 +42,15 @@
         "filter": "genomeDataLink",
         "folder" : "caleydo-altsplice",
         "module" : "caleydo-altsplice/altsplice-reads"
+      },
+      {
+        "type": "vis",
+        "id": "altsplice-reads-simple",
+        "name": "Alternative Splicing - Abundance",
+        "size": [840,2000],
+        "filter": "genomeDataLink",
+        "folder" : "caleydo-altsplice",
+        "module" : "caleydo-altsplice/altsplice-read-simple"
       }
     ]
   }
