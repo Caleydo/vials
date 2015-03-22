@@ -9,15 +9,11 @@ define(['exports','d3'],function(exports,d3){
     this.width = width;
     this.options = options;
 
-
-
     var that = this;
 
     this.scale_arrayPosToScreenPos = d3.scale.linear().domain([0,10000]).range([0,width])
     this.scale_genePosToScreenPos = d3.scale.linear().domain([0,100]).range([0,width])
     this.scale_arrayPosToGenePos = d3.scale.linear().domain([0,10000]).range([0,100])
-
-
 
     this.arrayPosToScreenPos = function(x){
       return that.scale_arrayPosToScreenPos(x);
