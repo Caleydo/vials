@@ -88,12 +88,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       crosshair.attr({
         "x1":x,
         "x2":x
+      }).style({
+        opacity:function(){
+          return x>that.axis.getWidth()?0:1
+        }
       })
 
 
     }
 
     event.on("crosshair", updateCrosshair);
+
+
+    var sampleSelectorMap = {} // will be updated at updateData()..
+
+    function cleanSelectors(sel){return sampleSelectorMap[sel]}
 
 
     function drawIsoforms(isoformList, minMaxValues){
@@ -112,7 +121,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         crosshair.attr({
           "y2":height+margin.top+margin.bottom
         })
-
 
 
         var scaleY = function(x){ return x*(exonHeight+3)};
@@ -137,6 +145,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         // --- changing nodes for isoform
         isoform.attr({
             "transform":function(d,i) {return "translate("+0+","+scaleY(i)+")";}
+        }).on({
+          "mouseover":function(){
+            //console.log("min", d3.event.target
+              d3.select(this).select(".background").classed("selected", true);
+            },
+          "mouseout":function(){
+            //console.log("mout", d3.event.target)
+            d3.select(this).select(".background").classed("selected", false);
+          }
         })
 
 
@@ -148,8 +165,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           height:exonHeight,
           class:"background"
         }).on({
-          "mouseover": function(){d3.select(this).classed("selected", true);},
-          "mouseout": function(){d3.select(this).classed("selected", false);},
+          //"mouseover": function(){d3.select(this).classed("selected", true);},
+          //"mouseout": function(){d3.select(this).classed("selected", false);},
           "click":function(d, i){
             console.log(d,i);
             var el = d3.select(this);
@@ -205,12 +222,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
-        var sampleSelectorMap = {};
-        isoformList[0].weights.forEach(function(d,i){
-          sampleSelectorMap[d.sample] = i;
-        })
 
-        function cleanSelectors(sel){return sampleSelectorMap[sel]}
+
+
 
         var sampleDot = isoform.selectAll(".sampleDot").data( function(d,i){return d.weights} );
         sampleDot.exit().remove();
@@ -221,9 +235,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             r:3
 
         }).on({
-          "mouseover":function(d){svg.selectAll(".sample"+ cleanSelectors(d.sample)).classed("highlighted", true);},
-          "mouseout":function(d){svg.selectAll(".sample"+ cleanSelectors(d.sample)).classed("highlighted", false);}
+          "mouseover":function(d){event.fire("sampleHighlight", d.sample, true)},
+          "mouseout":function(d){event.fire("sampleHighlight", d.sample, false)}
         })
+
 
         // --- changing nodes for sampleDot
         sampleDot.attr({
@@ -232,6 +247,20 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
     }
+
+
+    // event handling for highlights
+    function highlightSample(event, sample, highlight){
+      for (var _i = 0; _i < arguments.length; _i++) {
+        console.log("fire:",arguments[_i]);
+      }
+      //console.log(event, sample, highlight, cleanSelectors(sample));
+
+      svg.selectAll(".sample"+ cleanSelectors(sample)).classed("highlighted", highlight);
+    }
+
+    event.on("sampleHighlight", highlightSample)
+
 
 
 
@@ -285,6 +314,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
         console.log("used iso:",usedIsoforms, minMax);
+
+
+        // update the map between sample and a unique css-save selectorName
+        sampleSelectorMap = {};
+        usedIsoformsList[0].weights.forEach(function(d,i){
+          sampleSelectorMap[d.sample] = i;
+        })
+
 
         drawIsoforms(usedIsoformsList, minMax);
 

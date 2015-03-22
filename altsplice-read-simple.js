@@ -88,8 +88,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       crosshair.attr({
         "x1":x,
         "x2":x
+      }).style({
+        opacity:function(){
+          return x>that.axis.getWidth()?0:1
+        }
       })
-
 
     }
 
