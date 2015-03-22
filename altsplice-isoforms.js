@@ -168,23 +168,31 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       //console.log(that.axis);
 
 
+
+        var sampleSelectorMap = {};
+        isoformList[0].weights.forEach(function(d,i){
+          sampleSelectorMap[d.sample] = i;
+        })
+
+        function cleanSelectors(sel){return sampleSelectorMap[sel]}
+
         var sampleDot = isoform.selectAll(".sampleDot").data( function(d,i){return d.weights} );
         sampleDot.exit().remove();
 
         // --- adding Element to class sampleDot
         var sampleDotEnter = sampleDot.enter().append("circle").attr({
-            "class":function(d){return "sampleDot "+ d.sample;},
-            r:5
+            "class":function(d){return "sampleDot sample"+ cleanSelectors(d.sample);},
+            r:3
 
         }).on({
-          "mouseover":function(d){svg.selectAll("."+ d.sample).classed("highlighted", true);},
-          "mouseout":function(d){svg.selectAll("."+ d.sample).classed("highlighted", false);}
+          "mouseover":function(d){svg.selectAll(".sample"+ cleanSelectors(d.sample)).classed("highlighted", true);},
+          "mouseout":function(d){svg.selectAll(".sample"+ cleanSelectors(d.sample)).classed("highlighted", false);}
         })
 
         // --- changing nodes for sampleDot
         sampleDot.attr({
             cx: function(d){return  scaleXScatter(d.weight)},
-            cy: exonHeight/2
+            cy: function(){return exonHeight/4+Math.random()*exonHeight/2}
         })
 
     }
