@@ -35,14 +35,14 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
       d3.select("#toggleIntrons").on({
         click: function () {
           var el = d3.select(this);
-          if (el.classed("btn-primary")){
+          if (el.classed("buttonSelected")){
             // de-activate
-            el.classed("btn-primary", false);
+            el.classed("buttonSelected", false);
             that.genomeDataLink.genomeAxis.shrinkIntrons(false);
             event.fire("axisChange");
 
           }else{
-           el.classed("btn-primary", true);
+           el.classed("buttonSelected", true);
             that.genomeDataLink.genomeAxis.shrinkIntrons(true);
             event.fire("axisChange");
           }
