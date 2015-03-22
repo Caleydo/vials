@@ -106,6 +106,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
+
+    var sampleSelectorMap = {} // will be updated at updateData()..
+
+    function cleanSelectors(sel){return sampleSelectorMap[sel]}
+
+
+
+
     function drawSamples(samples, minMaxValues, g){
 
       var exonHeight = 30;
@@ -153,8 +161,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         height:exonHeight,
         class:"background"
       }).on({
-        "mouseover": function(){console.log("SAdfasf");d3.select(this).classed("selected", true);},
-        "mouseout": function(){d3.select(this).classed("selected", false);},
+        "mouseover": function(d){
+          d3.select(this).classed("selected", true);
+          event.fire("sampleHighlight", d.sample, true);
+        },
+        "mouseout": function(d){
+          d3.select(this).classed("selected", false);
+          event.fire("sampleHighlight", d.sample, false);
+        },
         "click":function(d, i){
           var el = d3.select(this);
           if (el.classed("fixed")){
@@ -184,6 +198,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       // update !!!
 
       abundance.select(".abundanceGraph").attr({
+        "class": function(d){return "abundanceGraph sample" +  cleanSelectors(d.sample)},
         "d":function(d){return that.lineFunction(d.weights)}
       })
 
@@ -192,67 +207,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
 
-      //
-      ///*
-      // * ========================
-      // * Draw exon abstractions
-      // * =========================
-      // * */
-      //
-      //var exon = abundance.selectAll(".exon").data(function(d){return d.ranges});
-      //exon.exit().remove();
-      //
-      //// --- adding Element to class exons
-      //var exonEnter = exon.enter().append("rect").attr({
-      //  "class":"exon",
-      //  height:exonHeight
-      //  //y:exonHeight
-      //})
-      //
-      //// --- changing nodes for exons
-      //exon.attr({
-      //  width: function(d,i){
-      //    return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)
-      //  },
-      //  x:function(d){return that.axis.genePosToScreenPos(d.start);}
-      //})
-      //
-      //
-      ///*
-      // * ===============
-      // * Draw samples
-      // * ===============
-      // * */
-      //
-      ////console.log(that.axis);
-      //
-      //
-      //
-      //var sampleSelectorMap = {};
-      //isoformList[0].weights.forEach(function(d,i){
-      //  sampleSelectorMap[d.sample] = i;
-      //})
-      //
-      //function cleanSelectors(sel){return sampleSelectorMap[sel]}
-      //
-      //var sampleDot = abundance.selectAll(".sampleDot").data( function(d,i){return d.weights} );
-      //sampleDot.exit().remove();
-      //
-      //// --- adding Element to class sampleDot
-      //var sampleDotEnter = sampleDot.enter().append("circle").attr({
-      //  "class":function(d){return "sampleDot sample"+ cleanSelectors(d.sample);},
-      //  r:3
-      //
-      //}).on({
-      //  "mouseover":function(d){svg.selectAll(".sample"+ cleanSelectors(d.sample)).classed("highlighted", true);},
-      //  "mouseout":function(d){svg.selectAll(".sample"+ cleanSelectors(d.sample)).classed("highlighted", false);}
-      //})
-      //
-      //// --- changing nodes for sampleDot
-      //sampleDot.attr({
-      //  cx: function(d){return  scaleXScatter(d.weight)},
-      //  cy: function(){return exonHeight/4+Math.random()*exonHeight/2}
-      //})
 
     }
 
@@ -458,13 +412,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
         //d3.nest().key(function(k){return k.key}).map(a)
         var minmaxCand = [];
-        sampleData.measures.reads.forEach(function (read) {
+        // update the map between sample and a unique css-save selectorName
+        sampleSelectorMap = {};
+        sampleData.measures.reads.forEach(function (read, i) {
           minmaxCand.push(read.min);
           minmaxCand.push(read.max);
+          sampleSelectorMap[read.sample] = i;
         })
         var minMax = d3.extent(minmaxCand)
 
-        //console.log("used iso:",usedIsoforms, minMax);
+
+
 
         var noSamples = sampleData.measures.reads.length;
 
@@ -495,6 +453,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
     event.on("axisChange", axisUpdate)
+
+
+    // event handling for highlights
+    function highlightSample(event, sample, highlight){
+
+      svg.selectAll(".sample"+ cleanSelectors(sample)).classed("highlighted", highlight);
+    }
+
+    event.on("sampleHighlight", highlightSample)
+
 
     return head.node();
 

@@ -50,23 +50,23 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
       })
 
 
-      d3.select("#testIso").on({
-        click: function(){
-          event.fire("isoFormSelect", {isoform:"uc003tqh.2", index:0});
-        }
-      })
-
-      d3.select("#testIso2").on({
-        click: function(){
-          event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:0});
-        }
-      })
-
-      d3.select("#testIso3").on({
-        click: function(){
-          event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:-1});
-        }
-      })
+      //d3.select("#testIso").on({
+      //  click: function(){
+      //    event.fire("isoFormSelect", {isoform:"uc003tqh.2", index:0});
+      //  }
+      //})
+      //
+      //d3.select("#testIso2").on({
+      //  click: function(){
+      //    event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:0});
+      //  }
+      //})
+      //
+      //d3.select("#testIso3").on({
+      //  click: function(){
+      //    event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:-1});
+      //  }
+      //})
 
     }
 

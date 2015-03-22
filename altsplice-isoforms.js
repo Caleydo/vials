@@ -237,7 +237,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var sampleDotEnter = sampleDot.enter().append("circle").attr({
             "class":function(d){return "sampleDot sample"+ cleanSelectors(d.sample);},
             r:3
-
         }).on({
           "mouseover":function(d){event.fire("sampleHighlight", d.sample, true)},
           "mouseout":function(d){event.fire("sampleHighlight", d.sample, false)}
@@ -255,10 +254,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     // event handling for highlights
     function highlightSample(event, sample, highlight){
-      for (var _i = 0; _i < arguments.length; _i++) {
-        console.log("fire:",arguments[_i]);
-      }
-      //console.log(event, sample, highlight, cleanSelectors(sample));
 
       svg.selectAll(".sample"+ cleanSelectors(sample)).classed("highlighted", highlight);
     }
