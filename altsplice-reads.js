@@ -40,7 +40,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         var margin = {top: 10, right: 10, bottom: 20, left: 10},
                 width = 800 - margin.left - margin.right,
-                height = 300 - margin.top - margin.bottom;
+                height = 1500 - margin.top - margin.bottom;
 
         var svg = head.append("svg")
                 .attr("width", width + margin.left + margin.right)
@@ -61,32 +61,31 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
             this.update = function(data) {
                 this.data = data || this.data;
-                this.splitData = this.axis.splitXData(this.data)
                 this.drawLines();
-                this.drawBoxes();
+                // this.drawBoxes();
             }
 
             this.drawLines = function() {
                 var axis = this.axis;
                 var aggregate = this.aggregate;
+                var dataLen = this.data.length;
                 var avgFunc = d3.svg.line()
-                                .x(function(d) {
-                                    return axis.getXPos(d.pos) + 0.5*axis.rangeBand();
+                                .x(function(d, i) {
+                                    return axis.arrayPosToScreenPos(i);
                                 })
                                 .y(function(d) {
-                                    var wiggle = aggregate ? d3.mean(d.wiggle) : d.wiggle;
+                                    var wiggle = aggregate ? d3.mean(d) : d;
                                     return styles["sampleBarHeight"]*(1-wiggle);
                                 })
                                 .interpolate('step');
 
-                var avgLines = this.g.selectAll(".avgLine").data(this.splitData);
-                avgLines.exit().remove();
-                avgLines.enter().append("svg:path").attr({
+                this.g.selectAll(".avgLine").remove();
+                this.g.append("svg:path").attr({
                                                        fill: "none",
                                                        stroke: "red",
                                                        class: "avgLine",
                                                      })
-                avgLines.attr("d", function(d) {return avgFunc(d)});
+                this.g.selectAll(".avgLine").attr("d", avgFunc(this.data));
 
                 if (this.aggregate) {
                     // need to update d3 to use d3.deviation
@@ -103,24 +102,23 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                     }
 
                     var stdAreaFunc = d3.svg.area()
-                        .x(function(d) {
-                            return axis.getXPos(d.pos) + 0.5*axis.rangeBand();
+                        .x(function(d, i) {
+                            return axis.arrayPosToScreenPos(i);
                         })
                         .y0(function(d) {
-                            return styles["sampleBarHeight"]*(1-d3.mean(d.wiggle)-std(d.wiggle));
+                            return styles["sampleBarHeight"]*(1-d3.mean(d)-std(d));
                         })
                         .y1(function(d) {
-                            var val = d3.mean(d.wiggle) + std(d.wiggle);
-                            return styles["sampleBarHeight"]*(1-d3.mean(d.wiggle)+std(d.wiggle));
+                            var val = d3.mean(d) + std(d);
+                            return styles["sampleBarHeight"]*(1-d3.mean(d)+std(d));
                         });
-                    var stdAreas = this.g.selectAll(".stdArea").data(this.splitData);
-                    stdAreas.exit().remove();
-                    stdAreas.enter().append("svg:path").attr({
+                    this.g.selectAll(".stdArea").remove();
+                    this.g.append("svg:path").attr({
                                                            fill: "red",
                                                            opacity: 0.3,
                                                            class: "stdArea",
                                                          })
-                    stdAreas.attr("d", function(d) {return stdAreaFunc(d)});
+                    this.g.selectAll(".stdArea").attr("d", function(d) {return stdAreaFunc(d)});
                 }
             }
 
@@ -177,7 +175,36 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                 this.data = data;
                 var samples = this.samples;
 
-                this.sampleBars.forEach(function(s) {s.update(data["samples"][s.id]["positions"])})
+                var reads = data["measures"]["reads"];
+                this.sampleReads = {};
+
+                var maxRead = 0;
+                var collection = this;
+                reads.forEach(function(d, i) {
+                    maxRead = Math.max(maxRead, d["max"]);
+                    if (samples.indexOf(d["sample"]) >= 0) {
+                        collection.sampleReads[d["sample"]] = d["weights"];
+                    }
+                })
+                for (sample in this.sampleReads) {
+                    var weights = this.sampleReads[sample];
+                    weights = weights.map(function(weight) {return weight / maxRead});
+                    weights = this.sampleReads[sample] = weights;
+                }
+                this.sampleBars.forEach(function(s) {s.update(collection.sampleReads[s.id])});
+                var collection = this;
+                if (collection.data && collection.aggregate) {
+                    var data = collection.data;
+                    var firstSampleData = collection.getSampleData(collection.samples[0]);
+                    var aggData = firstSampleData.map(function(d, i) {
+                        return collection.samples.map(
+                            function(sample) {
+                                return collection.getSampleData(sample)[i]
+                            }
+                        )
+                    });
+                    this.aggBar.update(aggData);
+                }
             }
 
             this.draw = function() {
@@ -191,6 +218,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                     this.g.selectAll(".linesGroup").remove();
                     this.drawSelector();
                 }
+            }
+
+            this.getSampleData = function(sample) {
+                return this.sampleReads[sample]
             }
 
             this.drawSamples = function() {
@@ -245,21 +276,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                 this.aggBar.g.attr("visibility", "hidden")
                 this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "hidden")
                 sampleGroups.selectAll(".sampleLabel").attr("visibility", "visible")
-                sampleGroups.transition().attr("opacity", 1);
-                if (this.data) {
-                    var data = this.data;
-                    var aggData = data["samples"][this.samples[0]]["positions"].map(function(d, i) {
-                        return {
-                                "pos": d.pos,
-                                "wiggle": samples.map(function(sample) {return data["samples"][sample]["positions"][i].wiggle}),
-                            }});
-                    this.aggBar.update(aggData);
-                }
+                sampleGroups.selectAll(".avgLine").attr("opacity", 1);
                 if (this.collapse) {
                     sampleGroups.selectAll(".sampleLabel").attr("visibility", "hidden")
                     this.aggBar.g.selectAll(".sampleLabel").attr("visibility", "visible")
                     if (this.aggregate) {
-                        sampleGroups.transition().attr("opacity", 0.2);
+                        sampleGroups.selectAll(".avgLine").attr("opacity", 0.2);
                         this.aggBar.g.attr("visibility", "visible")
                     }
                 }
@@ -393,20 +415,19 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             this.update = function() {
                 var geneName     = gui.current.getSelectedGene(),
                     pos         = gui.current.getStartPos(),
-                    baseWidth   = gui.current.getBaseWidth();
+                    baseWidth   = gui.current.getBaseWidth(),
+                    curProject = gui.current.getSelectedProject();
 
                 if (geneName !== this.curGene){
                     pos = null
                     baseWidth = null
                 }
-                that.data.getSamples(geneName,pos,baseWidth)
-                // that.data.getTestSamples("pileup ENSG00000150782.json")
+
+                that.data.getGeneData(curProject, geneName)
                     .then(function (data) {
                         globalData = data;
-                        var geneInfo = data["geneInfo"];
-                        that.axis.update(geneInfo,
-                                         pos || geneInfo["geneSpan"][0],
-                                         baseWidth || (geneInfo["geneSpan"][1] - geneInfo["geneSpan"][0] + 1));
+                        var geneInfo = data["gene"];
+                        // that.axis.update(geneInfo);
                         that.draw(data);
                     })
             }
@@ -429,10 +450,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             };
 
             this.draw = function(data) {
-                var
-                    data      = data || this.readData,
+                var data      = data || this.readData,
                     samples   = d3.keys(data["samples"]);
-
+                
                 this.readData = data;
 
                 var sampleBarGraphHeight = samples.length * (styles["sampleBarHeight"] + styles["sampleBarMargin"]);
@@ -452,7 +472,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                     "transform": "translate(0," + (this.collections.reduce(function(memo, c) {return memo + (c.collapse ? 1 : c.samples.length)}, 0) * (styles["sampleBarHeight"] + styles["sampleBarMargin"]) + this.collections.length * styles["collectionMargin"]) + ")",
                 });
                 this.axisGroup = axisGroup;
-                this.axis.draw(axisGroup);
+                // this.axis.draw(axisGroup);
+
 
                 var collectionGroups = this.g.selectAll(".collection").data(this.collections);
                 collectionGroups.exit().remove();

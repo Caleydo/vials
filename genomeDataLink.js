@@ -11,7 +11,7 @@ define(['exports', '../caleydo/main', '../caleydo/datatype', 'd3', '../bower_com
         this.allGenes=null;
         this.bamHeader=null;
         this.allProjects = null;
-        this.options={"showIntrons": false};
+        this.options={"showIntrons": true};
         this.genomeAxis=brokenAxis.create(600, this.options);
         this.localFileName = null;
         this.localFileData = null;
