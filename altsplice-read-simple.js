@@ -64,6 +64,38 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     })
 
 
+    // create crosshair
+    var crosshair = svg.append("line").attr({
+      "class":"crosshair",
+      "x1":0,
+      "y1":0,
+      "x2":50,
+      "y2":height
+    }).style({
+      "stroke-width":"1",
+      "stroke":"black",
+      "pointer-events":"none"
+    });
+
+    var currentX = 0;
+    svg.on("mousemove", function () {
+      currentX = d3.mouse(this)[0];
+      event.fire("crosshair", currentX);
+
+    })
+
+    function updateCrosshair(event, x){
+      crosshair.attr({
+        "x1":x,
+        "x2":x
+      })
+
+
+    }
+
+    event.on("crosshair", updateCrosshair);
+
+
 
 
     function drawSamples(samples, minMaxValues){
@@ -77,6 +109,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       height = (exonHeight+3)*noSamples;
       svg.attr("height", height+margin.top+margin.bottom)
         .attr("width", width + margin.left + margin.right);
+
+      // crosshair update
+      crosshair.attr({
+        "y2":height+margin.top+margin.bottom
+      })
+
+
 
       var scaleY = function(x){ return x*(exonHeight+3)};
       var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, width])
