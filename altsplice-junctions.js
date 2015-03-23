@@ -211,7 +211,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         connectors.transition()
           .duration(300).attr({
             "points": function() {
-              return getPoints(this)
+              return getConnectorPoints(this)
             }
           })
 
@@ -350,20 +350,35 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     }
 
-      function getBucketAt(loc) {
+      function getBucketIndAt(loc) {
         for (var i = 0; i < buckets.length; i++) {
           if (buckets[i].loc == loc)
-            return buckets[i];
+            return i;
         }
       }
 
+      function getBucketAt(loc) {
+        return buckets[getBucketIndAt(loc)];
+      }
 
-      function getPoints(connector) {
-        return  [
-          connector.getAttribute("x1"), jxnWrapperHeight,
-          connector.getAttribute("x2"), jxnWrapperHeight,
-          connector.getAttribute("x3"), getDonorY(),
-        ]
+      function getConnectorPoints(connector) {
+
+        var bucketInd = connector.getAttribute("adjacentSingletonAcceptorBucket");
+        if (bucketInd == "none") {
+          return [
+            connector.getAttribute("x1"), jxnWrapperHeight,
+            connector.getAttribute("x2"), jxnWrapperHeight,
+            connector.getAttribute("x3"), getDonorY(),
+          ]
+        }
+        else {
+          return [
+            connector.getAttribute("x1"), jxnWrapperHeight,
+            connector.getAttribute("x2"), jxnWrapperHeight,
+            buckets[bucketInd].xStart, getDonorY(),
+            connector.getAttribute("x3"), getDonorY(),
+          ]
+        }
       }
 
       function getDonorY() {
@@ -394,12 +409,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           })
 
           var donorLoc = jxnsData.weights[jxnGroup.start].start;
+          var donorInd = getBucketIndAt(donorLoc);
           jxnArea.append("polygon").attr({
             x1: startX +1,
             x2: startX + wrapperWidth -1,
-            x3: getBucketAt(donorLoc).xEnd,
-            "points": function() {return getPoints(this)},
+            x3: buckets[donorInd].xEnd,
             "loc": donorLoc,
+            "adjacentSingletonAcceptorBucket": function() {
+              if (jxnGroup.groups.length == 1) {
+                var loc = jxnGroup.groups[0].endLoc;
+                var acceptorInd = getBucketIndAt(loc);
+                return acceptorInd == donorInd + 1 ? acceptorInd : "none"
+              }
+              return "none"
+            },
+            "points": function() {return getConnectorPoints(this)},
             "class": "JXNAreaConnector",
             "stroke": "#ccc",
             "fill":"#ccc"
@@ -475,24 +499,29 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           })
 
           var anchorX = startX + (groupInd + 0.5) * groupWidth;
-          linesGroup.append("line").attr({
-            "type": "acceptor",
-            "anchorX": anchorX,
-            "x1": anchorX,
-            "x2": getBucketAt(group.endLoc).xStart,
-            "startLoc": group.startLoc,
-            "endLoc": group.endLoc,
-            "y1": jxnWrapperHeight,
-            "y2": getDonorY(),
-            "class": "edgeConnector",
-            "stroke": "red"
-          })
+
+          var endInd = getBucketIndAt(group.endLoc);
+          var startInd = getBucketIndAt(group.startLoc);
+          if (endInd > startInd + 1 || jxnGroup.groups.length > 1) {
+            linesGroup.append("line").attr({
+              "type": "acceptor",
+              "anchorX": anchorX,
+              "x1": anchorX,
+              "x2": buckets[endInd].xStart,
+              "startLoc": group.startLoc,
+              "endLoc": group.endLoc,
+              "y1": jxnWrapperHeight,
+              "y2": getDonorY(),
+              "class": "edgeConnector",
+              "stroke": "red"
+            })
+          }
 
           linesGroup.append("line").attr({
             "type": "donor",
             "anchorX": anchorX,
             "x1": anchorX,
-            "x2": getBucketAt(group.startLoc).xEnd,
+            "x2": buckets[startInd].xEnd,
             "startLoc": group.startLoc,
             "endLoc": group.endLoc,
             "y1": jxnWrapperHeight,
