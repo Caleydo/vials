@@ -35,6 +35,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
   var margin = {top: 40, right: 10, bottom: 20, left: 10};
   var width; // = 1050 - margin.left - margin.right,
+  var groupWidth;
+  var expandedWidth;
   var height = 450 - margin.top - margin.bottom;
   var dotRadius = 4;
   var triangleLength = 8;
@@ -57,12 +59,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
   var curGene;
   var curExons;
-  var expandedIsoform = -1;
-  var selectedIsoform = -1;
+  var expandedIsoform = null;
+  var selectedIsoform = null;
 
 
   var jxnsData;
   var allSamples;
+  var sampleLength;
+
   var allIsoforms;
   var allExons;
   var jxnGroups = [];
@@ -104,8 +108,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     width = axis.getWidth();
 
-    var sampleDataSet;
-
     var viewOptionsDiv = $parent.append("div").style({
       "left": "20px"
     });
@@ -114,8 +116,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       $('<label />', { 'for': 'cb', text: "Show groups" }).appendTo(viewOptionsDiv);
       $('#cbshowGroups').change(function() {
         showDotGroups = $(this).is(":checked")
-        if (expandedIsoform >= 0) {
-          expandIsoform(expandedIsoform, sampleDataSet);
+        if (expandedIsoform != null) {
+          expandIsoform(expandedIsoform);
         }
       });
 
@@ -136,7 +138,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       event.on("isoFormSelect", function(ev,data){
       var index  = data.index;
 
-      if (expandedIsoform != index && expandedIsoform != -1) {
+      if (expandedIsoform != null && expandedIsoform != data) {
         collapseIsoform(expandedIsoform, function() {
           selectIsoform(data);
         })
@@ -162,8 +164,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         if (otherSamples.length > 0)
           groups.push({"samples": otherSamples, "color": "gray"})
       }
-      if ((expandedIsoform >= 0) && showDotGroups) {
-        createGroups(expandedIsoform, sampleDataSet);
+      if ((expandedIsoform != null) && showDotGroups) {
+        createGroups(expandedIsoform);
       }
     });
 
@@ -192,8 +194,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         d3.selectAll(".edgeConnector").transition()
           .duration(300).attr({
             "x2": function() {
-              var loc = this.getAttribute("endLoc")
-              return getBucketAt(loc).xStart
+              var type = this.getAttribute("type");
+              var loc = type == "donor" ?
+                this.getAttribute("startLoc") :  this.getAttribute("endLoc");
+              return type ==  "donor" ? getBucketAt(loc).xEnd : getBucketAt(loc).xStart;
             }
           })
 
@@ -253,6 +257,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         jxnsData = sampleData.measures.jxns;
         allSamples = sampleData.samples;
+        sampleLength = Object.keys(allSamples).length;
         allIsoforms = sampleData.gene.isoforms;
         allExons = sampleData.gene.exons;
         // TODO: Hen: workaround for missing update cycle
@@ -308,7 +313,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     function computeJxnGroups() {
       jxnsData.weights.sort(function (a, b) { return a.start < b.start ? -1 :
         a.start > b.start ? 1 :
-          a.end < b.end ? - 1 : 1;
+        a.end < b.end ? - 1 :
+        a.end < b.end ? 1 :
+        a.weight < b.weight ? -1 : 1;
       });
 
       var ind = 0;
@@ -365,46 +372,86 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       function drawJxns() {
 
-      var groupWidth =  (width - weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
+      groupWidth =  (width - weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
 
-      var linesGroup = jxnArea.append("g").style({
-        "visibility": "visible"
-      })
+        var grayStripesGroup = jxnArea.append("g");
+        var linesGroup = jxnArea.append("g");
 
 
-      var startX = weightAxisCaptionWidth + jxnWrapperPadding;
-      for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
+        var startX = weightAxisCaptionWidth + jxnWrapperPadding;
+        for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
+
+          var jxnGroup = jxnGroups[jxnGpInd];
+          var wrapperWidth = groupWidth * jxnGroup.groups.length;
+          grayStripesGroup.append("rect").attr({
+            "class": "jxnWrapperBox",
+            "fill": "#ccc",
+            "height": jxnWrapperHeight,
+            "width": function (d, i) {
+              return wrapperWidth
+            },
+            "transform": "translate(" + startX + ", 0)"
+          })
+
+          var donorLoc = jxnsData.weights[jxnGroup.start].start;
+          jxnArea.append("polygon").attr({
+            x1: startX +1,
+            x2: startX + wrapperWidth -1,
+            x3: getBucketAt(donorLoc).xEnd,
+            "points": function() {return getPoints(this)},
+            "loc": donorLoc,
+            "class": "JXNAreaConnector",
+            "stroke": "#ccc",
+            "fill":"#ccc"
+          })
+          startX += groupWidth * jxnGroups[jxnGpInd].groups.length + jxnWrapperPadding;
+        }
+
+        var startX = weightAxisCaptionWidth + jxnWrapperPadding;
+        for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
 
         var jxnGroup = jxnGroups[jxnGpInd];
+        var wrapperWidth = groupWidth * jxnGroup.groups.length;
+
 
         var jxnGroupWrapper = jxnArea.append("g").attr({
-          "class": "jxnWrapperBox",
-          "transform": "translate(" + startX + ", 0)"
+          "class": "jxnWrapper",
         });
-
-        var wrapperWidth = groupWidth * jxnGroup.groups.length;
-        jxnGroupWrapper.append("rect").attr({
-          "class": "jxnWrapperBox",
-          "fill": "#ccc",
-          "height": jxnWrapperHeight,
-          "width": function(d, i) {
-            return wrapperWidth
-          }
-        })
 
         var edgeGroups = jxnGroupWrapper.selectAll(".edgeGroup").data(jxnGroup.groups).enter().append("g").attr({
           "class": "edgeGroup",
+          "ActiveIsoform": -1,
+          "startLoc": function(g) {return g.startLoc},
+          "endLoc": function(g) {return g.endLoc},
           "transform": function(d, i) {
-            return "translate(" + groupWidth * i + ", 0)"
-          }
+            return "translate(" + (startX + groupWidth * i) + ", 0)"
+          },
+          "startX": function(d, i) {return startX + groupWidth * i},
         });
+
 
         edgeGroups.each(function(group, groupInd) {
           var groupNode = d3.select(this);
-          var dotsGroup = d3.select(this).append("g");
 
           var y1 = jxnWrapperHeight + RNAMargin + RNAHeight/2;
           var y2 = y1 + 2 * RNAMargin;
+
+          groupNode.append("rect").attr({
+            "class": "jxnContainer",
+            "startLoc": group.startLoc,
+            "endLoc": group.endLoc,
+            "fill": "white",
+            "stroke": "black",
+            "height": jxnWrapperHeight,
+            "transform": " translate(" + groupWidth / 2 + ", 0)",
+            "width": 0
+          }).style({
+            "opacity": 0,
+            "visibility": "hidden"
+          }).on("dblclick", function() {
+            sortDots(this.parentNode);
+          })
+
 
           groupNode.append("rect").attr({
             "class": "edgeAnchor",
@@ -415,10 +462,23 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "height": 5,
             "width": groupWidth / 2,
             "transform": "translate(" + groupWidth / 4 + ", " + (jxnWrapperHeight - 6) + ")"
+          }).on("dblclick", function() {
+            if (selectedIsoform.index == this.parentNode.getAttribute("ActiveIsoform")) {
+              if (selectedIsoform == expandedIsoform) {
+                collapseIsoform(selectedIsoform);
+              }
+              else {
+                expandIsoform(selectedIsoform);
+                sortDots(this.parentNode);
+              }
+            }
           })
 
+          var anchorX = startX + (groupInd + 0.5) * groupWidth;
           linesGroup.append("line").attr({
-            "x1": startX + (groupInd + 0.5) * groupWidth,
+            "type": "acceptor",
+            "anchorX": anchorX,
+            "x1": anchorX,
             "x2": getBucketAt(group.endLoc).xStart,
             "startLoc": group.startLoc,
             "endLoc": group.endLoc,
@@ -428,7 +488,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "stroke": "red"
           })
 
-          var sampleLength = Object.keys(allSamples).length;
+          linesGroup.append("line").attr({
+            "type": "donor",
+            "anchorX": anchorX,
+            "x1": anchorX,
+            "x2": getBucketAt(group.startLoc).xEnd,
+            "startLoc": group.startLoc,
+            "endLoc": group.endLoc,
+            "y1": jxnWrapperHeight,
+            "y2": getDonorY(),
+            "class": "edgeConnector",
+            "stroke": "blue"
+          }).style({
+            "visibility": "hidden"
+            })
+
           var boxPlotData = new Array(sampleLength);
           var nonZeroStartIndex = sampleLength - (group.end - group.start + 1);
           for (var i = 0; i < sampleLength; i++) {
@@ -438,13 +512,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               boxPlotData[i] = jxnsData.weights[group.start + i - nonZeroStartIndex].weight;
           }
           var boxplotData = computeBoxPlot(boxPlotData, 1);
-          var boxplot = createBoxPlot(dotsGroup, "boxplot",
+          var boxplot = createBoxPlot(groupNode, "boxplot",
             boxplotData.whiskerDown, boxplotData.whiskerTop, boxplotData.Q).attr({
               "transform": " translate(" + groupWidth / 2 + ", 0)",
             }).style({
             });
 
-
+          var dotsGroup = groupNode.append("g");
           for (var ind = group.start; ind <= group.end; ind++) {
             var jxnData = jxnsData.weights[ind];
             var jxnCircle = dotsGroup.append("circle").attr({
@@ -484,17 +558,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
 
-        var donorLoc = jxnsData.weights[jxnGroup.start].start;
-        jxnArea.append("polygon").attr({
-          x1: startX +1,
-          x2: startX + wrapperWidth -1,
-          x3: getBucketAt(donorLoc).xEnd,
-          "points": function() {return getPoints(this)},
-          "loc": donorLoc,
-          "class": "JXNAreaConnector",
-          "stroke": "#ccc",
-          "fill":"#ccc"
-        })
         startX += groupWidth * jxnGroups[jxnGpInd].groups.length + jxnWrapperPadding;
       }
 
@@ -855,34 +918,30 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     function expandJxn(boxPlotGroup, callback) {
 
-      var srcInd = boxPlotGroup.getAttribute("sourceExonInd");
-      var targetInd = boxPlotGroup.getAttribute("targetExonInd");
+      var jxnWrapper = boxPlotGroup.parentNode;
 
-      var minVal = boxPlotGroup.getAttribute("minVal");
-      var maxVal = boxPlotGroup.getAttribute("maxVal");
-
-      boxPlotGroup.parentNode.appendChild(boxPlotGroup);
+      jxnWrapper.parentNode.appendChild(jxnWrapper);
 
       var parentNode = d3.select(boxPlotGroup);
-      var transformation, containerWidth;
-      parentNode.selectAll(".jxnContainer").style({"visibility": "visible"})
-        .transition().duration(400).style({
+      parentNode.each(function(d, i) {
+        console.log("Group: " + d.start + " - " + d.end)
+      })
+      parentNode.selectAll(".jxnContainer").attr({
+        "width": expandedWidth,
+      }).style({"visibility": "visible"})
+        .transition().duration(300).style({
         "opacity": 1,
-        "visibility": "visible"
-      }).each(function() {
-          transformation = this.getAttribute("transform")
-          containerWidth = this.getAttribute("width")
-        }).each("end", callback);
+      }).each("end", callback);
 
       var boxplots = parentNode.selectAll(".boxplot");
 
-      boxplots.transition().duration(400).attr({
+/*      boxplots.transition().duration(400).attr({
         "transform": transformation,
       });
       boxplots.selectAll(".boxPlotQLine").
         style({"stroke-dasharray": "5,5"})
         .transition().duration(400).attr({"x2": containerWidth});
-
+*/
 
 //      boxPlotGroup.selectAll(".boxPlotLine").style({
 //        "visibility": "hidden"
@@ -901,24 +960,27 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     function collapseJxn(parentNode, callback) {
 
+      parentNode.transition().duration(200).attr({
+        "transform": function() {
+          return  "translate(" + this.getAttribute("startX") + ", 0)"
+        }
+      })
+
       parentNode.selectAll(".jxnContainer").transition().duration(400).style({
         "opacity": 0,
       }).each("end", callback);
 
-      removeSubboxplots(parentNode)
+      // removeSubboxplots(parentNode)
 
-      var boxplots = parentNode.selectAll(".boxplot");
+      // var boxplots = parentNode.selectAll(".boxplot");
 
-      boxplots.transition().duration(400).attr({
-        "transform": ""
-      })
-      boxplots.selectAll(".boxPlotQLine")
+/*      boxplots.selectAll(".boxPlotQLine")
         .transition().duration(400).attr({"x2": jxnBBoxWidth / 2}).each("end", function() {
           d3.select(this).style({"stroke-dasharray": ""})
         });
-
+*/
       parentNode.selectAll(".jxnCircle").transition().duration(400).attr({
-        "cx": 0,
+        "cx": groupWidth / 2,
         "transform": ""
       })
 //      parentNode.transition().delay(400).selectAll(".boxPlotLine").style({
@@ -927,21 +989,51 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     }
 
-    function expandIsoform(activeIsoform, data) {
-      d3.selectAll(".boxplotWithDots").each(function () {
-        if (this.getAttribute("ActiveIsoform") == activeIsoform) {
-          expandJxn(this)
-          if (showDotGroups && (groups.length > 0)) {
-            createSubBoxPlots(this, data, groups);
-          }
-          else {
-            removeSubboxplots(d3.select(this));
-            sortDots(data, this)
-          }
-        }
-      })
-      expandedIsoform = activeIsoform;
+    function expandIsoform(isoform, sortBy) {
 
+      var numOfJunctions = allIsoforms[isoform.isoform].exons.length - 1;
+
+      var availableWidth = width - weightAxisCaptionWidth - jxnWrapperPadding;
+      var expandedSpace = Math.min(200, availableWidth / numOfJunctions);
+
+      var totalWidth = expandedSpace * numOfJunctions;
+
+      var activeEdgeGroups = d3.selectAll(".edgeGroup").filter(function () {
+        return this.getAttribute("ActiveIsoform") == isoform.index}
+      )
+
+      var leftMostGroupX = width, rightMostGroupX = 0;
+
+      activeEdgeGroups.each(function () {
+        var x = parseInt(this.getAttribute("startX"));
+        leftMostGroupX = Math.min(leftMostGroupX, x);
+        rightMostGroupX = Math.max(rightMostGroupX, x);
+      })
+
+      var startX = (rightMostGroupX + leftMostGroupX  + expandedSpace - totalWidth) / 2
+      startX = Math.min(startX, availableWidth - totalWidth)
+      startX = Math.max(startX, weightAxisCaptionWidth + jxnWrapperPadding)
+      expandedWidth = expandedSpace - 2 * jxnBBoxWidth;
+      activeEdgeGroups.each(function() {
+        d3.select(this).transition().duration(200).attr({
+          "transform": function() {
+            return "translate(" + startX + ", 0)"
+          }
+        }).each("end", function() {
+          expandJxn(this);
+        })
+        var startLoc = this.getAttribute("startLoc");
+        var endLoc = this.getAttribute("endLoc");
+        d3.selectAll(".edgeConnector").filter(function () {
+          return startLoc == this.getAttribute("startLoc") &&
+          endLoc == this.getAttribute("endLoc");
+        }).transition().duration(200).attr({
+          "x1":  startX + groupWidth / 2
+        });
+
+        startX += expandedSpace;
+      })
+      expandedIsoform = isoform;
     }
 
     function createGroups(activeIsoform, data) {
@@ -952,15 +1044,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             createSubBoxPlots(this, data, groups);
           }
           else {
-            sortDots(data, this)
+            sortDots(this)
           }
         }
       })
     }
 
-    function collapseIsoform(index, callback) {
-    var selection = d3.selectAll(".boxplotWithDots").filter(function (d, i) {
-      return (this.getAttribute("ActiveIsoform") == index);
+    function collapseIsoform(isoform, callback) {
+    var selection = d3.selectAll(".edgeGroup").filter(function (d, i) {
+      return this.getAttribute("ActiveIsoform") == isoform.index;
     })
     var size = 0;
     selection.each(function() { size++; });
@@ -971,11 +1063,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         parentNode.selectAll(".jxnContainer").style({
           "visibility": "hidden",
         })
-        if ((i == size - 1)&& callback)
+        if ((i == size - 1) && callback)
           callback()
       })
     })
-    expandedIsoform = -1;
+    d3.selectAll(".edgeConnector").transition().duration(200).attr({
+        "x1":  function() {
+          return this.getAttribute("anchorX");
+        }
+    });
+    expandedIsoform = null;
   }
 
     function getExpandJxnWidth() {
@@ -993,9 +1090,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function deSelectIsoforms() {
-      d3.selectAll(".JXNAreaConnector, .jxnWrapperBox, .miniExonBox, .miniExonEdge").
+      d3.selectAll(".JXNAreaConnector, .jxnWrapperBox, .miniExonBox, .miniExonEdge, .edgeGroup").
         transition().duration(200).style({
-          "opacity" : 1
+          "opacity" : 1,
+          "visibility": function() {
+            this.getAttribute("type") == "donor" ? "hidden" : "visible"
+        }
         })
       jxnArea.selectAll(".isoformEdge").style({"visibility":  "hidden"});
 
@@ -1021,16 +1121,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "opacity" : 0.1
         })
 
-      d3.selectAll(".RNASites, .RNASiteConnector, .JXNAreaConnector, .edgeAnchor, .edgeConnector").style({
-        "opacity" : 0.1
+      d3.selectAll(".RNASites, .RNASiteConnector, .JXNAreaConnector, .edgeAnchor, .edgeConnector, .edgeGroup").style({
+        "opacity" : 0.1,
+        "visibility": function() {
+          this.getAttribute("type") == "donor" ? "hidden" : "visible"
+        }
       })
-
-      /*        d3.selectAll(".jxnWrapper").transition().duration(300).style({
-       "opacity" : 0.1
-       })
-       d3.selectAll(".JXNAreaConnector").transition().duration(300).style({
-       "opacity" : 0.1
-       }) */
 
       var exonIDs = allIsoforms[data.isoform].exons;
 
@@ -1038,22 +1134,27 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       for (var exonInd = 0; exonInd < exonIDs.length; exonInd++) {
         var exon = allExons[exonIDs[exonInd]]
 
-        console.log(exon.start + "- " + exon.end);
+//        console.log(exon.start + "- " + exon.end);
 
-        if (exonInd != exonIDs.length - 1) {
-          d3.selectAll(".JXNAreaConnector").filter(function () {
-            return this.getAttribute("loc") == exon.end
-          }).style({
-            "opacity": 1
-          })
-        }
+        d3.selectAll(".RNASites, .RNASiteConnector").filter(function (d) {
+          return d.loc == exon.start || d.loc == exon.end
+        }).style({
+          "opacity": 1,
+        })
 
-        d3.selectAll(".edgeAnchor, .edgeConnector").filter(function () {
+        d3.selectAll(".edgeAnchor, .edgeConnector, .edgeGroup").filter(function () {
           var startLoc = this.getAttribute("startLoc");
           var endLoc = this.getAttribute("endLoc");
-          return startLoc == lastExonEnd && endLoc == exon.start
+          var include = startLoc == lastExonEnd && endLoc == exon.start
+          if (include && this.getAttribute("class") == "edgeGroup") {
+            d3.select(this).attr({
+              "ActiveIsoform": data.index
+            })
+          }
+          return include;
         }).style({
-          "opacity": 1
+          "opacity": 1,
+          "visibility": "visible"
         })
 
         lastExonEnd = exon.end;
@@ -1082,76 +1183,46 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           }
         })
         */
-
-      d3.selectAll(".boxplotWithDots").each(function() {
-        var srcExonInd = this.getAttribute("sourceExonInd");
-        var targetExonInd = this.getAttribute("targetExonInd");
-        this.setAttribute("ActiveIsoform", data.index);
-        var srcExon = curExons[srcExonInd ]
-        var targetExon= curExons[targetExonInd]
-        var ind = isoform.exons.indexOf(srcExon);
-        var groupNode = d3.select(this);
-        if (ind >= 0 && (ind < isoform.exons.length - 1) && isoform.exons[ind + 1] == targetExon) {
-          groupNode.transition().duration(300).style({
-            "opacity" : "1"
-          })
-          groupNode.selectAll(".jxnBBox").transition().duration(300).style({
-            "stroke": "black"
-          })
-
-          jxnArea.selectAll(".isoformEdge").filter(function() {
-            return this.getAttribute("startExonInd") == srcExonInd
-              && this.getAttribute("endExonInd") ==  targetExonInd
-          }).style({"visibility":  "visible"});
-        }
-        else {
-          this.setAttribute("ActiveIsoform", -1);
-          groupNode.transition().duration(300).style({
-            "opacity": "0.1"
-          })
-          jxnArea.selectAll(".isoformEdge").filter(function () {
-            return this.getAttribute("startExonInd") == srcExonInd
-              && this.getAttribute("endExonInd") == targetExonInd
-          }).style({"visibility": "hidden"});
-        }
-      })
-      selectedIsoform = data.index;
+      selectedIsoform = data;
     }
 
-    function sortDots(data, parentNode) {
+    function sortDots(parentNode) {
 
       var isoformInd = parentNode.getAttribute("ActiveIsoform");
 
-      var srcExonInd = parentNode.getAttribute("sourceExonInd");
-      var targetExonInd = parentNode.getAttribute("targetExonInd");
+      var indices = new Array(sampleLength);
+      d3.select(parentNode).each(function(d, i) {
+        var arrayLen = d.end - d.start + 1;
+        var shift = sampleLength - arrayLen;
+        for (var ind = d.start; ind <= d.end; ind++) {
+          indices[jxnsData.weights[ind].sample] = shift + (ind - d.start);
+        }
+      })
 
-      var activeJxnWeights = getJxnsFromSpan(data, curExons[srcExonInd], curExons[targetExonInd])
 
-      var indices = [];
+/*      var indices = [];
       for (var i = 0; i < activeJxnWeights.length; ++i) indices.push(i);
         indices.sort(function (a, b) { return activeJxnWeights[a] < activeJxnWeights[b] ? -1 : 1; });
+ */
 
-      var effectiveWidth = getExpandJxnWidth() - 3 * dotRadius - jxnBBoxWidth;
+      xJxnBoxScale.domain([0, indices.length - 1]).range([jxnBBoxWidth + 3 * dotRadius, expandedWidth + groupWidth / 2 - 3 * dotRadius])
 
-      d3.selectAll(".boxplotWithDots").filter(function() {
+      var newKeysCount = 0;
+
+      d3.selectAll(".edgeGroup").filter(function() {
         return this.getAttribute("ActiveIsoform") == isoformInd;
       }).each(function() {
-
         var thisNode = d3.select(this);
-        var transformation;
-        thisNode.selectAll(".jxnContainer").each(function()
-        {transformation = this.getAttribute("transform")});
 
-        var srcExonInd = this.getAttribute("sourceExonInd");
-        var targetExonInd = this.getAttribute("targetExonInd");
-
-        xJxnBoxScale.domain([0, samples.length - 1]).range([jxnBBoxWidth + 3 * dotRadius, effectiveWidth])
 
         thisNode.selectAll(".jxnCircle").transition().duration(400).attr({
           "cx": function(d, i) {
-            return xJxnBoxScale(indices[i])
+            var dataSample = this.getAttribute("data-sample");
+            if (indices[dataSample] === undefined ) {
+              indices[dataSample] = newKeysCount++;
+            }
+            return xJxnBoxScale(indices[dataSample])
           },
-          "transform" : transformation
         })
 
 /*        var axis = that.axis;
