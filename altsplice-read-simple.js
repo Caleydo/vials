@@ -230,7 +230,25 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "mapReads": function(exons) {
           var reads = []
           exons.forEach(function(e) {
-            reads = reads.concat(d3.range(e.start, e.end).map(function(d) {return {"pos": d, "weight": e.weight}}))
+            exonCoords = [
+              {
+                "pos": e.start,
+                "weight": e.weight.length > 1 ? e.weight.map(function() {return 0}) : 0
+              },
+              {
+                "pos": e.start,
+                "weight": e.weight
+              },
+              {
+                "pos": e.end,
+                "weight": e.weight
+              },
+              {
+                "pos": e.end,
+                "weight": e.weight.length > 1 ? e.weight.map(function() {return 0}) : 0
+              }
+            ]
+            reads = reads.concat(exonCoords)
           })
           return reads          
         },
