@@ -418,6 +418,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           })
 
           linesGroup.append("line").attr({
+            "type": "acceptor",
             "x1": startX + (groupInd + 0.5) * groupWidth,
             "x2": getBucketAt(group.endLoc).xStart,
             "startLoc": group.startLoc,
@@ -427,6 +428,20 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class": "edgeConnector",
             "stroke": "red"
           })
+
+          linesGroup.append("line").attr({
+            "type": "donor",
+            "x1": startX + (groupInd + 0.5) * groupWidth,
+            "x2": getBucketAt(group.startLoc).xEnd,
+            "startLoc": group.startLoc,
+            "endLoc": group.endLoc,
+            "y1": jxnWrapperHeight,
+            "y2": getDonorY(),
+            "class": "edgeConnector",
+            "stroke": "blue"
+          }).style({
+            "visibility": "hidden"
+            })
 
           var sampleLength = Object.keys(allSamples).length;
           var boxPlotData = new Array(sampleLength);
@@ -1022,7 +1037,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
       d3.selectAll(".RNASites, .RNASiteConnector, .JXNAreaConnector, .edgeAnchor, .edgeConnector").style({
-        "opacity" : 0.1
+        "opacity" : 0.1,
+        "visibility": function() {
+          this.getAttribute("type") == "donor" ? "hidden" : "visible"
+        }
       })
 
       /*        d3.selectAll(".jxnWrapper").transition().duration(300).style({
@@ -1040,6 +1058,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         console.log(exon.start + "- " + exon.end);
 
+        /*
         if (exonInd != exonIDs.length - 1) {
           d3.selectAll(".JXNAreaConnector").filter(function () {
             return this.getAttribute("loc") == exon.end
@@ -1047,13 +1066,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "opacity": 1
           })
         }
+        */
 
         d3.selectAll(".edgeAnchor, .edgeConnector").filter(function () {
           var startLoc = this.getAttribute("startLoc");
           var endLoc = this.getAttribute("endLoc");
-          return startLoc == lastExonEnd && endLoc == exon.start
+          return startLoc == lastExonEnd && endLoc == exon.start ||
+            startLoc == lastExonEnd && endLoc == exon.start
         }).style({
-          "opacity": 1
+          "opacity": 1,
+          "visibility": "visible"
         })
 
         lastExonEnd = exon.end;
