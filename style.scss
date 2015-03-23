@@ -43,7 +43,7 @@ $wes-red: #D16B54;
 .isoform {
   .exon{
     fill-opacity: .8;
-    pointer-events: none;
+    //pointer-events: none;
     fill:$wes-violet;
   }
   .background{
@@ -61,25 +61,26 @@ $wes-red: #D16B54;
   .sampleDot
   {
     fill:$wes-gray;
-    fill-opacity: .7;
+    fill-opacity: .5;
   }
   .sampleDot.highlighted{
     fill:$wes-red;
+    fill-opacity: 1;
   }
 }
 
 .buttonSelected{
-  background-color: $wes-green;
+  background-color: $wes-green !important;
 }
 
 .abundances{
 
   .abundanceGraph{
-    //fill-opacity: .8;
+    fill-opacity: .8;
     pointer-events: none;
-    stroke:$wes-violet;
+    stroke:$wes-gray;
     stroke-width: 1px;
-    fill:none;
+    fill:$wes-gray;
   }
   .abundanceGraph.highlighted{
     //fill-opacity: .8;

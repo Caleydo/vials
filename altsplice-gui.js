@@ -15,7 +15,9 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
 
     this.startPosDiv = d3.select("#startPos");
 
-    this.toggleIntrons = d3.select("#toggleIntrons")
+    this.toggleIntrons = d3.select("#toggleIntrons");
+
+    this.isoformSort = d3.select("#isoformSort")
 
     this.baseWidthInputDiv = d3.select("#baseWidth").attr({
       type:"text",
@@ -48,6 +50,17 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
           }
         }
       })
+
+
+      that.isoformSort.on({
+        "change":function(){
+
+
+
+          console.log($(that.isoformSort.node()).val());
+        }
+      })
+
 
 
       //d3.select("#testIso").on({

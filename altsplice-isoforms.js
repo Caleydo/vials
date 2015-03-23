@@ -36,6 +36,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
   var currentlySelectedIsoform = null;
 
+  var sortByMean = function(a,b){ return b.mean- a.mean; }
+  var currentSortFunction=sortByMean
+
+
+
 
   IsoFormVis.prototype.build = function($parent){
     var that = this;
@@ -44,6 +49,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       "class":"gv"
     })
 
+    var mergedRanges = [];
 
     var svg = head.append("svg")
       .attr("width", width + margin.left + margin.right)
@@ -105,10 +111,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     function cleanSelectors(sel){return sampleSelectorMap[sel]}
 
 
+    var exonHeight = 15;
+    var groupScale = function(x){ return x*(exonHeight+3)};
+
     function drawIsoforms(isoformList, minMaxValues){
         console.log("list", isoformList);
 
-        var exonHeight = 15;
         var scatterWidth = 200;
         var axisOffset =  that.axis.getWidth() + 10;
         var noIsoforms = isoformList.length;
@@ -123,7 +131,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
 
-        var scaleY = function(x){ return x*(exonHeight+3)};
         var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, width])
 
 
@@ -134,7 +141,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         * Manage .isoform - Groups
         * =========================
         * */
-        var isoform = gIso.selectAll(".isoform").data(isoformList, function (d) {return d.id });
+        var isoform = gIso.selectAll(".isoform")
+          .data(isoformList, function (d) {return d.id })
         isoform.exit().remove();
 
         // --- adding Element to class isoform
@@ -143,8 +151,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
         // --- changing nodes for isoform
-        isoform.attr({
-            "transform":function(d,i) {return "translate("+0+","+scaleY(i)+")";}
+        isoform.sort(currentSortFunction).attr({
+            "transform":function(d,i) {return "translate("+0+","+groupScale(i)+")";}
         }).on({
           "mouseover":function(){
             //console.log("min", d3.event.target
@@ -205,6 +213,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class":"exon",
             height:exonHeight
             //y:exonHeight
+        }).on({
+          "click":function(d){
+            console.log("CLIKADLKAJLKAJLK:",d);
+            //d3.event.stopPropagation();
+            event.fire("isoformSort","byExon", d.id);
+
+          }
         })
 
         // --- changing nodes for exons
@@ -277,10 +292,67 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
 
+    var createSortByExon = function(exonID){
+
+      var validNames = []
+      mergedRanges.forEach(function(mR){
+        if (mR.names.indexOf(exonID)>-1){
+          validNames = mR.names;
+        }
+      })
+
+      return function(a,b){
+        //console.log("compare",a,b,validNames);
+        console.log(a.id, b.id, validNames.indexOf(a.id)>-1,validNames.indexOf(b.id)>-1, validNames);
+        var aList = a.ranges.map(function(r){return r.id});
+        var bList = b.ranges.map(function(r){return r.id});
+        var aValid = false;
+        var bValid = false;
+
+
+        validNames.forEach(function(validName){
+          if (aList.indexOf(validName)>-1) aValid=true;
+          if (bList.indexOf(validName)>-1) bValid=true;
+        })
+
+        //var aValid = validNames.indexOf(a.id)>-1;
+        //var bValid = validNames.indexOf(b.id)>-1;
+        if (aValid && bValid){
+          return b.mean - a.mean;
+        }else{
+          return bValid?1:-1;
+        }
+
+      }
+    }
+
+    function resortIsoforms(_, sortingMethod, parameter ){
+
+      console.log("RESORT:",sortingMethod,parameter);
+
+      if (sortingMethod=="mean_sorting"){
+        currentSortFunction = sortByMean;
+
+      }else if (sortingMethod=="byExon"){
+        currentSortFunction = createSortByExon(parameter)
+
+
+      }
+
+      svg.selectAll(".isoform").sort(currentSortFunction).attr({
+        "transform":function(d,i) {return "translate("+0+","+groupScale(i)+")";}
+      })
+
+
+      // d3 sort function
+    }
+
+    event.on("isoformSort", resortIsoforms)
+
 
     function updateData(){
 
-      console.log("updateIso");
+
       var
         curGene = gui.current.getSelectedGene(),
         startPos = gui.current.getStartPos(),
@@ -290,7 +362,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
         //d3.nest().key(function(k){return k.key}).map(a)
 
-        console.log("updateIso_ 2");
+        mergedRanges = sampleData.gene['merged_ranges'];
 
         var minMax = d3.extent(sampleData.measures.isoforms, function (d) {
           return d.weight;
@@ -309,9 +381,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           res.ranges =
             allIsoforms[isokey].exons.map(function(exKey){
               var ex = allExons[exKey];
-              return {"start": ex.start, "end": ex.end}
+              return {"start": ex.start, "end": ex.end, "id": ex.id}
             });
 
+
+          res.mean = d3.mean(res.weights.map(function(d){return d.weight;}))
           return res;
 
         })
