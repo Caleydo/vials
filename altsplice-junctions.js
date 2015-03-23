@@ -211,7 +211,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         connectors.transition()
           .duration(300).attr({
             "points": function() {
-              return getPoints(this)
+              return getConnectorPoints(this)
             }
           })
 
@@ -350,20 +350,35 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     }
 
-      function getBucketAt(loc) {
+      function getBucketIndAt(loc) {
         for (var i = 0; i < buckets.length; i++) {
           if (buckets[i].loc == loc)
-            return buckets[i];
+            return i;
         }
       }
 
+      function getBucketAt(loc) {
+        return buckets[getBucketIndAt(loc)];
+      }
 
-      function getPoints(connector) {
-        return  [
-          connector.getAttribute("x1"), jxnWrapperHeight,
-          connector.getAttribute("x2"), jxnWrapperHeight,
-          connector.getAttribute("x3"), getDonorY(),
-        ]
+      function getConnectorPoints(connector) {
+
+        var bucketInd = connector.getAttribute("adjacentSingletonAcceptorBucket");
+        if (bucketInd == "none") {
+          return [
+            connector.getAttribute("x1"), jxnWrapperHeight,
+            connector.getAttribute("x2"), jxnWrapperHeight,
+            connector.getAttribute("x3"), getDonorY(),
+          ]
+        }
+        else {
+          return [
+            connector.getAttribute("x1"), jxnWrapperHeight,
+            connector.getAttribute("x2"), jxnWrapperHeight,
+            buckets[bucketInd].xStart, getDonorY(),
+            connector.getAttribute("x3"), getDonorY(),
+          ]
+        }
       }
 
       function getDonorY() {
@@ -394,12 +409,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           })
 
           var donorLoc = jxnsData.weights[jxnGroup.start].start;
+          var donorInd = getBucketIndAt(donorLoc);
           jxnArea.append("polygon").attr({
             x1: startX +1,
             x2: startX + wrapperWidth -1,
-            x3: getBucketAt(donorLoc).xEnd,
-            "points": function() {return getPoints(this)},
+            x3: buckets[donorInd].xEnd,
             "loc": donorLoc,
+            "adjacentSingletonAcceptorBucket": function() {
+              if (jxnGroup.groups.length == 1) {
+                var loc = jxnGroup.groups[0].endLoc;
+                var acceptorInd = getBucketIndAt(loc);
+                return acceptorInd == donorInd + 1 ? acceptorInd : "none"
+              }
+              return "none"
+            },
+            "points": function() {return getConnectorPoints(this)},
             "class": "JXNAreaConnector",
             "stroke": "#ccc",
             "fill":"#ccc"
@@ -475,24 +499,29 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           })
 
           var anchorX = startX + (groupInd + 0.5) * groupWidth;
-          linesGroup.append("line").attr({
-            "type": "acceptor",
-            "anchorX": anchorX,
-            "x1": anchorX,
-            "x2": getBucketAt(group.endLoc).xStart,
-            "startLoc": group.startLoc,
-            "endLoc": group.endLoc,
-            "y1": jxnWrapperHeight,
-            "y2": getDonorY(),
-            "class": "edgeConnector",
-            "stroke": "red"
-          })
+
+          var endInd = getBucketIndAt(group.endLoc);
+          var startInd = getBucketIndAt(group.startLoc);
+          if (endInd > startInd + 1 || jxnGroup.groups.length > 1) {
+            linesGroup.append("line").attr({
+              "type": "acceptor",
+              "anchorX": anchorX,
+              "x1": anchorX,
+              "x2": buckets[endInd].xStart,
+              "startLoc": group.startLoc,
+              "endLoc": group.endLoc,
+              "y1": jxnWrapperHeight,
+              "y2": getDonorY(),
+              "class": "edgeConnector",
+              "stroke": "red"
+            })
+          }
 
           linesGroup.append("line").attr({
             "type": "donor",
             "anchorX": anchorX,
             "x1": anchorX,
-            "x2": getBucketAt(group.startLoc).xEnd,
+            "x2": buckets[startInd].xEnd,
             "startLoc": group.startLoc,
             "endLoc": group.endLoc,
             "y1": jxnWrapperHeight,
@@ -659,6 +688,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       triangles.on('mouseover', function (d1, i1) {
 
+        if (selectedIsoform != null)
+          return;
+
         RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2, i2) {
           d3.select(this).style({
             "opacity" : d1 == d2 ? 1 : 0.1
@@ -694,10 +726,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
       }).on('mouseout', function () {
-        d3.selectAll(".RNASites, .JXNAreaConnector, .RNASiteConnector, .edgeAnchor, .edgeConnector").each(function (d2, i2) {
-          d3.select(this).style({
+        if (selectedIsoform != null)
+          return;
+
+
+        d3.selectAll(".RNASites, .JXNAreaConnector, .RNASiteConnector, .edgeAnchor, .edgeConnector").style({
             "opacity" : 1
-          })
         })
       });
 
@@ -923,9 +957,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       jxnWrapper.parentNode.appendChild(jxnWrapper);
 
       var parentNode = d3.select(boxPlotGroup);
-      parentNode.each(function(d, i) {
-        console.log("Group: " + d.start + " - " + d.end)
-      })
       parentNode.selectAll(".jxnContainer").attr({
         "width": expandedWidth,
       }).style({"visibility": "visible"})
@@ -1000,11 +1031,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       var activeEdgeGroups = d3.selectAll(".edgeGroup").filter(function () {
         return this.getAttribute("ActiveIsoform") == isoform.index}
-      )
+      ).sort(function(a, b) {
+          return a.start < b.start ? -1 : 1
+        });
 
       var leftMostGroupX = width, rightMostGroupX = 0;
 
-      activeEdgeGroups.each(function () {
+      activeEdgeGroups.each(function (d) {
+        console.log("Group: " + d.start + " - " + d.end)
         var x = parseInt(this.getAttribute("startX"));
         leftMostGroupX = Math.min(leftMostGroupX, x);
         rightMostGroupX = Math.max(rightMostGroupX, x);
@@ -1014,10 +1048,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       startX = Math.min(startX, availableWidth - totalWidth)
       startX = Math.max(startX, weightAxisCaptionWidth + jxnWrapperPadding)
       expandedWidth = expandedSpace - 2 * jxnBBoxWidth;
-      activeEdgeGroups.each(function() {
+      activeEdgeGroups.each(function(d, i) {
         d3.select(this).transition().duration(200).attr({
           "transform": function() {
-            return "translate(" + startX + ", 0)"
+            return "translate(" + (startX + i * expandedSpace) + ", 0)"
           }
         }).each("end", function() {
           expandJxn(this);
@@ -1028,10 +1062,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           return startLoc == this.getAttribute("startLoc") &&
           endLoc == this.getAttribute("endLoc");
         }).transition().duration(200).attr({
-          "x1":  startX + groupWidth / 2
+          "x1":  startX + i * expandedSpace + groupWidth / 2
         });
 
-        startX += expandedSpace;
       })
       expandedIsoform = isoform;
     }
@@ -1090,24 +1123,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function deSelectIsoforms() {
-      d3.selectAll(".JXNAreaConnector, .jxnWrapperBox, .miniExonBox, .miniExonEdge, .edgeGroup").
-        transition().duration(200).style({
-          "opacity" : 1,
-          "visibility": function() {
-            this.getAttribute("type") == "donor" ? "hidden" : "visible"
+      d3.selectAll(".edgeConnector").style({
+        "visibility": function() {
+          return this.getAttribute("type") == "donor" ? "hidden" : "visible"
         }
+      })
+      d3.selectAll(".RNASites, .RNASiteConnector, .JXNAreaConnector, .jxnWrapperBox, .edgeAnchor, .edgeConnector, .edgeGroup")
+        .transition().duration(200).style({
+          "opacity" : 1,
         })
-      jxnArea.selectAll(".isoformEdge").style({"visibility":  "hidden"});
-
-      d3.selectAll(".boxplotWithDots").attr({
-        "ActiveIsoform" : -1
-      }).style({
-        "opacity" : "1"
-      })
-
-      jxnArea.selectAll(".jxnBBox").transition().duration(200).style({
-        "fill" : "white"
-      })
+      selectedIsoform =  null;
     }
 
     function selectIsoform(data) {
@@ -1123,9 +1148,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       d3.selectAll(".RNASites, .RNASiteConnector, .JXNAreaConnector, .edgeAnchor, .edgeConnector, .edgeGroup").style({
         "opacity" : 0.1,
-        "visibility": function() {
-          this.getAttribute("type") == "donor" ? "hidden" : "visible"
-        }
       })
 
       var exonIDs = allIsoforms[data.isoform].exons;

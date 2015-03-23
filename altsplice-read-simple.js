@@ -63,14 +63,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       "transform":"translate("+margin.left+","+margin.top+")"
     })
 
-    var sampleGroups;
-    // var groupMargin = 10;
-    var exonHeight = 30;
-    var scatterWidth = 200;
-    var sampleScaleY = function(x){ return x*(exonHeight+3)};
-    var scaleXScatter;
-    var heightScale;
-
     // create crosshair
     var crosshair = svg.append("line").attr({
       "class":"crosshair",
@@ -109,7 +101,153 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     function cleanSelectors(sel){return sampleSelectorMap[sel]}
 
+    function std(values){
+      var avg = d3.mean(values);
+      var squareDiffs = values.map(function(value){
+        var diff = value - avg;
+        var sqrDiff = diff * diff;
+        return sqrDiff;
+      });
+      var avgSquareDiff = d3.mean(squareDiffs);
+      var stdDev = Math.sqrt(avgSquareDiff);
+      return stdDev;
+    }
 
+    var dataType;
+    var sampleGroups;
+    var exonHeight = 30;
+    var scatterWidth = 200;
+    var sampleScaleY = function(x){ return x*(exonHeight+3)};
+    var scaleXScatter;
+    var heightScale;
+
+    function zipData(sampleData) {
+      return sampleData[0].weights.map(function(s0, i) {
+        return sampleData.map(function(s) {return s.weights[i]});
+      })
+    }
+
+    dataFuncs = {
+      "BodyMap": {
+        "mean": function(zipped) {
+          var mean = d3.svg.line()
+            .x(function(d, i) {
+              return that.axis.arrayPosToScreenPos(i);
+            })
+            .y(function(d, i) {
+              return heightScale(d);
+            })
+            .interpolate('step');
+          return mean(zipped);
+        },
+        "stdDev": function(zipped) {
+          var stdDev = d3.svg.area()
+            .x(function(d, i) {
+              return that.axis.arrayPosToScreenPos(i);
+            })
+            .y0(function(d) {
+              return heightScale(d3.mean(d)-std(d));
+            })
+            .y1(function(d) {
+              return heightScale(d3.mean(d)+std(d));
+            });
+          return stdDev(zipped);
+        },
+        "line": function(sampleData) {
+          var lineFunc = d3.svg.line()
+              .x(function(d,i){return that.axis.arrayPosToScreenPos(i)})
+              .y(function (d) {return heightScale(d)})
+          return lineFunc(sampleData.weights);
+        },
+        "minMax": function(readData) {
+          //d3.nest().key(function(k){return k.key}).map(a)
+          var minmaxCand = [];
+          // update the map between sample and a unique css-save selectorName
+          sampleSelectorMap = {};
+          readData.forEach(function (read, i) {
+            minmaxCand.push(read.min);
+            minmaxCand.push(read.max);
+            sampleSelectorMap[read.sample] = i;
+          })
+          return d3.extent(minmaxCand)          
+        }
+      },
+      "TCGA": {
+        "mean": function(zipped) {
+          function meanData(exonWeights) {
+            return d3.mean(exonWeights, function(d){return d.weight});
+          }
+          var mappedReads = this.mapReads(this.mapExons(zipped, meanData));
+          var mean = d3.svg.line()
+            .x(function(d, i) {
+              return that.axis.genePosToScreenPos(d.pos);
+            })
+            .y(function(d, i) {
+              return heightScale(d.weight);
+            })
+            .interpolate('step');
+            // TODO: step interpolation happens in the middle of the intron; need to correct this manually
+          return mean(mappedReads);
+        },
+        "stdDev": function(zipped) {
+          function stdData(exonWeights) {
+            return exonWeights.map(function(e) {return e.weight});
+          }
+          var stdDev = d3.svg.area()
+            .x(function(d, i) {
+              return that.axis.genePosToScreenPos(d.pos);
+            })
+            .y0(function(d) {
+              return heightScale(d3.mean(d.weight)-std(d.weight));
+            })
+            .y1(function(d) {
+              return heightScale(d3.mean(d.weight)+std(d.weight));
+            })
+            .interpolate('step');
+            // TODO: step interpolation happens in the middle of the intron; need to correct this manually
+          var mappedReads = this.mapReads(this.mapExons(zipped, stdData));
+          return stdDev(mappedReads);
+        },
+        "line": function(sampleData) {
+          var lineFunc = d3.svg.line()
+              .x(function(d,i){return that.axis.genePosToScreenPos(d.pos)})
+              .y(function (d) {return heightScale(d.weight)})
+              .interpolate('step')
+          var mappedReads = this.mapReads(sampleData.weights);
+          return lineFunc(mappedReads);
+        },
+        "mapExons": function(zipped, f) {
+          var exons = zipped.map(function(exon_weights, i) {
+            // TODO: don't assume sorted from server side (though it is right now)
+            return {
+              "start": exon_weights[0].start,
+              "end": exon_weights[0].end,
+              "weight": f(exon_weights)
+            }
+          })
+          return exons
+        },
+        "mapReads": function(exons) {
+          var reads = []
+          exons.forEach(function(e) {
+            reads = reads.concat(d3.range(e.start, e.end).map(function(d) {return {"pos": d, "weight": e.weight}}))
+          })
+          return reads          
+        },
+        "minMax": function(readData) {
+          var minmaxCand = [];
+          // update the map between sample and a unique css-save selectorName
+          sampleSelectorMap = {};
+          readData.forEach(function (read, i) {
+            read.weights.map(function(exon) {
+              minmaxCand.push(exon.weight);
+            })
+            sampleSelectorMap[read.sample] = i;
+          })
+          return d3.extent(minmaxCand)
+        }
+      }
+    }
 
 
     function drawSamples(samples, minMaxValues, g){
@@ -123,12 +261,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       crosshair.attr({
         "y2":height+margin.top+margin.bottom
       })
-
-
-
-      that.lineFunction = d3.svg.line()
-                            .x(function(d,i){return that.axis.arrayPosToScreenPos(i)})
-                            .y(function (d) {return heightScale(d)})
 
 
       /*
@@ -189,7 +321,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       abundance.select(".abundanceGraph").attr({
         "class": function(d){return "abundanceGraph sample" +  cleanSelectors(d.sample)},
-        "d":function(d){return that.lineFunction(d.weights)}
+        "d":function(d){return dataFuncs[dataType].line(d)}
       })
 
       abundance.select(".background").attr({
@@ -257,41 +389,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function summarizeData(g, groupID, group) {
-      function std(values){
-        var avg = d3.mean(values);
-        var squareDiffs = values.map(function(value){
-          var diff = value - avg;
-          var sqrDiff = diff * diff;
-          return sqrDiff;
-        });
-        var avgSquareDiff = d3.mean(squareDiffs);
-        var stdDev = Math.sqrt(avgSquareDiff);
-        return stdDev;
-      }
-
-      var avgFunc = d3.svg.line()
-        .x(function(d, i) { return that.axis.arrayPosToScreenPos(i); })
-        .y(function(d, i) {
-          return heightScale(d3.mean(d));
-        })
-        .interpolate('step');
-      var stdAreaFunc = d3.svg.area()
-        .x(function(d, i) {
-          return that.axis.arrayPosToScreenPos(i);
-        })
-        .y0(function(d) {
-          return heightScale(d3.mean(d)-std(d));
-        })
-        .y1(function(d) {
-          return heightScale(d3.mean(d)+std(d));
-        });
-
-      // zip up data to be summarized
-      var zipData = g.sampleData[0].weights.map(function(s0, i) {
-        return g.sampleData.map(function(s) {return s.weights[i]});
-      })
-
-      var summary = group.selectAll(".summary").data([zipData]);
+      var summary = group.selectAll(".summary").data([g.sampleData]);
       summary.exit().remove();
       var summaryEnter = summary.enter().append("g").attr({
         "class": "summary",
@@ -306,12 +404,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         stroke: "red",
         class: "mean",
       })
-      summary.selectAll(".mean").attr("d", avgFunc(zipData));
+      // TODO: zipping inside the dataFuncs object
+      var zipped = zipData(g.sampleData);
+      summary.selectAll(".mean").attr("d", dataFuncs[dataType].mean(zipped));
       summaryEnter.append("svg:path").attr({
         fill: "red",
-        class: "stddev",
+        class: "stdDev",
       })
-      summary.selectAll(".stddev").attr("d", stdAreaFunc(zipData));
+      summary.selectAll(".stdDev").attr("d", dataFuncs[dataType].stdDev(zipped));
     }
 
     function toggleOpacities(g, group) {
@@ -340,50 +440,44 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "transform": "translate(" + (scatterWidth - 40) + ",0)"
         });
 
-        linesGroup.append("line")
-        .attr({
-         "class": "v",
-         "x1": axisWidth + 20,
-         "x2": axisWidth + 20,
-         "y1": sampleScaleY(0) + exonHeight / 2 + 5,
-         "y2": sampleScaleY(sampleData.length) + exonHeight / 2 - 5,
-         "stroke": "black",
-       });
+        linesGroup.append("line").attr({
+          "class": "v",
+          "x1": axisWidth + 20,
+          "x2": axisWidth + 20,
+          "y1": sampleScaleY(0) + exonHeight / 2 + 5,
+          "y2": sampleScaleY(sampleData.length) + exonHeight / 2 - 5,
+          "stroke": "black",
+        });
 
-        linesGroup.append("line")
-        .attr({
-         "class": "top",
-         "x1": axisWidth + 10,
-         "x2": axisWidth + 20,
-         "y1": sampleScaleY(0) + exonHeight / 2 + 5,
-         "y2": sampleScaleY(0) + exonHeight / 2 + 5,
-         "stroke": "black",
-       });
+        linesGroup.append("line").attr({
+          "class": "top",
+          "x1": axisWidth + 10,
+          "x2": axisWidth + 20,
+          "y1": sampleScaleY(0) + exonHeight / 2 + 5,
+          "y2": sampleScaleY(0) + exonHeight / 2 + 5,
+          "stroke": "black",
+        });
 
-        linesGroup.append("line")
-        .attr({
-         "class": "bottom",
-         "x1": axisWidth + 10,
-         "x2": axisWidth + 20,
-         "y1": sampleScaleY(sampleData.length) + exonHeight / 2 - 5,
-         "y2": sampleScaleY(sampleData.length) + exonHeight / 2 - 5,
-         "stroke": "black",
-       });
+        linesGroup.append("line").attr({
+          "class": "bottom",
+          "x1": axisWidth + 10,
+          "x2": axisWidth + 20,
+          "y1": sampleScaleY(sampleData.length) + exonHeight / 2 - 5,
+          "y2": sampleScaleY(sampleData.length) + exonHeight / 2 - 5,
+          "stroke": "black",
+        });
 
-        var buttonGroup = linesGroup.append("g")
-        .attr({
+        var buttonGroup = linesGroup.append("g").attr({
           "class": "buttonGroup",
         });
 
-        var collapseButton = buttonGroup.append("rect")
-        .attr({
-         "class": "collapseButton",
-         "stroke": "black",
-         "width": 10,
-         "height": 10,
-         "x": 0,
-       })
-        .on("click", function(d) {d.collapse = !d.collapse; expandGroups()});
+        var collapseButton = buttonGroup.append("rect").attr({
+          "class": "collapseButton",
+          "stroke": "black",
+          "width": 10,
+          "height": 10,
+          "x": 0,
+        }).on("click", function(d) {d.collapse = !d.collapse; expandGroups()});
 
         var buttonHeight = sampleGroup.collapse ? 1 : (sampleScaleY(sampleData.length)-sampleScaleY(0))/ 2 + exonHeight / 2 - 5;
       }
@@ -416,9 +510,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       //that.lineFunction.x(function(d,i){return that.axis.arrayPosToScreenPos(i)});
 
-
       gIso.selectAll(".abundanceGraph").attr({
-        "d":function(d){return that.lineFunction(d.weights)}
+        "d":function(d){return dataFuncs[dataType].line(d)}
         //opacity:.1
       })
 
@@ -462,16 +555,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         curProject = gui.current.getSelectedProject();
 
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
-        //d3.nest().key(function(k){return k.key}).map(a)
-        var minmaxCand = [];
-        // update the map between sample and a unique css-save selectorName
-        sampleSelectorMap = {};
-        sampleData.measures.reads.forEach(function (read, i) {
-          minmaxCand.push(read.min);
-          minmaxCand.push(read.max);
-          sampleSelectorMap[read.sample] = i;
-        })
-        var minMax = d3.extent(minmaxCand)
+        dataType = sampleData.measures.data_type;
+
+        var minMax = dataFuncs[dataType].minMax(sampleData.measures.reads);
 
         scaleXScatter = d3.scale.linear().domain([0,minMax[1]]).range([axisOffset, width])
         heightScale = d3.scale.linear().domain(minMax).range([exonHeight,0]);
