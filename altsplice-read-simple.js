@@ -186,6 +186,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               return heightScale(d.weight);
             })
             .interpolate('step');
+            // TODO: step interpolation happens in the middle of the intron; need to correct this manually
           return mean(mappedReads);
         },
         "stdDev": function(zipped) {
@@ -203,6 +204,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               return heightScale(d3.mean(d.weight)+std(d.weight));
             })
             .interpolate('step');
+            // TODO: step interpolation happens in the middle of the intron; need to correct this manually
           var mappedReads = this.mapReads(this.mapExons(zipped, stdData));
           return stdDev(mappedReads);
         },
@@ -508,9 +510,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       //that.lineFunction.x(function(d,i){return that.axis.arrayPosToScreenPos(i)});
 
-
       gIso.selectAll(".abundanceGraph").attr({
-        "d":function(d){return that.lineFunction(d.weights)}
+        "d":function(d){return dataFuncs[dataType].line(d)}
         //opacity:.1
       })
 
