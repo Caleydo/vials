@@ -23,14 +23,14 @@
 
   <div id="userinput" class="container-fluid">
     <div class="row">
-      <div class="form-group col-md-8 col-sm-12" style="max-width: 800px">
+      <div class="form-group col-md-6 col-sm-12" style="max-width: 800px">
         <label for="geneSelect">Select project:</label>
         <select class="form-control" id="projectSelect">
         </select>
       </div>
-    </div>
-    <div class="row">
-        <div class="form-group col-md-8 col-sm-12" style="max-width: 800px">
+    <!--</div>-->
+    <!--<div class="row">-->
+        <div class="form-group col-md-6 col-sm-12" style="max-width: 800px">
           <label for="geneSelect">Select gene:</label>
           <select class="form-control" id="geneSelect">
           </select>
@@ -58,6 +58,16 @@
         <div class="form-group col-md-10 col-sm-10">
           <!--<label for="toggleIntrons">Select gene:</label>-->
           <button class="btn btn-sm btn-default" id="toggleIntrons"> shrink Introns</button>
+
+          &nbsp;
+          <div class="form-group form-group-sm">
+            <label for="isoformSort">sort iso:</label>
+            <select class="form-control form-group-sm" id="isoformSort">
+              <option value="mean_sorting">abundance mean</option>
+              <option value="">Ketchup</option>
+              <option>Relish</option>
+            </select>
+          </div>
 
           <!--<button class="btn btn-sm " id="testIso"> select Isoform TCGA </button>-->
           <!--<button class="btn btn-sm " id="testIso2"> select Isoform EGFR (bodymap) </button>-->
