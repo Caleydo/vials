@@ -27,7 +27,7 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui',
       if (!options.mode || options.mode==='bilal' ){
         var junctionVis = visses.filter(function (vis) { return vis.id === 'altsplice-junctions'})[0];
         junctionVis.load().then(function (plugin) {
-          vis = plugin.factory(genomeDataLink, document.querySelector("#vis1") );
+          vis = plugin.factory(genomeDataLink, document.querySelector("#visJxns") );
           resolve();
         });
       }else{
@@ -41,7 +41,7 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui',
           return vis.id === 'altsplice-reads-simple'
         })[0];
         readVis.load().then(function (plugin) {
-          vis = plugin.factory(genomeDataLink, document.querySelector("#vis2"));
+          vis = plugin.factory(genomeDataLink, document.querySelector("#visReads"));
           resolve();
         });
     }else{
@@ -55,7 +55,7 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui',
           return vis.id === 'altsplice-isoforms'
         })[0];
         readVis.load().then(function (plugin) {
-          vis = plugin.factory(genomeDataLink, document.querySelector("#vis3"));
+          vis = plugin.factory(genomeDataLink, document.querySelector("#visIso"));
           resolve();
         });
       }else{

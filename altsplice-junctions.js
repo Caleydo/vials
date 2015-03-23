@@ -235,7 +235,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       .attr("height", height + margin.top + margin.bottom)
       .style({
         //"top":"10px",
-        "left":"20px",
+        "left":"0px",
         "position":"relative"
 
       })

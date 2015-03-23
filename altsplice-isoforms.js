@@ -133,7 +133,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "y2":height+margin.top+margin.bottom
         })
 
-
+        console.log(minMaxValues);
         var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, width])
 
         var menuOffset = -24;
@@ -485,7 +485,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         mergedRanges = sampleData.gene['merged_ranges'];
 
         var minMax = d3.extent(sampleData.measures.isoforms, function (d) {
-          return d.weight;
+          return +d.weight;
         })
 
         var usedIsoforms = d3.nest()

@@ -115,7 +115,7 @@ $wes-red: #D16B54;
 .isoMenu{
   fill:$wes-gray;
   fill-opacity: .3;
-  //stroke: $wes-violet;
+  stroke: $wes-gray;
   //stroke-width: 1;
 
 }
@@ -133,3 +133,11 @@ $wes-red: #D16B54;
 //    fill: $wes
 //  }
 //}
+
+
+#visReads{
+  max-height:300px;
+  overflow-y: auto;
+//  overflow-x: visible;
+  overflow-x: hidden;
+}
