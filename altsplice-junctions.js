@@ -659,6 +659,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       triangles.on('mouseover', function (d1, i1) {
 
+        if (selectedIsoform != null)
+          return;
+
         RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2, i2) {
           d3.select(this).style({
             "opacity" : d1 == d2 ? 1 : 0.1
@@ -694,10 +697,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
       }).on('mouseout', function () {
-        d3.selectAll(".RNASites, .JXNAreaConnector, .RNASiteConnector, .edgeAnchor, .edgeConnector").each(function (d2, i2) {
-          d3.select(this).style({
+        if (selectedIsoform != null)
+          return;
+
+
+        d3.selectAll(".RNASites, .JXNAreaConnector, .RNASiteConnector, .edgeAnchor, .edgeConnector").style({
             "opacity" : 1
-          })
         })
       });
 
@@ -923,9 +928,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       jxnWrapper.parentNode.appendChild(jxnWrapper);
 
       var parentNode = d3.select(boxPlotGroup);
-      parentNode.each(function(d, i) {
-        console.log("Group: " + d.start + " - " + d.end)
-      })
       parentNode.selectAll(".jxnContainer").attr({
         "width": expandedWidth,
       }).style({"visibility": "visible"})
@@ -1000,11 +1002,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       var activeEdgeGroups = d3.selectAll(".edgeGroup").filter(function () {
         return this.getAttribute("ActiveIsoform") == isoform.index}
-      )
+      ).sort(function(a, b) {
+          return a.start < b.start ? -1 : 1
+        });
 
       var leftMostGroupX = width, rightMostGroupX = 0;
 
-      activeEdgeGroups.each(function () {
+      activeEdgeGroups.each(function (d) {
+        console.log("Group: " + d.start + " - " + d.end)
         var x = parseInt(this.getAttribute("startX"));
         leftMostGroupX = Math.min(leftMostGroupX, x);
         rightMostGroupX = Math.max(rightMostGroupX, x);
@@ -1014,10 +1019,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       startX = Math.min(startX, availableWidth - totalWidth)
       startX = Math.max(startX, weightAxisCaptionWidth + jxnWrapperPadding)
       expandedWidth = expandedSpace - 2 * jxnBBoxWidth;
-      activeEdgeGroups.each(function() {
+      activeEdgeGroups.each(function(d, i) {
         d3.select(this).transition().duration(200).attr({
           "transform": function() {
-            return "translate(" + startX + ", 0)"
+            return "translate(" + (startX + i * expandedSpace) + ", 0)"
           }
         }).each("end", function() {
           expandJxn(this);
@@ -1028,10 +1033,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           return startLoc == this.getAttribute("startLoc") &&
           endLoc == this.getAttribute("endLoc");
         }).transition().duration(200).attr({
-          "x1":  startX + groupWidth / 2
+          "x1":  startX + i * expandedSpace + groupWidth / 2
         });
 
-        startX += expandedSpace;
       })
       expandedIsoform = isoform;
     }
@@ -1090,24 +1094,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function deSelectIsoforms() {
-      d3.selectAll(".JXNAreaConnector, .jxnWrapperBox, .miniExonBox, .miniExonEdge, .edgeGroup").
-        transition().duration(200).style({
-          "opacity" : 1,
-          "visibility": function() {
-            this.getAttribute("type") == "donor" ? "hidden" : "visible"
+      d3.selectAll(".edgeConnector").style({
+        "visibility": function() {
+          return this.getAttribute("type") == "donor" ? "hidden" : "visible"
         }
+      })
+      d3.selectAll(".RNASites, .RNASiteConnector, .JXNAreaConnector, .jxnWrapperBox, .edgeAnchor, .edgeConnector, .edgeGroup")
+        .transition().duration(200).style({
+          "opacity" : 1,
         })
-      jxnArea.selectAll(".isoformEdge").style({"visibility":  "hidden"});
-
-      d3.selectAll(".boxplotWithDots").attr({
-        "ActiveIsoform" : -1
-      }).style({
-        "opacity" : "1"
-      })
-
-      jxnArea.selectAll(".jxnBBox").transition().duration(200).style({
-        "fill" : "white"
-      })
+      selectedIsoform =  null;
     }
 
     function selectIsoform(data) {
@@ -1123,9 +1119,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       d3.selectAll(".RNASites, .RNASiteConnector, .JXNAreaConnector, .edgeAnchor, .edgeConnector, .edgeGroup").style({
         "opacity" : 0.1,
-        "visibility": function() {
-          this.getAttribute("type") == "donor" ? "hidden" : "visible"
-        }
       })
 
       var exonIDs = allIsoforms[data.isoform].exons;
