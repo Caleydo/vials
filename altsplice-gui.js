@@ -54,10 +54,17 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
 
       that.isoformSort.on({
         "change":function(){
-
+          event.fire("isoformSort",$(that.isoformSort.node()).val(), null);
 
 
           console.log($(that.isoformSort.node()).val());
+        }
+      })
+
+
+      event.on("isoformSort", function(event, method, parameter){
+        if (method=="byExon"){
+          $(that.isoformSort.node()).val("byExon");
         }
       })
 

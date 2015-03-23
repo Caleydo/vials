@@ -43,12 +43,13 @@ $wes-red: #D16B54;
 .isoform {
   .exon{
     fill-opacity: .8;
-    //pointer-events: none;
+    pointer-events: none;
     fill:$wes-violet;
   }
   .background{
 
     fill:white;
+    fill-opacity:.001;
 
   }
   .selected{
@@ -56,6 +57,7 @@ $wes-red: #D16B54;
   }
   .fixed{
     fill:$wes-yellow;
+    fill-opacity:.5;
   }
 
   .sampleDot
@@ -103,3 +105,31 @@ $wes-red: #D16B54;
 
 
 }
+
+
+.rangeRect{
+  fill:$wes-gray;
+  fill-opacity: .3;
+}
+
+.isoMenu{
+  fill:$wes-gray;
+  fill-opacity: .3;
+  //stroke: $wes-violet;
+  //stroke-width: 1;
+
+}
+.isoMenu.selected{
+  fill:$wes-gray;
+  fill-opacity: 1;
+  stroke: $wes-violet;
+  stroke-width: 1;
+
+}
+
+
+//.dotMenu{
+//  .dotmenuRect{
+//    fill: $wes
+//  }
+//}

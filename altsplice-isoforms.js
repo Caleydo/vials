@@ -30,7 +30,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   }
 
 
-  var margin = {top: 10, right: 10, bottom: 20, left: 0},
+  var margin = {top: 25, right: 10, bottom: 20, left: 0},
     width = 900 - margin.left - margin.right,
     height = 450 - margin.top - margin.bottom;
 
@@ -62,7 +62,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
 
-
+    var gExonRanges = svg.append("g").attr({
+      class:"exonRanges",
+      "transform":"translate("+margin.left+","+margin.top+")"
+    })
 
     var gIso = svg.append("g").attr({
       class:"isoforms",
@@ -133,6 +136,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, width])
 
+        var menuOffset = -24;
+        var menuHeight = 18;
+
 
 
 
@@ -198,6 +204,74 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           width:width+margin.right-2
         })
 
+      /*
+       * ========================
+       * Draw exon merging
+       * =========================
+       * */
+
+
+      //isoformEnter.append("g").attr({
+      //  "class":"mergedRanges"
+      //})
+
+      var mRanges = gExonRanges.selectAll(".rangeRect").data(mergedRanges);
+      mRanges.exit().remove();
+
+      mRanges.enter().append("rect").attr({
+          "class":"rangeRect"})
+        .style({
+          "pointer-event":"none"
+          //opacity:.2
+        })
+      ;
+
+      mRanges.attr({
+          "x":function(d,i){return that.axis.genePosToScreenPos(d.start)},
+          "y":function(d,i){return 0},
+          "width":function(d,i){return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)},
+          "height":function(d,i){return height}
+      })
+
+
+      console.log("mergedRanges", mergedRanges);
+      var mRangeSorter = gExonRanges.selectAll(".rangeMenu").data(mergedRanges);
+      mRangeSorter.exit().remove();
+
+      mRangeSorter.enter().append("rect").attr({
+        "class":"isoMenu rangeMenu",
+        "rx":3,
+        "ry":3
+      }).style({
+          "pointer-event":"none"
+          //opacity:.2
+        }).on({
+        "click":function(d){
+
+          //TODO: maybe change this to the whole range as parameter
+          if (d.names.length>0){
+            var me = this;
+            svg.selectAll(".isoMenu").classed("selected", function () {
+              return me == this;
+            })
+            event.fire("isoformSort","byExon", d.names[0]);
+          }
+
+
+        }
+      })
+      ;
+
+      mRangeSorter.attr({
+        "x":function(d,i){return that.axis.genePosToScreenPos(d.start)},
+        "y":function(d,i){
+          return menuOffset},
+        "width":function(d,i){return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)},
+        "height":function(d,i){return menuHeight}
+      })
+
+
+
 
       /*
        * ========================
@@ -213,13 +287,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class":"exon",
             height:exonHeight
             //y:exonHeight
-        }).on({
-          "click":function(d){
-            console.log("CLIKADLKAJLKAJLK:",d);
-            //d3.event.stopPropagation();
-            event.fire("isoformSort","byExon", d.id);
-
-          }
         })
 
         // --- changing nodes for exons
@@ -240,7 +307,47 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       //console.log(that.axis);
 
 
+      // menu first
 
+      var dotMenu = gIso.selectAll(".dotMenu").data([1]);
+
+      // --- adding Element to class dotMenu
+      var dotMenuEnter = dotMenu.enter().append("g").attr({
+          "class":"dotMenu"
+      })
+
+      dotMenuEnter.append("rect").attr({
+          "class":"isoMenu dotmenuRect selected",
+          "width":function(){return scaleXScatter.range()[1]- scaleXScatter.range()[0]},
+          "height":menuHeight,
+        "rx":3,
+        "ry":3
+      }).on({
+        "click":function(){
+          var me = this;
+          svg.selectAll(".isoMenu").classed("selected", function () {
+            return me == this;
+          })
+
+          event.fire("isoformSort","mean_sorting")
+        }
+      })
+
+      dotMenuEnter.append("text").attr({
+        "class":"dotmenuText",
+        "x":function(){return (scaleXScatter.range()[1]- scaleXScatter.range()[0])/2},
+        "y":menuHeight-3
+      }).style({
+        "text-anchor":"middle",
+        "pointer-events":"none"
+      }).text("sort by mean")
+
+
+      // --- changing nodes for dotMenu
+      dotMenu.attr({
+          "transform":"translate("+scaleXScatter.range()[0]+", "+menuOffset+")"
+
+      })
 
 
 
@@ -289,6 +396,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         },
         x:function(d){return that.axis.genePosToScreenPos(d.start);}
       })
+
+
+      gExonRanges.selectAll(".rangeRect").transition().attr({
+        "x":function(d,i){return that.axis.genePosToScreenPos(d.start)},
+        "width":function(d,i){return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)}
+      })
+
+      gExonRanges.selectAll(".rangeMenu").transition().attr({
+        "x":function(d,i){return that.axis.genePosToScreenPos(d.start)},
+        "width":function(d,i){return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)}
+      })
+
     }
 
 
@@ -317,7 +436,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         //var aValid = validNames.indexOf(a.id)>-1;
         //var bValid = validNames.indexOf(b.id)>-1;
-        if (aValid && bValid){
+        if ((aValid && bValid) || (!aValid && !bValid) ){
           return b.mean - a.mean;
         }else{
           return bValid?1:-1;
@@ -328,18 +447,19 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     function resortIsoforms(_, sortingMethod, parameter ){
 
-      console.log("RESORT:",sortingMethod,parameter);
+      console.log("RESORT:",sortingMethod,parameter, sortingMethod === "mean_sorting");
 
-      if (sortingMethod=="mean_sorting"){
+      if (sortingMethod === "mean_sorting"){
         currentSortFunction = sortByMean;
+        console.log(currentSortFunction);
 
-      }else if (sortingMethod=="byExon"){
+      }else if (sortingMethod === "byExon"){
         currentSortFunction = createSortByExon(parameter)
 
 
       }
 
-      svg.selectAll(".isoform").sort(currentSortFunction).attr({
+      svg.selectAll(".isoform").sort(currentSortFunction).transition().attr({
         "transform":function(d,i) {return "translate("+0+","+groupScale(i)+")";}
       })
 
