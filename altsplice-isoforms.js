@@ -157,6 +157,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
 
+
         /*
         * reactive background
         * */
@@ -185,6 +186,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
 
+        isoform.select(".background").attr({
+          width:width+margin.right-2
+        })
 
 
       /*
@@ -233,7 +237,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var sampleDotEnter = sampleDot.enter().append("circle").attr({
             "class":function(d){return "sampleDot sample"+ cleanSelectors(d.sample);},
             r:3
-
         }).on({
           "mouseover":function(d){event.fire("sampleHighlight", d.sample, true)},
           "mouseout":function(d){event.fire("sampleHighlight", d.sample, false)}
@@ -251,10 +254,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     // event handling for highlights
     function highlightSample(event, sample, highlight){
-      for (var _i = 0; _i < arguments.length; _i++) {
-        console.log("fire:",arguments[_i]);
-      }
-      //console.log(event, sample, highlight, cleanSelectors(sample));
 
       svg.selectAll(".sample"+ cleanSelectors(sample)).classed("highlighted", highlight);
     }
@@ -280,6 +279,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
     function updateData(){
+
+      console.log("updateIso");
       var
         curGene = gui.current.getSelectedGene(),
         startPos = gui.current.getStartPos(),
@@ -288,6 +289,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
         //d3.nest().key(function(k){return k.key}).map(a)
+
+        console.log("updateIso_ 2");
 
         var minMax = d3.extent(sampleData.measures.isoforms, function (d) {
           return d.weight;

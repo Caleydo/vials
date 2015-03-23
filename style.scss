@@ -81,6 +81,13 @@ $wes-red: #D16B54;
     stroke-width: 1px;
     fill:none;
   }
+  .abundanceGraph.highlighted{
+    //fill-opacity: .8;
+    //pointer-events: none;
+    stroke:$wes-red;
+    fill:$wes-red;
+  }
+
   .background{
 
     fill:white;

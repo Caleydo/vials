@@ -50,23 +50,23 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
       })
 
 
-      d3.select("#testIso").on({
-        click: function(){
-          event.fire("isoFormSelect", {isoform:"uc003tqh.2", index:0});
-        }
-      })
-
-      d3.select("#testIso2").on({
-        click: function(){
-          event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:0});
-        }
-      })
-
-      d3.select("#testIso3").on({
-        click: function(){
-          event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:-1});
-        }
-      })
+      //d3.select("#testIso").on({
+      //  click: function(){
+      //    event.fire("isoFormSelect", {isoform:"uc003tqh.2", index:0});
+      //  }
+      //})
+      //
+      //d3.select("#testIso2").on({
+      //  click: function(){
+      //    event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:0});
+      //  }
+      //})
+      //
+      //d3.select("#testIso3").on({
+      //  click: function(){
+      //    event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:-1});
+      //  }
+      //})
 
     }
 
@@ -94,9 +94,8 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
       console.log(that.genomeDataLink.getAllGenes(selectedProject));
       that.genomeDataLink.getAllGenes(selectedProject).then(function (genes) {
 
-
+        that.geneSelector.selectAll("option").remove();
         genes.forEach(function (gene) {
-          that.geneSelector.selectAll("option").remove();
           that.geneSelector.append("option").attr('value', gene).text(gene);
         })
         that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
