@@ -313,20 +313,20 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "click":function(d, i){
           var el = d3.select(this);
 
-          var fixEl = !el.classed("fixed");
-          el.classed("fixed", fixEl);
-          event.fire("sampleSelect", d.sample, fixEl);
+          // whether element is selected
+          var isSelected = !el.classed("fixed");
+          el.classed("fixed", isSelected);
 
           var groupID = getGroup(d.sample);
           var group = sampleGroups[groupID];
 
           if (group.collapse) {
-            // if one element in collapsed group is selected, select entire group
-            group.g.selectAll(".background").each(function(d) {
-              console.log("sadfas", d.sample);
-              d3.select(this).classed("fixed", fixEl);
-              event.fire("sampleSelect", d.sample, fixEl);
-            });
+            // toggle group selection
+            group.selected = isSelected;
+            event.fire("groupSelect", groupID, isSelected);
+          }
+          else {
+            event.fire("sampleSelect", d.sample, isSelected);
           }
         }
       })
@@ -383,11 +383,22 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var group = d3.select(this);
         redrawLineGroups(g, group);
         if (g.collapse) {
+          // deselect all samples
           group.selectAll(".background").each(function(d) {
             d3.select(this).classed("fixed", false);
             event.fire("sampleSelect", d.sample, false);
           });
           summarizeData(g, groupID, group);
+        }
+        else if (g.selected) {
+          // deselect group
+          event.fire("groupSelect", groupID, false);
+          // select all samples
+          group.selectAll(".background").each(function(d) {
+            d3.select(this).classed("fixed", true);
+            event.fire("sampleSelect", d.sample, true);
+          });
+          g.selected = false;
         }
         toggleOpacities(g, group);
       })
@@ -579,7 +590,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function groupData(readData) {
-      var grouped = sampleGroups.map(function() {return {"collapse": false, "sampleData": [], "g": undefined}});
+      var grouped = sampleGroups.map(function() {return {"collapse": false, "selected": false, "sampleData": []}});
       readData.forEach(function(d, i) {
         var groupID = getGroup(d.sample);
         grouped[groupID].sampleData.push(d)
@@ -592,7 +603,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                                               return sampleData.concat(sampleGroups[groupID].sampleData)
                                             }, []);
 
-      var newGroup = {"sampleData": combinedSamples, "collapse": false, "g": undefined};
+      var newGroup = {"collapse": false, "selected": false, "sampleData": combinedSamples};
       sampleGroups = [newGroup].concat(sampleGroups.filter(function(g, i) {return groupIDs.indexOf(i) < 0}));
     }
 
@@ -624,7 +635,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         if (sampleGroups === undefined || updatedProject != curProject) {
           sampleGroups = []
           readData.forEach(function(d, i) {
-            sampleGroups.push({"collapse": false, "sampleData": [d], "g": undefined});
+            sampleGroups.push({"collapse": false, "selected": false, "sampleData": [d]});
           })
         }
         joinGroups([0, 1, 2]);
