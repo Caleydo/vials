@@ -595,7 +595,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               }
               else {
                 expandIsoform(selectedIsoform);
-                sortDots(this.parentNode);
+                // sortDots(this.parentNode);
               }
             }
           })
@@ -635,19 +635,44 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             })
 
           var boxPlotData = new Array(sampleLength);
-          var nonZeroStartIndex = sampleLength - (group.end - group.start + 1);
+          var nonZeroCount = (group.end - group.start + 1);
+          var subBoxPlot1Data = new Array(Math.round(nonZeroCount / 2));
+          var subBoxPlot2Data = new Array(Math.round(nonZeroCount / 2));
+          var nonZeroStartIndex = sampleLength - nonZeroCount;
           for (var i = 0; i < sampleLength; i++) {
             if (i < nonZeroStartIndex)
               boxPlotData[i] = 0;
-            else
+            else {
               boxPlotData[i] = jxnsData.weights[group.start + i - nonZeroStartIndex].weight;
+              var newInd = i - nonZeroStartIndex;
+              if (newInd <  nonZeroCount / 2)
+                subBoxPlot1Data[newInd] = boxPlotData[i];
+              else
+                subBoxPlot2Data[newInd - nonZeroCount / 2] = boxPlotData[i];
+            }
+
           }
-          var boxplotData = computeBoxPlot(boxPlotData, 1);
+          var boxplotInfo = computeBoxPlot(boxPlotData, 1);
           var boxplot = createBoxPlot(groupNode, "boxplot",
-            boxplotData.whiskerDown, boxplotData.whiskerTop, boxplotData.Q).attr({
+            boxplotInfo.whiskerDown, boxplotInfo.whiskerTop, boxplotInfo.Q).attr({
               "transform": " translate(" + groupWidth / 2 + ", 0)",
             }).style({
             });
+
+          var subboxplot1Info = computeBoxPlot(subBoxPlot1Data, 1);
+          var subboxplot1 = createBoxPlot(groupNode, "subboxplot",
+            subboxplot1Info.whiskerDown, subboxplot1Info.whiskerTop, subboxplot1Info.Q).attr({
+            }).style({
+              "visibility": "hidden"
+            });
+
+          var subboxplot2Info = computeBoxPlot(subBoxPlot2Data, 1);
+          var subboxplot2 = createBoxPlot(groupNode, "subboxplot",
+            subboxplot2Info.whiskerDown, subboxplot2Info.whiskerTop, subboxplot2Info.Q).attr({
+            }).style({
+              "visibility": "hidden"
+            });
+
 
           var dotsGroup = groupNode.append("g");
 
@@ -668,7 +693,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               "targetExonInd": function(d){return d.end;},
               "r": jxnCircleRadius,
               "outlier": function(jxnData){
-                return jxnData.weight < boxplotData.whiskerDown || jxnData.weight > boxplotData.whiskerTop
+                return jxnData.weight < boxplotInfo.whiskerDown || jxnData.weight > boxplotInfo.whiskerTop
               },
               "fill":defaultDotColor
           })
@@ -969,27 +994,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     function createSubBoxPlots(parent, data, groups) {
       var transformation;
       var parentNode = d3.select(parent);
-      parentNode.selectAll(".jxnContainer").each(function() {
-          transformation = this.getAttribute("transform")
-        })
 
       var effectiveWidth = getExpandJxnWidth() -  jxnBBoxWidth;
       var subplotsContainer = parentNode.select(".subboxplots");
 
-      var curExon = curExons[parent.getAttribute("sourceExonInd")];
-      var otherExon = curExons[parent.getAttribute("targetExonInd")];
       for (var gr = 0; gr < groups.length; gr++) {
-        var jxns = []
 
-        for (var sInd in groups[gr].samples) {
-          var sample = groups[gr].samples[sInd];
-          data.samples[sample]["jxns"].forEach(function(jxn, i) {
-            if ((curExon[1] == jxn[0][0] && otherExon[0] == jxn[0][1]) ||
-              (otherExon[1] == jxn[0][0] && curExon[0] == jxn[0][1])) {
-              jxns.push(jxn[1]);
-            }
-          });
-        }
         var boxplotData = computeBoxPlot(jxns);
         var xShift = jxnBBoxWidth / 2 + effectiveWidth * (gr + 1) / (groups.length + 1);
         var boxplot = createBoxPlot(subplotsContainer, "subboxplot",
@@ -1103,15 +1113,30 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "opacity": 1,
       }).each("end", callback);
 
-      var boxplots = parentNode.selectAll(".boxplot");
+      var boxplots = parentNode.selectAll(".subboxplot").style({
+          "visibility": "visible"
 
-/*      boxplots.transition().duration(400).attr({
-        "transform": transformation,
+      }).transition().duration(300).attr({
+        "transform": function(d, i) {
+          var xShift = jxnBBoxWidth  + (i + 0.5) * expandedWidth / 2;
+          return "translate(" + xShift + ", 0)"
+        }
       });
-      boxplots.selectAll(".boxPlotQLine").
-        style({"stroke-dasharray": "5,5"})
-        .transition().duration(400).attr({"x2": containerWidth});
-*/
+
+      parentNode.selectAll(".jxnCircle").transition().duration(300).attr({
+        "cx": function(d, i) {
+          var ind = i < sampleLength / 2 ? 0 : 1;
+          return jxnBBoxWidth  + (ind + 0.5) * expandedWidth / 2
+        },
+      })
+
+        /*      boxplots.transition().duration(400).attr({
+                "transform": transformation,
+              });
+              boxplots.selectAll(".boxPlotQLine").
+                style({"stroke-dasharray": "5,5"})
+                .transition().duration(400).attr({"x2": containerWidth});
+        */
 
 //      boxPlotGroup.selectAll(".boxPlotLine").style({
 //        "visibility": "hidden"
@@ -1208,12 +1233,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       expandedIsoform = isoform;
     }
 
-    function createGroups(activeIsoform, data) {
+    function createGroups(activeIsoform) {
       d3.selectAll(".boxplotWithDots").each(function () {
         if (this.getAttribute("ActiveIsoform") == activeIsoform) {
           removeSubboxplots(d3.select(this));
           if (showDotGroups && (groups.length > 0)) {
-            createSubBoxPlots(this, data, groups);
+            createSubBoxPlots(this, groups);
           }
           else {
             sortDots(this)
