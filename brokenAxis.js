@@ -18,6 +18,8 @@ define(['exports','d3'],function(exports,d3){
     this.brokenDomain = [0,100];
     this.brokenRange = [0,100];
 
+    this.avrgExonLength = 50;
+
     this.shrinkIntronsState = false;
 
     var that = this;
@@ -86,7 +88,7 @@ define(['exports','d3'],function(exports,d3){
       if (ranges.length<1) return;
 
 
-      var avrgExonLength = 30;
+
       var fixedIntronLength = 10;
 
       var rangeCount = ranges.length;
@@ -94,7 +96,7 @@ define(['exports','d3'],function(exports,d3){
       var allExonLength = ranges.reduce(function(previous, range){
         return previous +  (range.end-range.start)
       },0)
-      var rangeToLength = d3.scale.linear().domain([0,allExonLength/rangeCount]).range([0,avrgExonLength]); /// TODO magic number
+      var rangeToLength = d3.scale.linear().domain([0,allExonLength/rangeCount]).range([0,that.avrgExonLength]); /// TODO magic number
 
       var d3_domain =[];
       var d3_range =[];
