@@ -113,6 +113,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       return stdDev;
     }
 
+    var curProject;
     var dataType;
     var sampleGroups;
     var exonHeight = 30;
@@ -583,9 +584,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         curGene = gui.current.getSelectedGene(),
         startPos = gui.current.getStartPos(),
         baseWidth = gui.current.getBaseWidth(),
-        curProject = gui.current.getSelectedProject();
+        updatedProject = gui.current.getSelectedProject();
 
-      that.data.getGeneData(curProject, curGene).then(function(sampleData) {
+      that.data.getGeneData(updatedProject, curGene).then(function(sampleData) {
         dataType = sampleData.measures.data_type;
 
         var minMax = dataFuncs[dataType].minMax(sampleData.measures.reads);
@@ -603,7 +604,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           .attr("width", width + margin.left + margin.right);
 
         var readData = sampleData.measures.reads;
-        if (sampleGroups === undefined) {
+        if (sampleGroups === undefined || updatedProject != curProject) {
           sampleGroups = []
           readData.forEach(function(d, i) {
             sampleGroups.push({"collapse": false, "sampleData": [d]});
@@ -612,8 +613,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         joinGroups([0, 1, 2]);
         joinGroups([4, 5, 6, 7]);
 
-        sampleGroups = groupData(readData)
-        drawGroups(sampleGroups, minMax)
+        sampleGroups = groupData(readData);
+        drawGroups(sampleGroups, minMax);
+
+        curProject = updatedProject;
       })
 
     }
