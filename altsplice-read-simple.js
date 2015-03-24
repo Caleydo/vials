@@ -329,11 +329,22 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class":"abundanceGraph"
       })
 
+      function wrap() {
+        var textWidth = scatterWidth - 50;
+        var self = d3.select(this),
+        textLength = self.node().getComputedTextLength(),
+        text = self.text();
+        while (textLength > textWidth && text.length > 0) {
+          text = text.slice(0, -1);
+          self.text(text + '...');
+          textLength = self.node().getComputedTextLength();
+        }
+      }
+
       abundanceEnter.append("text").attr({
           "class": "sampleLabel",
           "transform": "translate(" + (that.axis.getWidth() + 10) + "," + exonHeight + ")"
-      }).text(function(d) {return d.sample})
-
+      }).text(function(d) {return d.sample}).each(wrap)
 
       // update !!!
 
