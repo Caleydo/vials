@@ -312,17 +312,22 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         },
         "click":function(d, i){
           var el = d3.select(this);
-          if (el.classed("fixed")){
-            el.classed("fixed", false);
-            //currentlySelectedIsoform = null;
-            //event.fire("isoFormSelect", {isoform: d.id, index:-1});
-          } else{
-            el.classed("fixed", true);
-            //if (currentlySelectedIsoform) currentlySelectedIsoform.classed("fixed", false);
-            //currentlySelectedIsoform = el;
-            //event.fire("isoFormSelect", {isoform: d.id, index:i})
-          }
 
+          // whether element is selected
+          var isSelected = !el.classed("fixed");
+          el.classed("fixed", isSelected);
+
+          var groupID = getGroup(d.sample);
+          var group = sampleGroups[groupID];
+
+          if (group.collapse) {
+            // toggle group selection
+            group.selected = isSelected;
+            event.fire("groupSelect", groupID, isSelected);
+          }
+          else {
+            event.fire("sampleSelect", d.sample, isSelected);
+          }
         }
       })
 
@@ -344,8 +349,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       var sampleText = abundanceEnter.append("text").attr({
           "class": "sampleLabel",
-          "transform": "translate(" + (that.axis.getWidth() + 10) + "," + exonHeight + ")"
       }).text(function(d) {return d.sample}).each(wrap)
+
+      sampleText.each(function() {
+        var self = d3.select(this),
+        bb = self.node().getBBox();
+        self.attr("transform",
+          "translate(" + (that.axis.getWidth() + 10) + "," + (exonHeight + bb.height)/2 + ")"
+        );
+      })
 
       sampleText.append("title").text(function(d) {return d.sample});
 
@@ -371,7 +383,22 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var group = d3.select(this);
         redrawLineGroups(g, group);
         if (g.collapse) {
+          // deselect all samples
+          group.selectAll(".background").each(function(d) {
+            d3.select(this).classed("fixed", false);
+            event.fire("sampleSelect", d.sample, false);
+          });
           summarizeData(g, groupID, group);
+        }
+        else if (g.selected) {
+          // deselect group
+          event.fire("groupSelect", groupID, false);
+          // select all samples
+          group.selectAll(".background").each(function(d) {
+            d3.select(this).classed("fixed", true);
+            event.fire("sampleSelect", d.sample, true);
+          });
+          g.selected = false;
         }
         toggleOpacities(g, group);
       })
@@ -402,7 +429,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     function redrawLineGroups(g, group) {
       var sampleData = g.sampleData;
       var linesGroup = group.selectAll(".linesGroup");
-      var linesGroupHeight = sampleScaleY(g.collapse ? 1 : sampleData.length) + exonHeight / 2 - 5
+      var linesGroupHeight = sampleScaleY(g.collapse ? 1 : sampleData.length) - 5
       linesGroup.selectAll(".v").transition().attr({
         "y2": linesGroupHeight,
       });
@@ -411,7 +438,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "y2": linesGroupHeight,
       });
       var buttonHeight = g.collapse ? 1 : sampleData.length;
-      buttonHeight = (sampleScaleY(buttonHeight)-sampleScaleY(0))/ 2 + exonHeight / 2 - 5;
+      buttonHeight = (sampleScaleY(buttonHeight)-sampleScaleY(0))/ 2 - 5;
       linesGroup.selectAll(".buttonGroup").transition().attr({
         "transform": "translate(" + (that.axis.getWidth() + 15) + "," + buttonHeight + ")",
       });
@@ -447,9 +474,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function toggleOpacities(g, group) {
-        group.selectAll(".abundanceGraph, .abundance .background").transition().attr({
-          "opacity": g.collapse ? 0 : 1
-        });
+        // group.selectAll(".abundanceGraph, .abundance .background").transition().attr({
+        //   "opacity": g.collapse ? 0 : 1
+        // });
         group.selectAll(".sampleLabel").transition().attr("opacity", g.collapse ? 0 : 1);
         group.selectAll(".summary").transition().attr({
           "opacity": g.collapse ? 1 : 0
@@ -476,8 +503,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "class": "v",
           "x1": axisWidth + 20,
           "x2": axisWidth + 20,
-          "y1": sampleScaleY(0) + exonHeight / 2 + 5,
-          "y2": sampleScaleY(sampleData.length) + exonHeight / 2 - 5,
+          "y1": sampleScaleY(0) + 5,
+          "y2": sampleScaleY(sampleData.length) - 5,
           "stroke": "black",
         });
 
@@ -485,8 +512,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "class": "top",
           "x1": axisWidth + 10,
           "x2": axisWidth + 20,
-          "y1": sampleScaleY(0) + exonHeight / 2 + 5,
-          "y2": sampleScaleY(0) + exonHeight / 2 + 5,
+          "y1": sampleScaleY(0) + 5,
+          "y2": sampleScaleY(0) + 5,
           "stroke": "black",
         });
 
@@ -494,8 +521,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "class": "bottom",
           "x1": axisWidth + 10,
           "x2": axisWidth + 20,
-          "y1": sampleScaleY(sampleData.length) + exonHeight / 2 - 5,
-          "y2": sampleScaleY(sampleData.length) + exonHeight / 2 - 5,
+          "y1": sampleScaleY(sampleData.length) - 5,
+          "y2": sampleScaleY(sampleData.length) - 5,
           "stroke": "black",
         });
 
@@ -511,7 +538,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "x": 0,
         }).on("click", function(d) {d.collapse = !d.collapse; expandGroups()});
 
-        var buttonHeight = sampleGroup.collapse ? 1 : (sampleScaleY(sampleData.length)-sampleScaleY(0))/ 2 + exonHeight / 2 - 5;
+        var buttonHeight = sampleGroup.collapse ? 1 : (sampleScaleY(sampleData.length)-sampleScaleY(0))/ 2 - 5;
       }
 
       linesGroup.selectAll(".buttonGroup").attr({
@@ -527,12 +554,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "class":"sampleGroup"
       })
 
-      groupEnter.each(function(g) {
-        drawLinesGroup(g, d3.select(this));
+      groupEnter.each(function(group) {
+        group.g = d3.select(this);
+        drawLinesGroup(group, d3.select(this));
       })
 
-      group.each(function(g) {
-        drawSamples(g.sampleData, minMax, d3.select(this));
+      group.each(function(group) {
+        drawSamples(group.sampleData, minMax, d3.select(this));
       })
 
       expandGroups();
@@ -562,7 +590,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function groupData(readData) {
-      var grouped = sampleGroups.map(function() {return {"collapse": false, "sampleData": []}});
+      var grouped = sampleGroups.map(function() {return {"collapse": false, "selected": false, "sampleData": []}});
       readData.forEach(function(d, i) {
         var groupID = getGroup(d.sample);
         grouped[groupID].sampleData.push(d)
@@ -575,7 +603,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                                               return sampleData.concat(sampleGroups[groupID].sampleData)
                                             }, []);
 
-      var newGroup = {"sampleData": combinedSamples, "collapse": false};
+      var newGroup = {"collapse": false, "selected": false, "sampleData": combinedSamples};
       sampleGroups = [newGroup].concat(sampleGroups.filter(function(g, i) {return groupIDs.indexOf(i) < 0}));
     }
 
@@ -607,7 +635,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         if (sampleGroups === undefined || updatedProject != curProject) {
           sampleGroups = []
           readData.forEach(function(d, i) {
-            sampleGroups.push({"collapse": false, "sampleData": [d]});
+            sampleGroups.push({"collapse": false, "selected": false, "sampleData": [d]});
           })
         }
         joinGroups([0, 1, 2]);
