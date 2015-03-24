@@ -33,7 +33,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     return new GenomeVis(data, parent);
   }
 
-  var margin = {top: 40, right: 10, bottom: 20, left: 10};
+  var margin = {top: 40, right: 10, bottom: 20, left: 150};
   var width; // = 1050 - margin.left - margin.right,
   var groupWidth;
   var expandedWidth;
@@ -215,8 +215,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             }
           })
 
+        // == update heatmap ==
+        heatmapGroup.selectAll(".exonHeat").transition().attr({
+          x:function(d){return axis.genePosToScreenPos(d.start);},
+          width:function(d){return axis.genePosToScreenPos(d.end)-axis.genePosToScreenPos(d.start);}
+        })
 
       })
+
+
+
 
 
       var head = $parent.append("div").attr({
@@ -235,13 +243,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       .attr("height", height + margin.top + margin.bottom)
       .style({
         //"top":"10px",
-        "left":"0px",
+        "left":"20px",
         "position":"relative"
 
       })
 
-    var exploreArea = svg.append("g").attr("transform", "translate(20, 20)").attr("id","exploreArea");
+    var exploreArea = svg.append("g").attr("transform", "translate(0, 20)").attr("id","exploreArea");
     jxnArea = exploreArea.append("g").attr("id", "jxnArea");
+
+
 
     function updateVisualization() {
 
@@ -278,11 +288,106 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         drawRNA(RNAArea);
 
         drawJxns();
+        drawHeatmap();
 
       })
       //// should trigger a cache hit
       //that.data.getSamples(chromID,startPos,baseWidth);
     }
+
+      /*================
+      * DRAW Heatmap
+      * ================
+      * */
+    var heatmapGroup = exploreArea.append("g")
+      .attr("transform", "translate(0,"+(jxnWrapperHeight+RNAMargin +RNAHeight)+")")
+      .attr("class", "exonHeatMap")
+
+    var heatMapHeight = 20;
+    var heatMapExtendedHeight = height+margin.top + margin.bottom- (jxnWrapperHeight+RNAMargin +RNAHeight)
+      heatmapGroup.append("rect").attr({
+        class:"background",
+        x:0,
+        y:0,
+        width: width,
+        height: heatMapExtendedHeight
+      })
+      heatmapGroup.append("text").attr({
+        class:"heatmapLabel infoSticker",
+        x:width + 5,
+        y:heatMapHeight-4
+      }).text(" ] exon overlap")
+
+    function drawHeatmap(){
+        var exonHeat = heatmapGroup.selectAll(".exonHeat").data(Object.keys(allExons).map(function(key){return allExons[key];}));
+        exonHeat.exit().remove();
+
+        // --- adding Element to class exonHeat
+        var exonHeatEnter = exonHeat.enter().append("rect").attr({
+            "class":"exonHeat",
+          y:0,
+          height:heatMapHeight
+        })
+
+        // --- changing nodes for exonHeat
+        exonHeat.attr({
+            x:function(d){return axis.genePosToScreenPos(d.start);},
+            width:function(d){return axis.genePosToScreenPos(d.end)-axis.genePosToScreenPos(d.start);}
+        })
+
+        //== updates
+        heatmapGroup.selectAll(".background").attr({
+          width: width
+        })
+
+      heatmapGroup.selectAll(".heatmapLabel").attr({
+        x: width +5
+      })
+
+
+    }
+
+
+      function addCrosshair(){
+        // create crosshair
+        var crosshair = heatmapGroup.append("line").attr({
+          "class":"crosshair",
+          "x1":0,
+          "y1":0,
+          "x2":50,
+          "y2":heatMapExtendedHeight
+        }).style({
+          "stroke-width":"1",
+          "stroke":"black",
+          "pointer-events":"none"
+        });
+
+        var currentX = 0;
+        heatmapGroup.on("mousemove", function () {
+          currentX = d3.mouse(this)[0];
+          event.fire("crosshair", currentX);
+
+        })
+
+        function updateCrosshair(event, x){
+          crosshair.attr({
+            "x1":x,
+            "x2":x
+          }).style({
+            opacity:function(){
+              return x>axis.getWidth()?0:1
+            }
+          })
+
+
+        }
+
+        event.on("crosshair", updateCrosshair);
+      }
+
+      addCrosshair();
+
+
 
     function drawJxnAxis() {
 
@@ -400,7 +505,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var wrapperWidth = groupWidth * jxnGroup.groups.length;
           grayStripesGroup.append("rect").attr({
             "class": "jxnWrapperBox",
-            "fill": "#ccc",
             "height": jxnWrapperHeight,
             "width": function (d, i) {
               return wrapperWidth
@@ -424,22 +528,20 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               return "none"
             },
             "points": function() {return getConnectorPoints(this)},
-            "class": "JXNAreaConnector",
-            "stroke": "#ccc",
-            "fill":"#ccc"
+            "class": "JXNAreaConnector"
           })
           startX += groupWidth * jxnGroups[jxnGpInd].groups.length + jxnWrapperPadding;
         }
 
         var startX = weightAxisCaptionWidth + jxnWrapperPadding;
-        for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
+      for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
 
         var jxnGroup = jxnGroups[jxnGpInd];
         var wrapperWidth = groupWidth * jxnGroup.groups.length;
 
 
         var jxnGroupWrapper = jxnArea.append("g").attr({
-          "class": "jxnWrapper",
+          "class": "jxnWrapper"
         });
 
         var edgeGroups = jxnGroupWrapper.selectAll(".edgeGroup").data(jxnGroup.groups).enter().append("g").attr({
@@ -548,43 +650,52 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             });
 
           var dotsGroup = groupNode.append("g");
-          for (var ind = group.start; ind <= group.end; ind++) {
-            var jxnData = jxnsData.weights[ind];
-            var jxnCircle = dotsGroup.append("circle").attr({
-              "class": "jxnCircle",
-              "sourceExonInd": jxnData.start,
-              "targetExonInd": jxnData.end,
-              "data-sample": jxnData.sample,
-              "r": jxnCircleRadius,
-              "cx": groupWidth / 2,
-              "cy": yScaleContJxn(jxnData.weight),
-              "outlier": jxnData.weight < boxplotData.whiskerDown || jxnData.weight > boxplotData.whiskerTop,
-              "fill": function (d, i) {
-                return defaultDotColor
-              }
-            })
-            jxnCircle.on('mouseover', function () {
-              var hoveredSample = this.getAttribute("data-sample");
-              d3.selectAll('.jxnCircle').style('fill', function () {
-                var sample = this.getAttribute("data-sample");
-                return (sample == hoveredSample) ? highlightedDotColor : dehighlightedDotColor;
-              });
-            }).on('mouseout', function (val, dotInd, plotInd) {
-              d3.selectAll('.jxnCircle')
-                .transition()
-                .duration(100)
-                .style('fill', defaultDotColor);
 
+
+          // == jxnCircles !!
+
+          console.log(jxnsData);
+
+          var jxnCircle = dotsGroup.selectAll(".jxnCircle").data(jxnsData.weights.filter(function(d,ind){
+            return ind >= group.start && ind <= group.end // TODO: VERY BAD CODE
+          }));
+          jxnCircle.exit().remove();
+
+          // --- adding Element to class jxnCircle
+          var jxnCircleEnter = jxnCircle.enter().append("circle").attr({
+              "class":"jxnCircle",
+              "sourceExonInd": function(d){return d.start;},
+              "targetExonInd": function(d){return d.end;},
+              "r": jxnCircleRadius,
+              "outlier": function(jxnData){
+                return jxnData.weight < boxplotData.whiskerDown || jxnData.weight > boxplotData.whiskerTop
+              },
+              "fill":defaultDotColor
+          })
+          jxnCircleEnter.on('mouseover', function (d) {
+            // == fire sample select event
+            event.fire("sampleHighlight", d.sample, true);
+
+          }).on('mouseout', function (d) {
+            event.fire("sampleHighlight", d.sample, false);
+
+          });
+
+          jxnCircleEnter.append("svg:title")
+            .text(function (d, i) {
+              return d.sample + ": " + d.weight + " (" + d.start + " - " + d.end + ")";
             });
 
-            jxnCircle.append("svg:title")
-              .text(function (d, i) {
-                return jxnData.sample + ": " + jxnData.weight + " (" + jxnData.start + " - " + jxnData.end + ")";
-              });
-
-          }
+          // --- changing nodes for jxnCircle
+          jxnCircle.attr({
+            "cx": groupWidth / 2,
+            "cy": function(jxnData){return yScaleContJxn(jxnData.weight)}
+          })
 
         })
+
+
+
 
 
         startX += groupWidth * jxnGroups[jxnGpInd].groups.length + jxnWrapperPadding;
@@ -593,7 +704,31 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       linesGroup.each(function() {
         this.parentNode.appendChild(this);
       })
+
     }
+
+    // == bind sampleHighlight Event:
+    event.on("sampleHighlight", function(event, hoveredSample, highlight){
+      console.log("highlight", hoveredSample, highlight);
+      if (highlight){
+        svg.selectAll('.jxnCircle').style('fill', function (d) {
+          return (d.sample == hoveredSample) ? highlightedDotColor : dehighlightedDotColor;
+        });
+      }
+      else
+      {
+        svg.selectAll('.jxnCircle')
+          //.transition()
+          //.duration(100)
+          .style('fill', defaultDotColor);
+      }
+    })
+
+
+
+
+
+
 
     function updateDotVisibility() {
       d3.selectAll(".jxnCircle").style({
@@ -616,14 +751,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     function drawRNA(RNAArea) {
 
-      RNAArea.append("line").attr({
-        "x1": axis.genePosToScreenPos(startCoord),
-        "x2": axis.genePosToScreenPos(endCoord),
-        "y1": RNAHeight,
-        "y2": RNAHeight,
-        "class": "RNALine",
-        "stroke": "#666"
-      });
+      //TODO: hen deleted here
+      //RNAArea.append("line").attr({
+      //  "x1": axis.genePosToScreenPos(startCoord),
+      //  "x2": axis.genePosToScreenPos(endCoord),
+      //  "y1": RNAHeight,
+      //  "y2": RNAHeight,
+      //  "class": "RNALine",
+      //  "stroke": "#666"
+      //});
 
       buckets = new Array(jxnsData.all_starts.length + jxnsData.all_ends.length);
       for (var i = 0; i < buckets.length; ++i) {
@@ -691,6 +827,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         if (selectedIsoform != null)
           return;
 
+        // == move crosshair there..
+        event.fire("crosshair", axis.genePosToScreenPos(d1.loc))
+
         RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2, i2) {
           d3.select(this).style({
             "opacity" : d1 == d2 ? 1 : 0.1
@@ -699,7 +838,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         d3.selectAll(".JXNAreaConnector").each(function() {
           d3.select(this).style({
-            "opacity" : (this.getAttribute("loc") == d1.loc) ? 1 : 0.1
+            "opacity" : (this.getAttribute("loc") == d1.loc) ?1 : 0.1
           })
         })
 
@@ -719,7 +858,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             })
             d3.selectAll(".JXNAreaConnector").each(function (d2) {
               if (this.getAttribute("loc") == otherLoc) {
-                d3.select(this).style({"opacity" : 1})
+                d3.select(this).style({"opacity" :1})
               }
             })
           }

@@ -101,6 +101,7 @@ $wes-red: #D16B54;
   }
   .fixed{
     fill:$wes-yellow;
+    fill-opacity: .5;
   }
 
 
@@ -135,6 +136,37 @@ $wes-red: #D16B54;
 //}
 
 
+
+//===> jxn view <===
+#jxnArea{
+  .jxnWrapperBox{
+      fill:$wes-gray;
+      fill-opacity: .5;
+  }
+
+  .JXNAreaConnector{
+    fill:$wes-gray;
+    fill-opacity: .5;
+  }
+}
+
+.exonHeatMap{
+  .exonHeat{
+      fill:$wes-violet;
+      fill-opacity:.1;
+
+  }
+
+  .background{
+    fill:white;
+//    fill-opacity: .3;
+  }
+
+}
+
+
+
+// ===> here for html <===
 #visReads{
   max-height:300px;
   overflow-y: auto;

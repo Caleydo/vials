@@ -121,10 +121,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         console.log("list", isoformList);
 
         var scatterWidth = 200;
+        var extraLabel = 100;
         var axisOffset =  that.axis.getWidth() + 10;
         var noIsoforms = isoformList.length;
 
-        width = axisOffset+ scatterWidth;
+        width = axisOffset+ scatterWidth+extraLabel;
         height = (exonHeight+3)*noIsoforms;
         svg.attr("height", height+margin.top+margin.bottom)
           .attr("width", width + margin.left + margin.right);
@@ -134,7 +135,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
         console.log(minMaxValues);
-        var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, width])
+        var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, axisOffset+scatterWidth])
 
         var menuOffset = -24;
         var menuHeight = 18;
@@ -341,6 +342,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "text-anchor":"middle",
         "pointer-events":"none"
       }).text("sort by mean")
+
+      dotMenuEnter.append("text").attr({
+        "class":"searchLabel infoSticker",
+        "x":(scaleXScatter.range()[1]- scaleXScatter.range()[0])+3,
+        "y": menuHeight-4
+      }).text(" ] sort column")
+
+
 
 
       // --- changing nodes for dotMenu
