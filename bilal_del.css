@@ -1,12 +1,12 @@
 /*Bilal: put your css in here -- Hen will transfer it*/
 
 
-.RINASite[type=donor]{
+.RNASite[type=donor]{
   fill: blue;
   fill-opacity: 1;
   stroke: black;}
 
-.RINASite[type=receptor]  {
+.RNASite[type=receptor]  {
   fill: red;
   fill-opacity: 1;
   stroke: black;}
