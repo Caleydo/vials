@@ -341,10 +341,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }
       }
 
-      abundanceEnter.append("text").attr({
+      var sampleText = abundanceEnter.append("text").attr({
           "class": "sampleLabel",
           "transform": "translate(" + (that.axis.getWidth() + 10) + "," + exonHeight + ")"
       }).text(function(d) {return d.sample}).each(wrap)
+
+      sampleText.append("title").text(function(d) {return d.sample});
 
       // update !!!
 
