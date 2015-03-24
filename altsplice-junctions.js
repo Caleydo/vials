@@ -173,7 +173,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         computeFlagPositions()
 
-        d3.selectAll(".RNASites").transition()
+        d3.selectAll(".RNASite").transition()
           .duration(300).attr({
             "transform": function(d, i) {return "translate(" + d.xStart + ",0)"}
           })
@@ -468,7 +468,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       function getConnectorPoints(connector) {
 
-        var bucketInd = connector.getAttribute("adjacentSingletonAcceptorBucket");
+        var bucketInd = connector.getAttribute("adjacentSingletonReceptorBucket");
         if (bucketInd == "none") {
           return [
             connector.getAttribute("x1"), jxnWrapperHeight,
@@ -519,11 +519,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             x2: startX + wrapperWidth -1,
             x3: buckets[donorInd].xEnd,
             "loc": donorLoc,
-            "adjacentSingletonAcceptorBucket": function() {
+            "adjacentSingletonReceptorBucket": function() {
               if (jxnGroup.groups.length == 1) {
                 var loc = jxnGroup.groups[0].endLoc;
-                var acceptorInd = getBucketIndAt(loc);
-                return acceptorInd == donorInd + 1 ? acceptorInd : "none"
+                var receptorInd = getBucketIndAt(loc);
+                return receptorInd == donorInd + 1 ? receptorInd : "none"
               }
               return "none"
             },
@@ -583,8 +583,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class": "edgeAnchor",
             "startLoc": group.startLoc,
             "endLoc": group.endLoc,
-            "fill": "red",
-            "stroke": "black",
             "height": 5,
             "width": groupWidth / 2,
             "transform": "translate(" + groupWidth / 4 + ", " + (jxnWrapperHeight - 6) + ")"
@@ -606,7 +604,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var startInd = getBucketIndAt(group.startLoc);
           if (endInd > startInd + 1 || jxnGroup.groups.length > 1) {
             linesGroup.append("line").attr({
-              "type": "acceptor",
+              "type": "receptor",
               "anchorX": anchorX,
               "x1": anchorX,
               "x2": buckets[endInd].xStart,
@@ -614,8 +612,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               "endLoc": group.endLoc,
               "y1": jxnWrapperHeight,
               "y2": getDonorY(),
-              "class": "edgeConnector",
-              "stroke": "red"
+              "class": "edgeConnector"
             })
           }
 
@@ -629,7 +626,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "y1": jxnWrapperHeight,
             "y2": getDonorY(),
             "class": "edgeConnector",
-            "stroke": "blue"
           }).style({
             "visibility": "hidden"
             })
@@ -718,10 +714,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           })
 
         })
-
-
-
-
 
         startX += groupWidth * jxnGroups[jxnGpInd].groups.length + jxnWrapperPadding;
       }
@@ -818,13 +810,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       computeFlagPositions()
 
-      var RNASites = RNAArea.selectAll(".RNASites").data(buckets);
+      var RNASites = RNAArea.selectAll(".RNASite").data(buckets);
       RNASites .exit().remove();
 
       var triangles = RNASites.enter().append("polyline").attr({
-        "class": "RNASites",
-        "fill": function (d, i) {return d.type == "donor" ? "blue" : "red"},
-        "stroke": "black",
+        "class": "RNASite",
+        "type":function (d, i) {return d.type},
         "points": function (d, i) {
           return d.type == "donor" ? [
             0, RNAHeight/2,
@@ -855,7 +846,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         // == move crosshair there..
         event.fire("crosshair", axis.genePosToScreenPos(d1.loc))
 
-        RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2, i2) {
+        RNAArea.selectAll(".RNASite, .RNASiteConnector").each(function (d2, i2) {
           d3.select(this).style({
             "opacity" : d1 == d2 ? 1 : 0.1
           })
@@ -876,7 +867,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           }
           else if (classAttr == "edgeConnector") {
             var otherLoc = startLoc == d1.loc ? endLoc : startLoc;
-            RNAArea.selectAll(".RNASites, .RNASiteConnector").each(function (d2) {
+            RNAArea.selectAll(".RNASite, .RNASiteConnector").each(function (d2) {
               if (d2.loc == otherLoc) {
                 d3.select(this).style({"opacity" : 1})
               }
@@ -894,15 +885,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           return;
 
 
-        d3.selectAll(".RNASites, .JXNAreaConnector, .RNASiteConnector, .edgeAnchor, .edgeConnector").style({
+        d3.selectAll(".RNASite, .JXNAreaConnector, .RNASiteConnector, .edgeAnchor, .edgeConnector").style({
             "opacity" : 1
         })
       });
 
       RNASites.enter().append("polyline").attr({
         "class": "RNASiteConnector",
-        "fill":"none",
-        "stroke": function (d, i) {return d.type == "donor" ? "blue" : "red"},
+        "type":function (d, i) {return d.type},
         "points": function (d, i) {
           var x1 =  d.type == "donor" ? d.xEnd : d.xStart;
           return [
@@ -1165,7 +1155,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "opacity": 0,
       }).each("end", callback);
 
-      // removeSubboxplots(parentNode)
+      removeSubboxplots(parentNode)
 
       // var boxplots = parentNode.selectAll(".boxplot");
 
@@ -1292,7 +1282,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           return this.getAttribute("type") == "donor" ? "hidden" : "visible"
         }
       })
-      d3.selectAll(".RNASites, .RNASiteConnector, .JXNAreaConnector, .jxnWrapperBox, .edgeAnchor, .edgeConnector, .edgeGroup")
+      d3.selectAll(".RNASite, .RNASiteConnector, .JXNAreaConnector, .jxnWrapperBox, .edgeAnchor, .edgeConnector, .edgeGroup")
         .transition().duration(200).style({
           "opacity" : 1,
         })
@@ -1310,7 +1300,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "opacity" : 0.1
         })
 
-      d3.selectAll(".RNASites, .RNASiteConnector, .JXNAreaConnector, .edgeAnchor, .edgeConnector, .edgeGroup").style({
+      d3.selectAll(".RNASite, .RNASiteConnector, .JXNAreaConnector, .edgeAnchor, .edgeConnector, .edgeGroup").style({
         "opacity" : 0.1,
       })
 
@@ -1322,7 +1312,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 //        console.log(exon.start + "- " + exon.end);
 
-        d3.selectAll(".RNASites, .RNASiteConnector").filter(function (d) {
+        d3.selectAll(".RNASite, .RNASiteConnector").filter(function (d) {
           return d.loc == exon.start || d.loc == exon.end
         }).style({
           "opacity": 1,
