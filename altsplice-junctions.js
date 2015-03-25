@@ -492,7 +492,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       function drawJxns() {
 
-      groupWidth =  (width - weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
+      var lastFlagX = buckets[buckets.length - 1].xEnd;
+        groupWidth =  (lastFlagX + 2.7 * weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
+
 
         var grayStripesGroup = jxnArea.append("g");
         var linesGroup = jxnArea.append("g");
