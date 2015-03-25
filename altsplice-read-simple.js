@@ -560,6 +560,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var allBG = getGroup(groupID).g.selectAll(".background");
       drawSampleMark(allBG, groupID, isSelected);
       allBG.classed("fixed", isSelected);
+      if (!isSelected) {
+        gui.current.releaseColorForSelection(group.groupID);
+      }
     })
 
     event.on("sampleSelect", function(e, sample, isSelected){
@@ -567,8 +570,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var sampleBG = group.g.selectAll(".background").filter(function(d) {
                                                         return d.sample === sample
                                                       })
-      drawSampleMark(sampleBG, {"samples": [sample], "meta": getMetaFromSample(sample)}, isSelected);
+      var sampleID = {"samples": [sample], "meta": getMetaFromSample(sample)};
+      drawSampleMark(sampleBG, sampleID, isSelected);
       sampleBG.classed("fixed", isSelected);
+      if (!isSelected) {
+        gui.current.releaseColorForSelection(sampleID);
+      }
     });
 
     function drawSampleMark(g, groupID, isSelected) {

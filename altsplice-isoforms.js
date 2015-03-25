@@ -555,8 +555,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     event.on("sampleSelect", selectSample)
 
 
-    event.on("groupHighlight", function(e, samples, isHighlighted){
-      var sall = samples.map(function(d,i){return ".sample"+cleanSelectors(d)}).join(", ");
+    event.on("groupHighlight", function(e, groupID, isHighlighted){
+      var sall = groupID.samples.map(function(d,i){return ".sample"+cleanSelectors(d)}).join(", ");
       var highlightSel = svg.selectAll(sall);
       var hl = highlightSel.classed("highlighted", isHighlighted)
       if (isHighlighted)  hl.moveToFront();
@@ -565,9 +565,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
-    event.on("groupSelect", function(e,samples, isSelected) {
+    event.on("groupSelect", function(e, groupID, isSelected) {
 
-      var sall = samples.map(function (d, i) {
+      var sall = groupID.samples.map(function (d, i) {
         return ".sample" + cleanSelectors(d)
       }).join(", ");
 
@@ -582,7 +582,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             .select(".highlight")
 
           d3.select(this).style({
-            fill: gui.current.getColorForSelection(samples),
+            fill: gui.current.getColorForSelection(groupID),
             "fill-opacity": 1,
             stroke: 1
           })
@@ -599,7 +599,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
       } else {
-        gui.current.releaseColorForSelection(samples);
+        gui.current.releaseColorForSelection(groupID);
 
         var allX = gIso.selectAll(".highlight " + sall)
         allX.classed("selected", null);
