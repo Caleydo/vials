@@ -148,6 +148,27 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     });
 
+
+    event.on("sampleSelect", function(e,sampleID, isSelected){
+
+          var sampleColor = gui.current.getColorForSelection(sampleID);
+
+
+          // TODO: bilal, here you have the infos about a single somple selection. Have fun coding :)
+
+          if (isSelected){
+            // sample was selected
+          }else{
+            // sample was de-selected
+          }
+
+
+      })
+
+
+
+
+
       event.on("GroupingChanged", function(ev,data){
      /*  groups = []
       var otherSamples = []
