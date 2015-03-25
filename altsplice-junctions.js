@@ -151,11 +151,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     event.on("sampleSelect", function(e,sampleID, isSelected){
 
-          var sampleColor = gui.current.getColorForSelection(sampleID);
+
 
           // TODO: bilal, here you have the infos about a single somple selection. Have fun coding :)
 
           if (isSelected) {
+            var sampleColor = gui.current.getColorForSelection(sampleID);
             svg.selectAll('.jxnCircle').filter(function(d) {
               return this.getAttribute("selected") == 0;
             }).style('fill', function (d) {

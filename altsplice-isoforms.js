@@ -555,6 +555,88 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     event.on("sampleSelect", selectSample)
 
 
+    event.on("groupHighlight", function(e, samples, isHighlighted){
+      var sall = samples.map(function(d,i){return ".sample"+cleanSelectors(d)}).join(", ");
+      var highlightSel = svg.selectAll(sall);
+      var hl = highlightSel.classed("highlighted", isHighlighted)
+      if (isHighlighted)  hl.moveToFront();
+    });
+
+
+
+
+    event.on("groupSelect", function(e,samples, isSelected) {
+
+      var sall = samples.map(function (d, i) {
+        return ".sample" + cleanSelectors(d)
+      }).join(", ");
+
+      if (isSelected) {
+
+        var allX = gIso.selectAll(".foreground " + sall)
+
+        allX.classed("selected", true);
+
+        allX.each(function () {
+          var highlightG = d3.select(d3.select(this).node().parentNode.parentNode) // grandpa
+            .select(".highlight")
+
+          d3.select(this).style({
+            fill: gui.current.getColorForSelection(samples),
+            "fill-opacity": 1,
+            stroke: 1
+          })
+
+          // add to highlight
+          highlightG.node().appendChild(this);
+
+          // make BG white to cover other dots
+          highlightG.select(".highlightBG").style({
+            opacity: .5
+          })
+
+
+        })
+
+      } else {
+        gui.current.releaseColorForSelection(samples);
+
+        var allX = gIso.selectAll(".highlight " + sall)
+        allX.classed("selected", null);
+
+
+        allX.each(function () {
+          var fgG = d3.select(d3.select(this).node().parentNode.parentNode) // grandpa
+            .select(".foreground")
+
+          // save the old parent
+          var highlightG = d3.select(d3.select(this).node().parentNode);
+
+          d3.select(this).style({
+            fill: null,
+            "fill-opacity": null,
+            stroke: null
+          })
+
+          // add to highlight
+          fgG.node().appendChild(this);
+
+          // if only bgrect left..
+          if (highlightG.node().childNodes.length == 1) {
+
+            // make BG white to cover other dots
+            highlightG.select(".highlightBG").style({
+              opacity: 0
+            })
+
+          }
+
+
+        })
+
+      }
+    })
+
 
 
 
