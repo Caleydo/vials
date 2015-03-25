@@ -197,17 +197,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
          if (otherSamples.length > 0)
          groups.push({"samples": otherSamples, "color": "gray"})
          }
-         */
         groups = [
           {"samples": samples, "color": groupColors[0]}
         ]
         if ((expandedIsoform != null) && showDotGroups) {
           createGroups(expandedIsoform);
         }
+         */
       });
 
 
-      event.on("GroupingChanged", function(ev,data){
+      event.on("groupingChanged", function(ev, newGroups){
      /*  groups = []
       var otherSamples = []
         for (var i = 0; i < data.collections.length; i++) {
@@ -224,6 +224,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           groups.push({"samples": otherSamples, "color": "gray"})
       }
       */
+        groups = newGroups;
+
+//        event.fire("groupingChanged",  [ ["heart", "adipose"], ["thyroid", ...], ...] )
+
       if ((expandedIsoform != null) && showDotGroups) {
         createGroups(expandedIsoform);
       }
@@ -1189,7 +1193,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 //      var groupIndices = new Array(groups.length);
       var sampleToGroup = [];
       for (var gr = 0; gr < groups.length; gr++) {
-        var groupSamples = groups[gr].samples;
+        var groupSamples = groups[gr];
         groupData[gr] = []
         for (var sampleInd = 0; sampleInd < groupSamples.length; sampleInd++) {
           var sample = groupSamples[sampleInd]
@@ -1218,13 +1222,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "opacity": 0
           });
         boxplot.selectAll(".jxnBBox").style({
-          "fill" : groups[gr].color
+          "fill" : gui.current.getColorForSelection(groups[gr])
         })
         boxplot.transition().duration(400).style({
             "opacity": 1
           });
         parentNode.selectAll(".jxnCircle").filter(function (d) {
-          return groups[gr].samples.indexOf(d.sample) >= 0
+          return groups[gr].indexOf(d.sample) >= 0
         }).transition().duration(400).attr({
           "cx": function(d, i) {
             return xShift
