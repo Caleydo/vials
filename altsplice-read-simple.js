@@ -652,8 +652,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "y1": linesGroupHeight,
         "y2": linesGroupHeight,
       });
-      var buttonHeight = group.collapse ? 1 : noSamples;
-      buttonHeight = (sampleScaleY(buttonHeight)-sampleScaleY(0))/ 2 - 5;
+      // var buttonHeight = group.collapse ? 1 : noSamples;
+      // buttonHeight = (sampleScaleY(buttonHeight)-sampleScaleY(0))/ 2 - 5;
+      buttonHeight = sampleScaleY(0);
       linesGroup.selectAll(".buttonGroup").transition().attr({
         "transform": "translate(" + (that.axis.getWidth() + 15) + "," + buttonHeight + ")",
       });
@@ -759,13 +760,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "height": 10,
           "x": 0,
         }).on("click", function(d) {d.collapse = !d.collapse; expandGroups()});
-
-        var buttonHeight = group.collapse ? 1 : (sampleScaleY(noSamples)-sampleScaleY(0))/ 2 - 5;
       }
-
-      linesGroup.selectAll(".buttonGroup").attr({
-        "transform": "translate(" + (axisWidth + 15) + "," + buttonHeight + ")",
-      });
     }
 
     function drawGroups() {
