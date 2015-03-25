@@ -435,12 +435,24 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         class:"background"
       }).on({
         "mouseover": function(d){
+          var group = getGroupFromSample(d.sample);
+          if (group.collapse) {
+            event.fire("groupHighlight", group.groupID, true);            
+          }
+          else {
+            event.fire("sampleHighlight", d.sample, true);            
+          }
           d3.select(this).classed("selected", true);
-          event.fire("sampleHighlight", d.sample, true);
         },
         "mouseout": function(d){
+          var group = getGroupFromSample(d.sample);
+          if (group.collapse) {
+            event.fire("groupHighlight", group.groupID, false);
+          }
+          else {
+            event.fire("sampleHighlight", d.sample, false);            
+          }
           d3.select(this).classed("selected", false);
-          event.fire("sampleHighlight", d.sample, false);
         },
         "click":function(d, i){
           var el = d3.select(this);
@@ -525,18 +537,22 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     })
 
     event.on("sampleSelect", function(e, sample, isSelected){
+      drawSampleMark(getGroupFromSample(sample), isSelected)
+    });
 
-      var allBG = svg.selectAll(".background").filter(function(d){
-        return d.sample == sample;
-      })
+    event.on("groupSelect", function(e, groupID, isSelected) {
+      drawSampleMark(getGroup(groupID), isSelected);
+    })
+
+    function drawSampleMark(group, isSelected) {
+      var allBG = group.g.selectAll(".background");
       allBG.classed("fixed", isSelected);
 
-      var selMark = isSelected?[gui.current.getColorForSelection(sample)]:[]
+      var selMark = isSelected?[gui.current.getColorForSelection(group.groupID)]:[]
+      console.log(isSelected, selMark);
 
       allBG.each(function(){
         var w = d3.select(this).attr("width");
-
-
 
         var selectionMarker =  d3.select(this.parentNode).selectAll(".selectionMarker").data(selMark);
         selectionMarker.exit().remove();
@@ -558,12 +574,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         //
         //})
 
-        d3.select(this.parentNode).selectAll(".selectionMarker").data([]);
-
-
+        d3.select(group.g.parentNode).selectAll(".selectionMarker").data([]);
       })
-
-    });
+    }
 
     function repositionGroups() {
       var noSamplesBefore = 0;
@@ -808,21 +821,20 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function joinGroups(groupIDs) {
-      var combinedData = groupIDs.reduce(function(data, groupID) {
-        return data.concat(getGroup(groupID).data);
-      }, []);
+      var combinedData = groupIDs.reduce(function(newGroup, groupID) {
+        var group = getGroup(groupID);
+        group.samples.forEach(function(s) {event.fire("sampleSelect", s, false)})
+        newGroup.data = newGroup.data.concat(group.data);
+        newGroup.samples = newGroup.samples.concat(group.samples);
+        return newGroup
+      }, {"data": [], "samples": []});
 
-      var combinedSamples = groupIDs.reduce(function(samples, groupID) {
-        return samples.concat(getGroup(groupID).samples);
-      }, []);
-
-      var groupID = combinedSamples.reduce(function(groupID, sample) {return groupID + sample}, "");
       var newGroup = {
-        "groupID": combinedSamples,
+        "groupID": combinedData.samples,
         "collapse": false,
         "selected": false,
-        "samples": combinedSamples,
-        "data": combinedData
+        "samples": combinedData.samples,
+        "data": combinedData.data
       };
       sampleGroups = [newGroup].concat(sampleGroups.filter(function(group) {return groupIDs.indexOf(group.groupID) < 0}));
       event.fire("groupingChanged", sampleGroups.map(function(group) {return group.samples}))
