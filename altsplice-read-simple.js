@@ -440,7 +440,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             event.fire("groupHighlight", group.groupID, true);            
           }
           else {
-            event.fire("sampleHighlight", d.sample, true);            
+            event.fire("sampleHighlight", d.sample, true);
           }
           d3.select(this).classed("selected", true);
         },
@@ -816,7 +816,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         newGroups.push(newGroup);
       })
       sampleGroups = newGroups.concat(sampleGroups.filter(function(curGroup) {return curGroup != group}));
-      event.fire("groupingChanged", sampleGroups.map(function(group) {return group.samples}))
+      event.fire("groupingChanged", newGroups.map(function(group) {return group.groupID}), [group.groupID])
       drawGroups();
     }
 
@@ -837,7 +837,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "data": combinedData.data
       };
       sampleGroups = [newGroup].concat(sampleGroups.filter(function(group) {return groupIDs.indexOf(group.groupID) < 0}));
-      event.fire("groupingChanged", sampleGroups.map(function(group) {return group.samples}))
+      event.fire("groupingChanged", [newGroup.groupID], groupIDs)
       drawGroups();
     }
 
