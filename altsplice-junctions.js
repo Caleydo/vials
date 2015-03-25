@@ -181,6 +181,31 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
+      event.on("sampleGroupSelected", function(ev,groupID, samples, isSelected){
+        /*  groups = []
+         var otherSamples = []
+         for (var i = 0; i < data.collections.length; i++) {
+         var col = data.collections[i]
+         if (col.samples.length > 1) {
+         groups.push({"samples": col.samples, "color": groupColors[i]})
+         }
+         else {
+         otherSamples.push(col.samples[0])
+         }
+         }
+         if (groups.length > 0) {
+         if (otherSamples.length > 0)
+         groups.push({"samples": otherSamples, "color": "gray"})
+         }
+         */
+        groups = [
+          {"samples": samples, "color": groupColors[0]}
+        ]
+        if ((expandedIsoform != null) && showDotGroups) {
+          createGroups(expandedIsoform);
+        }
+      });
+
 
       event.on("GroupingChanged", function(ev,data){
      /*  groups = []
@@ -1177,7 +1202,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var sample = sortedWeights[ind].sample;
         var weight = sortedWeights[ind].weight;
         var gr = sampleToGroup[sample];
-        groupData[gr].push(weight);
+        if (gr >= 0)
+          groupData[gr].push(weight);
       }
 
       for (var gr = 0; gr < groups.length; gr++) {
