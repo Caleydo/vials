@@ -94,9 +94,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           if (allSelected.length){
             var groupIDs = []
             allSelected.forEach(function(sample) {
-              var groupID = getGroup(sample);
-              if (sampleGroups[groupID].sampleData.length == 1) {
-                groupIDs.push(groupID);
+              var group = getGroupFromSample(sample);
+              if (group.samples.length == 1) {
+                groupIDs.push(group.groupID);
               }
             })
             if (groupIDs.length > 1) {
@@ -189,6 +189,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
     var sampleHeight = 30;
+
+    function wrapText() {
+      var textWidth = scatterWidth - 50;
+      var self = d3.select(this),
+      textLength = self.node().getComputedTextLength(),
+      text = self.text();
+      while (textLength > textWidth && text.length > 0) {
+        text = text.slice(0, -1);
+        self.text(text + '...');
+        textLength = self.node().getComputedTextLength();
+      }
+    }
 
     function std(values){
       var avg = d3.mean(values);
@@ -359,12 +371,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
 
-    function drawSamples(samples, minMaxValues, g){
+    function drawSamples(group, minMaxValues, g){
 
       var exonHeight = 30;
       var scatterWidth = 200;
       var axisOffset =  that.axis.getWidth() + 10;
-      var noSamples = samples.length;
+      var noSamples = group.samples.length;
 
       // crosshair update
       crosshair.attr({
@@ -377,7 +389,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
        * Manage .isoform - Groups
        * =========================
        * */
-      var abundance = g.selectAll(".abundance").data(samples, function (d) {return d.sample });
+      var abundance = g.selectAll(".abundance").data(group.data, function (d) {return d.sample});
       abundance.exit().remove();
 
       // --- adding Element to class isoform
@@ -406,13 +418,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           // whether element is selected
           var isSelected = !el.classed("fixed");
 
-          var groupID = getGroup(d.sample);
-          var group = sampleGroups[groupID];
+          var group = getGroupFromSample(d.sample);
 
           if (group.collapse) {
             // toggle group selection
             group.selected = isSelected;
-            event.fire("groupSelect", groupID, isSelected);
+            event.fire("groupSelect", group.groupID, isSelected);
           }
           else {
             event.fire("sampleSelect", d.sample, isSelected);
@@ -424,21 +435,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class":"abundanceGraph"
       })
 
-      function wrap() {
-        var textWidth = scatterWidth - 50;
-        var self = d3.select(this),
-        textLength = self.node().getComputedTextLength(),
-        text = self.text();
-        while (textLength > textWidth && text.length > 0) {
-          text = text.slice(0, -1);
-          self.text(text + '...');
-          textLength = self.node().getComputedTextLength();
-        }
-      }
-
       var sampleText = abundanceEnter.append("text").attr({
           "class": "sampleLabel",
-      }).text(function(d) {return d.sample}).each(wrap)
+      }).text(function(d) {return d.sample}).each(wrapText)
 
       sampleText.each(function() {
         var self = d3.select(this),
@@ -460,39 +459,36 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       abundance.select(".background").attr({
         width:that.axis.getWidth()
       })
-
-
-
     }
 
     function expandGroups() {
       repositionGroups();
       var groups = gIso.selectAll(".sampleGroup");
-      groups.each(function(g, groupID) {
-        var group = d3.select(this);
-        redrawLineGroups(g, group);
+      groups.each(function(group, i) {
+        var g = d3.select(this);
+        redrawLineGroups(group);
 
-        if (g.collapse) {
+        if (group.collapse) {
           // deselect all samples
-          group.selectAll(".background").each(function(d) {
+          g.selectAll(".background").each(function(d) {
             event.fire("sampleSelect", d.sample, false);
-            summarizeData(g, groupID, group)
+            summarizeData(group)
           });
         }
-        else if (g.selected) {
+        else if (group.selected) {
           // deselect group
-          event.fire("groupSelect", groupID, false);
+          event.fire("groupSelect", false);
           // select all samples
           group.selectAll(".background").each(function(d) {
             event.fire("sampleSelect", d.sample, true);
           });
         }
-        toggleOpacities(g, group);
+        toggleOpacities(group);
       })
     }
 
     event.on("groupSelect", function(e, groupID, isSelected) {
-      var group = sampleGroups[groupID];
+      var group = getGroup(groupID);
       group.selected = false;
       group.g.selectAll(".background").classed("fixed", isSelected);
     })
@@ -538,39 +534,32 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     });
 
-
-
-
-
-
-
-
     function repositionGroups() {
       var noSamplesBefore = 0;
       var groupScaleY = function(x, noSamplesBefore){return noSamplesBefore*(sampleHeight+3)+20};
       var groups = gIso.selectAll(".sampleGroup").transition().attr({
         "transform":function(d,i) {
           groupPos = groupScaleY(i, noSamplesBefore);
-          noSamplesBefore += (d.collapse ? 1 : d.sampleData.length);
+          noSamplesBefore += (d.collapse ? 1 : d.samples.length);
           return "translate("+0+","+groupPos+")";
         }
       })
-      groups.each(function(g, groupID) {
-        var sampleData = g.sampleData;
-        var group = d3.select(this);
-        group.selectAll(".abundance").transition().attr({
+      groups.each(function(group) {
+        var g = d3.select(this);
+        g.selectAll(".abundance").transition().attr({
           "transform":function(d,i) {
-            i = g.collapse ? 0 : i;
+            i = group.collapse ? 0 : i;
             return "translate("+0+","+sampleScaleY(i)+")";
           }
         })
       })
     }
 
-    function redrawLineGroups(g, group) {
-      var sampleData = g.sampleData;
-      var linesGroup = group.selectAll(".linesGroup");
-      var linesGroupHeight = sampleScaleY(g.collapse ? 1 : sampleData.length) - 5
+    function redrawLineGroups(group) {
+      var g = group.g;
+      var noSamples = group.samples.length;
+      var linesGroup = g.selectAll(".linesGroup");
+      var linesGroupHeight = sampleScaleY(group.collapse ? 1 : noSamples) - 5
       linesGroup.selectAll(".v").transition().attr({
         "y2": linesGroupHeight,
       });
@@ -578,34 +567,37 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "y1": linesGroupHeight,
         "y2": linesGroupHeight,
       });
-      var buttonHeight = g.collapse ? 1 : sampleData.length;
+      var buttonHeight = group.collapse ? 1 : noSamples;
       buttonHeight = (sampleScaleY(buttonHeight)-sampleScaleY(0))/ 2 - 5;
       linesGroup.selectAll(".buttonGroup").transition().attr({
         "transform": "translate(" + (that.axis.getWidth() + 15) + "," + buttonHeight + ")",
       });
       linesGroup.selectAll(".collapseButton").attr({
-        "fill": g.collapse ? "black" : "white"
+        "fill": group.collapse ? "black" : "white"
       });
     }
 
-    function summarizeData(g, groupID, group) {
-      var summary = group.selectAll(".summary").data([g.sampleData]);
+    function summarizeData(group) {
+      var g = group.g;
+      var summary = g.selectAll(".summary").data([group.data]);
       summary.exit().remove();
       var summaryEnter = summary.enter().append("g").attr({
         "class": "summary",
         "transform": "translate(0, 0)"
       });
-      summaryEnter.append("text").attr({
+      var groupText = summaryEnter.append("text").attr({
           "class": "summaryLabel",
           "transform": "translate(" + (that.axis.getWidth() + 10) + "," + sampleHeight + ")"
-      }).text("Group " + groupID)
+      }).text("Group " + group.groupID).each(wrapText);
+      groupText.append("title").text("Group " + group.groupID);
+
       summaryEnter.append("svg:path").attr({
         fill: "none",
         stroke: "red",
         class: "mean",
       })
       // TODO: zipping inside the dataFuncs object
-      var zipped = zipData(g.sampleData);
+      var zipped = zipData(group.data);
       summary.selectAll(".mean").attr("d", dataFuncs[dataType].mean(zipped));
       summaryEnter.append("svg:path").attr({
         fill: "red",
@@ -614,19 +606,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       summary.selectAll(".stdDev").attr("d", dataFuncs[dataType].stdDev(zipped));
     }
 
-    function toggleOpacities(g, group) {
-        group.selectAll(".abundanceGraph").transition().attr({
-          "opacity": g.collapse ? 0 : 1
+    function toggleOpacities(group) {
+        var g = group.g;
+        g.selectAll(".abundanceGraph").transition().attr({
+          "opacity": group.collapse ? 0 : 1
         });
-        group.selectAll(".sampleLabel").transition().attr("opacity", g.collapse ? 0 : 1);
-        group.selectAll(".summary").transition().attr({
-          "opacity": g.collapse ? 1 : 0
+        g.selectAll(".sampleLabel").transition().attr("opacity", group.collapse ? 0 : 1);
+        g.selectAll(".summary").transition().attr({
+          "opacity": group.collapse ? 1 : 0
         });
     }
 
-    function drawLinesGroup(sampleGroup, g) {
-      var sampleData = sampleGroup.sampleData;
-      if (sampleData.length <= 1) {
+    function drawLinesGroup(group) {
+      var g = group.g;
+      var noSamples = group.samples.length;
+      if (group.samples.length <= 1) {
         g.selectAll(".linesGroup").remove();
         return;
       }
@@ -645,7 +639,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "x1": axisWidth + 20,
           "x2": axisWidth + 20,
           "y1": sampleScaleY(0) + 5,
-          "y2": sampleScaleY(sampleData.length) - 5,
+          "y2": sampleScaleY(noSamples) - 5,
           "stroke": "black",
         });
 
@@ -662,8 +656,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "class": "bottom",
           "x1": axisWidth + 10,
           "x2": axisWidth + 20,
-          "y1": sampleScaleY(sampleData.length) - 5,
-          "y2": sampleScaleY(sampleData.length) - 5,
+          "y1": sampleScaleY(noSamples) - 5,
+          "y2": sampleScaleY(noSamples) - 5,
           "stroke": "black",
         });
 
@@ -679,7 +673,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "x": 0,
         }).on("click", function(d) {d.collapse = !d.collapse; expandGroups()});
 
-        var buttonHeight = sampleGroup.collapse ? 1 : (sampleScaleY(sampleData.length)-sampleScaleY(0))/ 2 - 5;
+        var buttonHeight = group.collapse ? 1 : (sampleScaleY(noSamples)-sampleScaleY(0))/ 2 - 5;
       }
 
       linesGroup.selectAll(".buttonGroup").attr({
@@ -688,7 +682,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function drawGroups(groupData, minMax) {
-      var group = gIso.selectAll(".sampleGroup").data(groupData, function (g) {return g.sampleData.map(function(d) {return d.sample}) });
+      var group = gIso.selectAll(".sampleGroup")
+                      .data(groupData, function (group) {
+                        return group.data.map(function(d) {return d.sample})
+                      });
+
       group.exit().remove();
 
       var groupEnter = group.enter().append("g").attr({
@@ -701,7 +699,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
       group.each(function(group) {
-        drawSamples(group.sampleData, minMax, d3.select(this));
+        drawSamples(group, minMax, d3.select(this));
       })
 
       expandGroups();
@@ -719,35 +717,54 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       expandGroups();
     }
 
-    function getGroup(sample) {
-      var groupID;
-      sampleGroups.forEach(function(g, i) {
-        var samples = g.sampleData.map(function(d) {return d.sample})
-        if (samples.indexOf(sample) >= 0) {
-          groupID = i;
+    function getGroup(groupID) {
+      var foundGroup;
+      sampleGroups.forEach(function(group, i) {
+        if (group.groupID == groupID) {
+          foundGroup = group;
         }
       })
-      return groupID;
+      return foundGroup;
+    }
+
+    function getGroupFromSample(sample) {
+      var foundGroup;
+      sampleGroups.forEach(function(group) {
+        if (group.samples.indexOf(sample) >= 0) {
+          foundGroup = group;
+        }
+      })
+      return foundGroup;
     }
 
     function groupData(readData) {
-      var grouped = sampleGroups.map(function() {return {"collapse": false, "selected": false, "sampleData": []}});
-      readData.forEach(function(d, i) {
-        var groupID = getGroup(d.sample);
-        grouped[groupID].sampleData.push(d)
+      sampleGroups.forEach(function(group) {
+        group.data = [];
       })
-      return grouped;
+      readData.forEach(function(d) {
+        var group = getGroupFromSample(d.sample);
+        group.data.push(d)
+      })
     }
 
     function joinGroups(groupIDs) {
-      console.log(groupIDs)
-      var combinedSamples = groupIDs.reduce(function(sampleData, groupID) {
-                                              console.log(sampleData, groupID, sampleGroups[groupID])
-                                              return sampleData.concat(sampleGroups[groupID].sampleData)
-                                            }, []);
+      var combinedData = groupIDs.reduce(function(data, groupID) {
+        return data.concat(getGroup(groupID).data);
+      }, []);
 
-      var newGroup = {"collapse": false, "selected": false, "sampleData": combinedSamples};
-      sampleGroups = [newGroup].concat(sampleGroups.filter(function(g, i) {return groupIDs.indexOf(i) < 0}));
+      var combinedSamples = groupIDs.reduce(function(samples, groupID) {
+        return samples.concat(getGroup(groupID).samples);
+      }, []);
+
+      var groupID = combinedSamples.reduce(function(groupID, sample) {return groupID + sample}, "");
+      var newGroup = {
+        "groupID": combinedSamples,
+        "collapse": false,
+        "selected": false,
+        "samples": combinedSamples,
+        "data": combinedData
+      };
+      sampleGroups = [newGroup].concat(sampleGroups.filter(function(group) {return groupIDs.indexOf(group.groupID) < 0}));
     }
 
     function updateData(){
@@ -778,11 +795,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         if (sampleGroups === undefined || updatedProject != curProject) {
           sampleGroups = []
           readData.forEach(function(d, i) {
-            sampleGroups.push({"collapse": false, "selected": false, "sampleData": [d]});
+            sampleGroups.push({
+              "groupID": d.sample,
+              "collapse": false,
+              "selected": false,
+              "samples": [d.sample],
+              "data": [d]
+            });
           })
         }
 
-        sampleGroups = groupData(readData);
+        groupData(readData);
         drawGroups(sampleGroups, minMax);
 
         curProject = updatedProject;
