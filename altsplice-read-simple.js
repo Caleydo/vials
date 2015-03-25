@@ -567,12 +567,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var sampleBG = group.g.selectAll(".background").filter(function(d) {
                                                         return d.sample === sample
                                                       })
-      drawSampleMark(sampleBG, sample, isSelected);
+      drawSampleMark(sampleBG, {"samples": [sample], "meta": getMetaFromSample(sample)}, isSelected);
       sampleBG.classed("fixed", isSelected);
     });
 
     function drawSampleMark(g, groupID, isSelected) {
-      var selMark = isSelected?[gui.current.getColorForSelection(groupID)]:[]
+      var selMark = isSelected?[gui.current.getColorForSelection(JSON.stringify(groupID))]:[]
 
       g.each(function(){
         var w = d3.select(this).attr("width");
