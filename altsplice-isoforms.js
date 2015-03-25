@@ -604,20 +604,36 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       return function(a,b){
         //console.log("compare",a,b,validNames);
         //console.log(a.id, b.id, validNames.indexOf(a.id)>-1,validNames.indexOf(b.id)>-1, validNames);
-        var aList = a.ranges.map(function(r){return r.id});
-        var bList = b.ranges.map(function(r){return r.id});
-        var aValid = false;
-        var bValid = false;
+        var aMap = d3.nest().key(function(d,i){return d.id}).map(a.ranges, d3.map)
+        var bMap = d3.nest().key(function(d,i){return d.id}).map(b.ranges, d3.map)
+        var aValid = null;
+        var bValid = null;
 
 
         validNames.forEach(function(validName){
-          if (aList.indexOf(validName)>-1) aValid=true;
-          if (bList.indexOf(validName)>-1) bValid=true;
+          if (aMap.has(validName)) aValid=aMap.get(validName);
+          if (bMap.has(validName)) bValid=bMap.get(validName);
         })
 
         //var aValid = validNames.indexOf(a.id)>-1;
         //var bValid = validNames.indexOf(b.id)>-1;
-        if ((aValid && bValid) || (!aValid && !bValid) ){
+        if (aValid && bValid){
+          var aStart = +aValid[0].start
+          var bStart = +bValid[0].start
+          if (aStart==bStart){
+            var aWidth = +aValid[0].end - aStart
+            var bWidth = +bValid[0].end - bStart
+
+            return bWidth-aWidth;
+
+          }else{
+            return aStart-bStart;
+          }
+          //console.log("VALID:",aValid[0].start, bValid[0].start, a, b);
+
+
+        } else if  (!aValid && !bValid){
+          //console.log("INVALID:",aValid, bValid);
           return b.mean - a.mean;
         }else{
           return bValid?1:-1;
