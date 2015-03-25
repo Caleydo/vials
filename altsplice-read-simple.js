@@ -803,6 +803,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         newGroups.push(newGroup);
       })
       sampleGroups = newGroups.concat(sampleGroups.filter(function(curGroup) {return curGroup != group}));
+      event.fire("groupingChanged", sampleGroups.map(function(group) {return group.samples}))
       drawGroups();
     }
 
@@ -824,6 +825,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "data": combinedData
       };
       sampleGroups = [newGroup].concat(sampleGroups.filter(function(group) {return groupIDs.indexOf(group.groupID) < 0}));
+      event.fire("groupingChanged", sampleGroups.map(function(group) {return group.samples}))
       drawGroups();
     }
 
@@ -863,6 +865,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               "data": [d]
             });
           })
+          event.fire("groupingChanged", sampleGroups.map(function(group) {return group.samples}))
         }
 
         groupData(readData);
