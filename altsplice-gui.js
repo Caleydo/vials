@@ -96,7 +96,7 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
           event.fire("isoformSort",$(that.isoformSort.node()).val(), null);
 
 
-          console.log($(that.isoformSort.node()).val());
+          //console.log($(that.isoformSort.node()).val());
         }
       })
 
@@ -145,7 +145,7 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
         that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"])
 
 
-        console.log(that.genomeDataLink.genomeAxis.arrayPosToScreenPos(2), that.genomeDataLink.genomeAxis.arrayPosToGenePos(10));
+        //console.log(that.genomeDataLink.genomeAxis.arrayPosToScreenPos(2), that.genomeDataLink.genomeAxis.arrayPosToGenePos(10));
         //observer
         that.allVisUpdates.forEach(function (update) {
           update();
@@ -156,7 +156,7 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
 
 
     function updateGeneSelector(selectedProject) {
-      console.log(that.genomeDataLink.getAllGenes(selectedProject));
+      //console.log(that.genomeDataLink.getAllGenes(selectedProject));
       that.genomeDataLink.getAllGenes(selectedProject).then(function (genes) {
 
         that.geneSelector.selectAll("option").remove();
@@ -177,7 +177,7 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
 
     this.start = function(selectedProject){
       that.genomeDataLink.getAllProjects().then(function (projects) {
-        console.log("allProjects", projects);
+        //console.log("allProjects", projects);
 
         selectedProject = selectedProject || Object.keys(projects)[0]
 

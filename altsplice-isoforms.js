@@ -425,7 +425,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         highlightSel.each(function(){
           var trans = d3.transform(d3.select(this.parentNode.parentNode).attr("transform")).translate
           var me = d3.select(this)
-          console.log(trans);
+          //console.log(trans);
           lineCoord.push({
             "x":+me.attr("cx")+trans[0],
             "y":+me.attr("cy")+trans[1]
@@ -439,7 +439,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         //console.log(lineCoord, line(lineCoord));
 
-        console.log(lineCoord.map(function(d){return d.x+" "+ d.y}));
+        //console.log(lineCoord.map(function(d){return d.x+" "+ d.y}));
 
         var selectionParco = gHighlight.selectAll(".selectionParco").data([lineCoord]);
         selectionParco.exit().remove();
@@ -482,7 +482,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     // event handling for highlights
     function selectSample(event, sample, selected){
-      console.log("select", sample, selected, gui.current.getColorForSelection(sample));
+      //console.log("select", sample, selected, gui.current.getColorForSelection(sample));
 
 
       if (selected){
@@ -603,7 +603,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       return function(a,b){
         //console.log("compare",a,b,validNames);
-        console.log(a.id, b.id, validNames.indexOf(a.id)>-1,validNames.indexOf(b.id)>-1, validNames);
+        //console.log(a.id, b.id, validNames.indexOf(a.id)>-1,validNames.indexOf(b.id)>-1, validNames);
         var aList = a.ranges.map(function(r){return r.id});
         var bList = b.ranges.map(function(r){return r.id});
         var aValid = false;
@@ -628,11 +628,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     function resortIsoforms(_, sortingMethod, parameter ){
 
-      console.log("RESORT:",sortingMethod,parameter, sortingMethod === "mean_sorting");
+      //console.log("RESORT:",sortingMethod,parameter, sortingMethod === "mean_sorting");
 
       if (sortingMethod === "mean_sorting"){
         currentSortFunction = sortByMean;
-        console.log(currentSortFunction);
+        //console.log(currentSortFunction);
 
       }else if (sortingMethod === "byExon"){
         currentSortFunction = createSortByExon(parameter)
@@ -691,7 +691,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         })
 
-        console.log("used iso:",usedIsoforms, minMax);
+        //console.log("used iso:",usedIsoforms, minMax);
 
 
         // update the map between sample and a unique css-save selectorName
