@@ -101,7 +101,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             })
             if (groupIDs.length > 1) {
               joinGroups(groupIDs);
-              drawGroups();
             }
           }
         }
@@ -117,10 +116,41 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "pointer-events":"none"
       }).text("group selected")
 
+
+      var guiDesel = gGui.append("g").attr({
+        "id":"groupByX",
+        "transform":"translate("+160+","+0+")"
+      })
+      guiDesel.append("rect").attr({
+        "class":"ungroupSelectedRect isoMenu",
+        "width":150,
+        "height": 20,
+        "rx":3,
+        "ry":3
+      }).on({
+        "mouseover":function(){d3.select(this).classed("selected", true)},
+        "mouseout":function(){d3.select(this).classed("selected", null)},
+        "click":function(){
+          gIso.selectAll(".sampleGroup").each(function(group) {
+            if (group.selected) {
+              ungroup(group)
+            }
+          })
+        }
+      })
+      guiDesel.append("text").attr({
+        class:"ungroupSelectedRect isoMenuText",
+        x:75,
+        y:15
+      }).style({
+        "text-anchor":"middle",
+        "pointer-events":"none"
+      }).text("ungroup selected")
+
       // ==> group by feature button
       var guiGroupBy = gGui.append("g").attr({
         "id":"groupByX",
-        "transform":"translate("+160+","+0+")"
+        "transform":"translate("+320+","+0+")"
       })
       guiGroupBy.append("rect").attr({
         "class":"groupByXRect isoMenu",
@@ -489,7 +519,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     event.on("groupSelect", function(e, groupID, isSelected) {
       var group = getGroup(groupID);
-      group.selected = false;
+      group.selected = isSelected;
       group.g.selectAll(".background").classed("fixed", isSelected);
     })
 
@@ -554,7 +584,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }
       })
       groups.each(function(group) {
-        console.log(group.samples)
         var g = d3.select(this);
         g.selectAll(".abundance").transition().attr({
           "transform":function(d,i) {
@@ -757,6 +786,25 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
     }
 
+    function ungroup(group) {
+      var newGroups = [];
+      // deselect group
+      event.fire("groupSelect", group.groupID, false);
+      // decompose into single sample groups
+      group.data.forEach(function(sampleData) {
+        var newGroup = {
+          "groupID": sampleData.sample,
+          "collapse": false,
+          "selected": false,
+          "samples": [sampleData.sample],
+          "data": [sampleData]
+        };
+        newGroups.push(newGroup);
+      })
+      sampleGroups = newGroups.concat(sampleGroups.filter(function(curGroup) {return curGroup != group}));
+      drawGroups();
+    }
+
     function joinGroups(groupIDs) {
       var combinedData = groupIDs.reduce(function(data, groupID) {
         return data.concat(getGroup(groupID).data);
@@ -775,6 +823,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "data": combinedData
       };
       sampleGroups = [newGroup].concat(sampleGroups.filter(function(group) {return groupIDs.indexOf(group.groupID) < 0}));
+      drawGroups();
     }
 
     function updateData(){
