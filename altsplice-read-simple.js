@@ -158,7 +158,27 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "ry":3
       }).on({
         "mouseover":function(){d3.select(this).classed("selected", true)},
-        "mouseout":function(){d3.select(this).classed("selected", null)}
+        "mouseout":function(){d3.select(this).classed("selected", null)},
+        "click": function() {
+          // generate meta groupings
+          metaGroups = {}
+          sampleGroups.forEach(function(group) {
+            group.samples.forEach(function(sample) {
+              var meta = getMetaFromSample(sample);
+              if (!metaGroups[meta]) {
+                metaGroups[meta] = []
+              }
+              metaGroups[meta].push(sample);
+            })
+            ungroup(group);
+          })
+
+          console.log(metaGroups);
+
+          for (meta in metaGroups) {
+            joinGroups(metaGroups[meta].map(function(sample) {return getGroupFromSample(sample).groupID}));
+          }
+        }
       })
       guiGroupBy.append("text").attr({
         class:"groupByXText isoMenuText",
@@ -244,6 +264,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     var curProject;
     var dataType;
+    var sampleInfo;
     var sampleGroups;
     var minMax;
 
@@ -251,6 +272,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     var sampleScaleY = function(x){ return x*(sampleHeight+3)};
     var scaleXScatter;
     var heightScale;
+
+    function getMetaFromSample(sample) {
+      for (curSample in sampleInfo) {
+        if (curSample == sample) {
+          return sampleInfo[curSample].meta.disease; // TODO: list all meta keys to sort by
+        }
+      }
+    }
 
     function zipData(sampleData) {
       return sampleData[0].weights.map(function(s0, i) {
@@ -335,7 +364,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               return heightScale(d3.mean(d.weight)+std(d.weight));
             })
             .interpolate('step');
-            // TODO: step interpolation happens in the middle of the intron; need to correct this manually
           var mappedReads = this.mapReads(this.mapExons(zipped, stdData));
           return stdDev(mappedReads);
         },
@@ -545,7 +573,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     function drawSampleMark(g, groupID, isSelected) {
       var selMark = isSelected?[gui.current.getColorForSelection(groupID)]:[]
-      console.log(isSelected, selMark);
 
       g.each(function(){
         var w = d3.select(this).attr("width");
@@ -639,8 +666,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var groupText = summaryEnter.append("text").attr({
           "class": "summaryLabel",
           "transform": "translate(" + (that.axis.getWidth() + 10) + "," + sampleHeight + ")"
-      }).text("Group " + group.groupID).each(wrapText);
-      groupText.append("title").text("Group " + group.groupID);
+      }).text("Group: " + group.groupID.meta).each(wrapText);
+      groupText.append("title")
+               .text("Group: \nMeta: " + group.groupID.meta + "\nSamples: " 
+                      + group.groupID.samples.map(function(s) {return "\n" + s}));
 
       summaryEnter.append("svg:path").attr({
         fill: "none",
@@ -799,23 +828,25 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function ungroup(group) {
-      var newGroups = [];
-      // deselect group
-      event.fire("groupSelect", group.groupID, false);
-      // decompose into single sample groups
-      group.data.forEach(function(sampleData) {
-        var newGroup = {
-          "groupID": sampleData.sample,
-          "collapse": false,
-          "selected": false,
-          "samples": [sampleData.sample],
-          "data": [sampleData]
-        };
-        newGroups.push(newGroup);
-      })
-      sampleGroups = newGroups.concat(sampleGroups.filter(function(curGroup) {return curGroup != group}));
-      event.fire("groupingChanged", newGroups.map(function(group) {return group.groupID}), [group.groupID])
-      drawGroups();
+      if (group.samples.length > 1) {
+        var newGroups = [];
+        // deselect group
+        event.fire("groupSelect", group.groupID, false);
+        // decompose into single sample groups
+        group.data.forEach(function(sampleData) {
+          var newGroup = {
+            "groupID": {"samples": [sampleData.sample], "meta": [getMetaFromSample(sampleData.sample)]},
+            "collapse": false,
+            "selected": false,
+            "samples": [sampleData.sample],
+            "data": [sampleData]
+          };
+          newGroups.push(newGroup);
+        })
+        sampleGroups = newGroups.concat(sampleGroups.filter(function(curGroup) {return curGroup != group}));
+        event.fire("groupingChanged", newGroups.map(function(group) {return group.groupID}), [group.groupID])
+        drawGroups();
+      }
     }
 
     function joinGroups(groupIDs) {
@@ -827,8 +858,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         return newGroup
       }, {"data": [], "samples": []});
 
+      var meta = {};
+      combinedData.samples.forEach(function(s) {meta[getMetaFromSample(s)] = null});
+      meta = d3.keys(meta);
+
       var newGroup = {
-        "groupID": combinedData.samples,
+        "groupID": {"samples": combinedData.samples, "meta": meta},
         "collapse": false,
         "selected": false,
         "samples": combinedData.samples,
@@ -848,6 +883,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       that.data.getGeneData(updatedProject, curGene).then(function(sampleData) {
         dataType = sampleData.measures.data_type;
+        sampleInfo = sampleData.samples;
 
         minMax = dataFuncs[dataType].minMax(sampleData.measures.reads);
 
@@ -868,11 +904,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           sampleGroups = []
           readData.forEach(function(d, i) {
             sampleGroups.push({
-              "groupID": d.sample,
+              "groupID": {"samples": [d.sample], "meta": [getMetaFromSample(d.sample)]},
               "collapse": false,
               "selected": false,
               "samples": [d.sample],
-              "data": [d]
+              "data": [d],
             });
           })
           event.fire("groupingChanged", sampleGroups.map(function(group) {return group.samples}))
