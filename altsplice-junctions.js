@@ -40,15 +40,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var height = 450 - margin.top - margin.bottom;
   var dotRadius = 4;
   var triangleLength = 8;
-  var defaultDotColor = "rgba(0,0,0,0.6)";
-  var dehighlightedDotColor = "rgba(0,0,0,0.2)";
+  var defaultDotColor = "rgba(90,90,90,0.3)";
+  var dehighlightedDotColor = "rgba(120,120,120,0.05)";
   var highlightedDotColor = "red";
   var weightAxisCaptionWidth = 25;
   var exonWeightsAreaHeight;
   var jxnWrapperPadding = 6;
   var sitePadding = 2;
   var jxnWrapperHeight = 250;
-  var miniExonHeight = 8;
+  var miniExonHeight = 12;
   var jxnCircleRadius = 3;
   var jxnBBoxWidth = jxnCircleRadius * 4;
 
@@ -153,16 +153,29 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
           var sampleColor = gui.current.getColorForSelection(sampleID);
 
-
           // TODO: bilal, here you have the infos about a single somple selection. Have fun coding :)
 
-          if (isSelected){
-            // sample was selected
-          }else{
-            // sample was de-selected
+          if (isSelected) {
+            svg.selectAll('.jxnCircle').filter(function(d) {
+              return this.getAttribute("selected") == 0;
+            }).style('fill', function (d) {
+                var match = d.sample == sampleID;
+                if (match) {
+                  this.parentNode.appendChild(this);
+                  this.setAttribute("selected", 1);
+                }
+                return match ? sampleColor : dehighlightedDotColor;
+              });
           }
-
-
+          else
+          {
+            svg.selectAll('.jxnCircle').filter(function(d) {
+              var match = d.sample == sampleID;
+              if (match)
+                this.setAttribute("selected", 0);
+              return this.getAttribute("selected") == 0;
+            }).style('fill', defaultDotColor);
+          }
       })
 
 
@@ -786,6 +799,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           // --- adding Element to class jxnCircle
           var jxnCircleEnter = jxnCircle.enter().append("circle").attr({
               "class":"jxnCircle",
+              "selected":0,
               "r": jxnCircleRadius,
               "outlier": function(jxnData){
                 return jxnData.weight < boxplotInfo.whiskerDown || jxnData.weight > boxplotInfo.whiskerTop
@@ -830,16 +844,23 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     event.on("sampleHighlight", function(event, hoveredSample, highlight){
       //console.log("highlight", hoveredSample, highlight);
       if (highlight){
-        svg.selectAll('.jxnCircle').style('fill', function (d) {
-          return (d.sample == hoveredSample) ? highlightedDotColor : dehighlightedDotColor;
+        svg.selectAll('.jxnCircle').filter(function(d) {
+          return this.getAttribute("selected") == "0"})
+          .style('fill', function (d) {
+            var selected = (d.sample == hoveredSample);
+            if (selected)
+              this.parentNode.appendChild(this);
+          return selected ? highlightedDotColor : dehighlightedDotColor;
         });
       }
       else
       {
-        svg.selectAll('.jxnCircle')
-          //.transition()
-          //.duration(100)
-          .style('fill', defaultDotColor);
+        var color = (svg.selectAll('.jxnCircle').filter(function(d) {
+          return this.getAttribute("selected") == 1;
+        }).empty()) ? defaultDotColor : dehighlightedDotColor;
+        svg.selectAll('.jxnCircle').filter(function(d) {
+          return this.getAttribute("selected") == "0"
+        }).style('fill', color);
       }
     })
 
