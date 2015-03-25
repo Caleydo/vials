@@ -78,6 +78,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
   var jxnArea;
+  var RNAArea;
   var yScaleContJxn;
   var xJxnBoxScale = d3.scale.linear();
   var showAllDots = false;
@@ -277,7 +278,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         computeJxnGroups();
         drawJxnAxis();
 
-        var RNAArea = exploreArea.append("g").attr({
+        RNAArea = exploreArea.append("g").attr({
           "id": "RNAArea",
           "transform": "translate(0," + (jxnWrapperHeight+RNAMargin) + ")"
         });
@@ -596,25 +597,65 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                 // sortDots(this.parentNode);
               }
             }
+          }).on('mouseover', function (d1, i1) {
+
+            if (selectedIsoform != null)
+              return;
+
+            RNAArea.selectAll(".RNASite, .RNASiteConnector").style({
+                "opacity" : function (d2, i2) {
+                  return d1.startLoc == d2.loc || d1.endLoc == d2.loc ? 1 : 0.1
+                }
+            })
+
+            d3.selectAll(".JXNAreaConnector").style({
+                "opacity": 0.1
+              })
+
+            d3.selectAll(".edgeConnector").style({
+                  "visibility": function () {
+                    var match = d1.startLoc == this.getAttribute("startLoc") && d1.endLoc == this.getAttribute("endLoc");
+                    return match ? "visible" : "hidden"
+                  }
+              })
+          }).on("mouseout", function (d1, i1) {
+
+            if (selectedIsoform != null)
+              return;
+
+            RNAArea.selectAll(".RNASite, .RNASiteConnector, .JXNAreaConnector").style({
+              "opacity":  1
+            })
+
+            d3.selectAll(".edgeConnector").style({
+              "visibility": function () {
+                if (this.getAttribute("type") == "donor")
+                  return "hidden"
+                else if (this.getAttribute("UniqueAdajcenReceptor") == "true")
+                  return "hidden"
+                return "visible";
+              }
+            })
           })
 
           var anchorX = startX + (groupInd + 0.5) * groupWidth;
 
           var endInd = getBucketIndAt(group.endLoc);
           var startInd = getBucketIndAt(group.startLoc);
-          if (endInd > startInd + 1 || jxnGroup.groups.length > 1) {
+          var UniqueadajcenReceptor =  (endInd > startInd + 1) || (jxnGroup.groups.length > 1);
             linesGroup.append("line").attr({
               "type": "receptor",
               "anchorX": anchorX,
               "x1": anchorX,
+              "UniqueAdajcenReceptor": UniqueadajcenReceptor,
               "x2": buckets[endInd].xStart,
               "startLoc": group.startLoc,
               "endLoc": group.endLoc,
               "y1": jxnWrapperHeight,
               "y2": getDonorY(),
-              "class": "edgeConnector"
+              "class": "edgeConnector",
+              "visibility": UniqueadajcenReceptor ? "hidden" : "visible"
             })
-          }
 
           linesGroup.append("line").attr({
             "type": "donor",
