@@ -64,6 +64,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var clickedElement = null;
 
   var jxnsData;
+  var sortedWeights;
   var allSamples;
   var sampleLength;
 
@@ -480,24 +481,22 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function computeJxnGroups() {
-      jxnsData.weights.sort(function (a, b) { return a.start < b.start ? -1 :
-        a.start > b.start ? 1 :
-        a.end < b.end ? - 1 :
-        a.end < b.end ? 1 :
-        a.weight < b.weight ? -1 : 1;
+      sortedWeights = jxnsData.weights.slice();
+      sortedWeights.sort(function (a, b) {
+        return (a.start != b.start) ?  (a.start - b.start) : ((a.end != b.end) ?  (a.end - b.end) : (a.weight - b.weight))
       });
 
       var ind = 0;
       edgeCount = 0;
       var prevStart = ind;
       var prevEnd = ind;
-      var startLoc = jxnsData.weights[ind].start;
-      var endLoc = jxnsData.weights[ind].end;
+      var startLoc = sortedWeights[ind].start;
+      var endLoc = sortedWeights[ind].end;
       var subGroups = [];
-      for (ind = 1; ind < jxnsData.weights.length; ind++) {
+      for (ind = 1; ind < sortedWeights.length; ind++) {
 
-        var startLoc2 = jxnsData.weights[ind].start;
-        var endLoc2 = jxnsData.weights[ind].end;
+        var startLoc2 = sortedWeights[ind].start;
+        var endLoc2 = sortedWeights[ind].end;
 
         if (startLoc2 > startLoc || endLoc2 > endLoc) {
           subGroups.push({"start":prevEnd, "end":ind - 1, "startLoc" : startLoc, "endLoc": endLoc})
@@ -578,7 +577,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "transform": "translate(" + startX + ", 0)"
           })
 
-          var donorLoc = jxnsData.weights[jxnGroup.start].start;
+          var donorLoc = sortedWeights[jxnGroup.start].start;
           var donorInd = getBucketIndAt(donorLoc);
           jxnArea.append("polygon").attr({
             x1: startX +1,
@@ -730,7 +729,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             if (i < nonZeroStartIndex)
               boxPlotData[i] = 0;
             else {
-              boxPlotData[i] = jxnsData.weights[group.start + i - nonZeroStartIndex].weight;
+              boxPlotData[i] = sortedWeights[group.start + i - nonZeroStartIndex].weight;
             }
           }
           var boxplotInfo = computeBoxPlot(boxPlotData, 1);
@@ -747,7 +746,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
           // == jxnCircles !!
 
-          var jxnCircle = dotsGroup.selectAll(".jxnCircle").data(jxnsData.weights.filter(function(d,ind){
+          var jxnCircle = dotsGroup.selectAll(".jxnCircle").data(sortedWeights.filter(function(d,ind){
             return ind >= group.start && ind <= group.end // TODO: VERY BAD CODE
           }));
           jxnCircle.exit().remove();
@@ -1118,8 +1117,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       }
 
       for (var ind = edgeGroup.start; ind <= edgeGroup.end; ind++) {
-        var sample = jxnsData.weights[ind].sample;
-        var weight = jxnsData.weights[ind].weight;
+        var sample = sortedWeights[ind].sample;
+        var weight = sortedWeights[ind].weight;
         var gr = sampleToGroup[sample];
         groupData[gr].push(weight);
       }
@@ -1485,7 +1484,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var arrayLen = d.end - d.start + 1;
         var shift = sampleLength - arrayLen;
         for (var ind = d.start; ind <= d.end; ind++) {
-          indices[jxnsData.weights[ind].sample] = shift + (ind - d.start);
+          indices[sortedWeights[ind].sample] = shift + (ind - d.start);
         }
       })
 
