@@ -3,6 +3,13 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui',
   'use strict';
   var vis;
 
+  // d3 extension
+  d3.selection.prototype.moveToFront = function() {
+    return this.each(function(){
+      this.parentNode.appendChild(this);
+    });
+  };
+
   data.create({
     type: 'genomeDataLink',
     name: 'AltSplice',

@@ -69,6 +69,16 @@ $wes-red: #D16B54;
     fill:$wes-red;
     fill-opacity: 1;
   }
+  .highlightBG{
+    pointer-events: none;
+  }
+}
+
+path.selectionParco{
+  fill:none;
+  stroke:$wes-red;
+  stroke-width: 2px;
+  stroke-opacity: .5;
 }
 
 .buttonSelected{
@@ -168,8 +178,8 @@ $wes-red: #D16B54;
 
 // ===> here for html <===
 #visReads{
-  max-height:300px;
-  overflow-y: auto;
+//  max-height:300px;
+//  overflow-y: auto;
 //  overflow-x: visible;
-  overflow-x: hidden;
+//  overflow-x: hidden;
 }

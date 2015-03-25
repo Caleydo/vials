@@ -726,7 +726,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     // == bind sampleHighlight Event:
     event.on("sampleHighlight", function(event, hoveredSample, highlight){
-      console.log("highlight", hoveredSample, highlight);
+      //console.log("highlight", hoveredSample, highlight);
       if (highlight){
         svg.selectAll('.jxnCircle').style('fill', function (d) {
           return (d.sample == hoveredSample) ? highlightedDotColor : dehighlightedDotColor;

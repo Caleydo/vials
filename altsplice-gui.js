@@ -30,6 +30,28 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
     // TODO: delete this after iso implementation
     this.isoForm = null;
 
+    this.mappedColors = d3.map();
+    this.availableColors = d3.scale.category10().range().map(function(d){return d}).reverse();
+
+
+    this.getColorForSelection=function(name){
+      if (!(that.mappedColors.has(name)))
+        that.mappedColors.set(name,that.availableColors.pop());
+
+      return that.mappedColors.get(name);
+    }
+
+    this.releaseColorForSelection= function(name){
+      if (that.mappedColors.has(name)){
+
+          that.availableColors.push(that.mappedColors.get(name))
+          that.mappedColors.remove(name)
+
+      }
+
+    }
+
+
 
 
     this.init = function (genomeDataLink) {
@@ -49,6 +71,23 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
             event.fire("axisChange");
           }
         }
+      })
+
+
+      d3.select("#decreaseWidth").on("click", function () {
+        that.genomeDataLink.getGeneData(that.getSelectedProject(), that.getSelectedGene()).then(function(geneData) {
+          that.genomeDataLink.genomeAxis.avrgExonLength = Math.max(that.genomeDataLink.genomeAxis.avrgExonLength - 10, 10);
+          that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"])
+          event.fire("redrawAllVis");
+        })
+      })
+
+      d3.select("#increaseWidth").on("click", function () {
+        that.genomeDataLink.getGeneData(that.getSelectedProject(), that.getSelectedGene()).then(function(geneData) {
+        that.genomeDataLink.genomeAxis.avrgExonLength = that.genomeDataLink.genomeAxis.avrgExonLength +10;
+        that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"])
+        event.fire("redrawAllVis");
+        })
       })
 
 
@@ -89,6 +128,12 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
       //})
 
     }
+
+    event.on("redrawAllVis", function(){
+      that.allVisUpdates.forEach(function (update) {
+        update();
+      })
+    })
 
 
     this.populateGeneData= function(project, geneName){

@@ -72,6 +72,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       "transform":"translate("+margin.left+","+margin.top+")"
     })
 
+    var gHighlight = svg.append("g").attr({
+      class:"highlights",
+      "transform":"translate("+margin.left+","+margin.top+")"
+    })
 
     // create crosshair
     var crosshair = svg.append("line").attr({
@@ -205,6 +209,22 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           width:width+margin.right-2
         })
 
+
+        isoformEnter.append("g").attr("class","foreground");
+        var highlight = isoformEnter.append("g").attr("class","highlight");
+        highlight.append("rect").attr({
+          class:"highlightBG",
+          x:axisOffset,
+          y:0,
+          width:scatterWidth,
+          height:exonHeight
+        }).style({
+          fill: "white",
+          opacity:0
+        })
+
+
+
       /*
        * ========================
        * Draw exon merging
@@ -280,7 +300,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
        * =========================
        * */
 
-        var exon = isoform.selectAll(".exon").data(function(d){return d.ranges});
+        var exon = isoform.select(".foreground").selectAll(".exon").data(function(d){return d.ranges});
         exon.exit().remove();
 
         // --- adding Element to class exons
@@ -361,7 +381,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
-        var sampleDot = isoform.selectAll(".sampleDot").data( function(d,i){return d.weights} );
+        var sampleDot = isoform.select(".foreground").selectAll(".sampleDot").data( function(d,i){return d.weights} );
         sampleDot.exit().remove();
 
         // --- adding Element to class sampleDot
@@ -370,8 +390,20 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             r:3
         }).on({
           "mouseover":function(d){event.fire("sampleHighlight", d.sample, true)},
-          "mouseout":function(d){event.fire("sampleHighlight", d.sample, false)}
-        })
+          "mouseout":function(d){event.fire("sampleHighlight", d.sample, false)},
+          "click":function(d){
+
+            if (d3.select(this).classed("selected")){
+              //deselect
+              event.fire("sampleSelect", d.sample, false)
+            }else{
+              //select
+              event.fire("sampleSelect", d.sample, true)
+            }
+
+
+          }
+        }).append("title").text(function(d){return d.sample;})
 
 
         // --- changing nodes for sampleDot
@@ -385,16 +417,153 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     // event handling for highlights
     function highlightSample(event, sample, highlight){
+      var highlightSel = svg.selectAll(".sample"+ cleanSelectors(sample));
+      highlightSel.classed("highlighted", highlight).moveToFront();
 
-      svg.selectAll(".sample"+ cleanSelectors(sample)).classed("highlighted", highlight);
+      if (highlight){
+        var lineCoord = [];
+        highlightSel.each(function(){
+          var trans = d3.transform(d3.select(this.parentNode.parentNode).attr("transform")).translate
+          var me = d3.select(this)
+          console.log(trans);
+          lineCoord.push({
+            "x":+me.attr("cx")+trans[0],
+            "y":+me.attr("cy")+trans[1]
+          })
+        })
+
+        var line = d3.svg.line()
+          .interpolate("cardinal")
+          .x(function(d){return d.x})
+          .y(function(d){return d.y});
+
+        //console.log(lineCoord, line(lineCoord));
+
+        console.log(lineCoord.map(function(d){return d.x+" "+ d.y}));
+
+        var selectionParco = gHighlight.selectAll(".selectionParco").data([lineCoord]);
+        selectionParco.exit().remove();
+
+        // --- adding Element to class selectionParco
+        var selectionParcoEnter = selectionParco.enter().append("path").attr({
+          "class":"selectionParco"
+        })
+
+        // --- changing nodes for selectionParco
+        selectionParco.transition().duration(50).attr({
+          "d":line,
+          "opacity":1
+        }).style({
+          "pointer-events":"none"
+        })
+      }else{
+        gHighlight.selectAll(".selectionParco").transition().attr({
+          opacity:0
+        })
+
+
+
+      }
+
+
+
+
+
+
+
+
+
+
     }
 
     event.on("sampleHighlight", highlightSample)
 
 
 
+    // event handling for highlights
+    function selectSample(event, sample, selected){
+      console.log("select", sample, selected, gui.current.getColorForSelection(sample));
+
+
+      if (selected){
+        var allX = gIso.selectAll(".foreground .sample"+ cleanSelectors(sample))
+
+        allX.classed("selected", true);
+
+        allX.each(function(){
+          var highlightG = d3.select(d3.select(this).node().parentNode.parentNode) // grandpa
+            .select(".highlight")
+
+          d3.select(this).style({
+            fill:gui.current.getColorForSelection(sample),
+            "fill-opacity":1,
+            stroke:1
+          })
+
+          // add to highlight
+          highlightG.node().appendChild(this);
+
+          // make BG white to cover other dots
+          highlightG.select(".highlightBG").style({
+            opacity:.5
+          })
+
+
+        })
+
+      }else{
+        gui.current.releaseColorForSelection(sample);
+
+        var allX = gIso.selectAll(".highlight .sample"+ cleanSelectors(sample))
+        allX.classed("selected", null);
+
+
+        allX.each(function() {
+          var fgG = d3.select(d3.select(this).node().parentNode.parentNode) // grandpa
+            .select(".foreground")
+
+          // save the old parent
+          var highlightG = d3.select(d3.select(this).node().parentNode);
+
+          d3.select(this).style({
+            fill:null,
+            "fill-opacity":null,
+            stroke:null
+          })
+
+          // add to highlight
+          fgG.node().appendChild(this);
+
+          // if only bgrect left..
+          if (highlightG.node().childNodes.length==1){
+
+            // make BG white to cover other dots
+            highlightG.select(".highlightBG").style({
+              opacity:0
+            })
+
+          }
+
+
+
+        })
+
+      }
+
+    }
+
+    event.on("sampleSelect", selectSample)
+
+
+
+
+
+
 
     function axisUpdate(){
+
+      svg.attr("height", height+margin.top+margin.bottom)
+        .attr("width", width + margin.left + margin.right);
 
       var exon =svg.selectAll(".exon");
 
@@ -416,6 +585,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "x":function(d,i){return that.axis.genePosToScreenPos(d.start)},
         "width":function(d,i){return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)}
       })
+
+      // ==> move end design -->
+
 
     }
 

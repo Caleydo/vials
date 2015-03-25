@@ -99,7 +99,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     var sampleSelectorMap = {} // will be updated at updateData()..
 
+
     function cleanSelectors(sel){return sampleSelectorMap[sel]}
+
+
+    var sampleHeight = 30;
 
     function std(values){
       var avg = d3.mean(values);
@@ -116,9 +120,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     var curProject;
     var dataType;
     var sampleGroups;
-    var exonHeight = 30;
+
     var scatterWidth = 200;
-    var sampleScaleY = function(x){ return x*(exonHeight+3)};
+    var sampleScaleY = function(x){ return x*(sampleHeight+3)};
     var scaleXScatter;
     var heightScale;
 
@@ -170,7 +174,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             minmaxCand.push(read.max);
             sampleSelectorMap[read.sample] = i;
           })
-          return d3.extent(minmaxCand)          
+          return d3.extent(minmaxCand)
         }
       },
       "TCGA": {
@@ -251,7 +255,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             ]
             reads = reads.concat(exonCoords)
           })
-          return reads          
+          return reads
         },
         "minMax": function(readData) {
           var minmaxCand = [];
@@ -315,7 +319,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
           // whether element is selected
           var isSelected = !el.classed("fixed");
-          el.classed("fixed", isSelected);
+
 
           var groupID = getGroup(d.sample);
           var group = sampleGroups[groupID];
@@ -404,9 +408,58 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
     }
 
+
+    event.on("sampleSelect", function(e, sample, isSelected){
+
+      var allBG = svg.selectAll(".background").filter(function(d){
+        return d.sample == sample;
+      })
+      allBG.classed("fixed", isSelected);
+
+      var selMark = isSelected?[gui.current.getColorForSelection(sample)]:[]
+
+      allBG.each(function(){
+        var w = d3.select(this).attr("width");
+
+
+
+        var selectionMarker =  d3.select(this.parentNode).selectAll(".selectionMarker").data(selMark);
+        selectionMarker.exit().remove();
+
+        // --- adding Element to class selectionMarker
+        var selectionMarkerEnter = selectionMarker.enter().append("circle").attr({
+            "class":"selectionMarker",
+            r:5,
+            cx:w,
+            cy: sampleHeight/2
+        }).attr({
+          "fill":function(d){
+            return d;
+          }
+        })
+
+        //// --- changing nodes for selectionMarker
+        //selectionMarker.attr({
+        //
+        //})
+
+        d3.select(this.parentNode).selectAll(".selectionMarker").data([]);
+
+
+      })
+
+    });
+
+
+
+
+
+
+
+
     function repositionGroups() {
       var noSamplesBefore = 0;
-      var groupScaleY = function(x, noSamplesBefore){return noSamplesBefore*(exonHeight+3)+20};
+      var groupScaleY = function(x, noSamplesBefore){return noSamplesBefore*(sampleHeight+3)+20};
       var groups = gIso.selectAll(".sampleGroup").transition().attr({
         "transform":function(d,i) {
           groupPos = groupScaleY(i, noSamplesBefore);
@@ -456,7 +509,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       });
       summaryEnter.append("text").attr({
           "class": "summaryLabel",
-          "transform": "translate(" + (that.axis.getWidth() + 10) + "," + exonHeight + ")"
+          "transform": "translate(" + (that.axis.getWidth() + 10) + "," + sampleHeight + ")"
       }).text("Group " + groupID)
       summaryEnter.append("svg:path").attr({
         fill: "none",
@@ -620,14 +673,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var minMax = dataFuncs[dataType].minMax(sampleData.measures.reads);
 
         scaleXScatter = d3.scale.linear().domain([0,minMax[1]]).range([axisOffset, width])
-        heightScale = d3.scale.linear().domain(minMax).range([exonHeight,0]);
+        heightScale = d3.scale.linear().domain(minMax).range([sampleHeight,0]);
 
 
         var noSamples = sampleData.measures.reads.length;
 
         var axisOffset =  that.axis.getWidth() + 10;
         width = axisOffset + scatterWidth;
-        height = (exonHeight+3)*noSamples;
+        height = (sampleHeight+3)*noSamples;
         svg.attr("height", height+margin.top+margin.bottom)
           .attr("width", width + margin.left + margin.right);
 

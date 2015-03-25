@@ -18,7 +18,7 @@ define(['exports','d3'],function(exports,d3){
     this.brokenDomain = [0,100];
     this.brokenRange = [0,100];
 
-    this.avrgExonLength = 50;
+    this.avrgExonLength = 30;
 
     this.shrinkIntronsState = false;
 
