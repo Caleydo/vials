@@ -50,7 +50,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var jxnWrapperHeight = 250;
   var miniExonHeight = 8;
   var jxnCircleRadius = 3;
-  var hoveredEdgeColor = "orange";
   var jxnBBoxWidth = jxnCircleRadius * 4;
 
   var RNAHeight = 80;
@@ -597,52 +596,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                 // sortDots(this.parentNode);
               }
             }
-          }).on('mouseover', function (d1, i1) {
-
-            if (selectedIsoform != null)
-              return;
-
-            RNAArea.selectAll(".RNASite, .RNASiteConnector").style({
-                "opacity" : function (d2, i2) {
-                  return d1.startLoc == d2.loc || d1.endLoc == d2.loc ? 1 : 0.1
-                }
+          }).on('mouseover', function(d) {
+              event.fire("jxnHighlight", {"startLoc": d.startLoc, "endLoc":d.endLoc,"highlight": true});
             })
-
-            d3.selectAll(".JXNAreaConnector").style({
-                "opacity": 0.1
-              })
-
-            d3.selectAll(".edgeConnector").style({
-                  "visibility": function () {
-                    var match = d1.startLoc == this.getAttribute("startLoc") && d1.endLoc == this.getAttribute("endLoc");
-                    return match ? "visible" : "hidden"
-                  }
-              })
-          }).on("mouseout", function (d1, i1) {
-
-            if (selectedIsoform != null)
-              return;
-
-            RNAArea.selectAll(".RNASite, .RNASiteConnector, .JXNAreaConnector").style({
-              "opacity":  1
+            .on("mouseout", function(d) {
+              event.fire("jxnHighlight", {"startLoc": d.startLoc, "endLoc":d.endLoc,"highlight": false});
             })
-
-            d3.selectAll(".edgeConnector").style({
-              "visibility": function () {
-                if (this.getAttribute("type") == "donor")
-                  return "hidden"
-                else if (this.getAttribute("UniqueAdajcenReceptor") == "true")
-                  return "hidden"
-                return "visible";
-              }
-            })
-          })
 
           var anchorX = startX + (groupInd + 0.5) * groupWidth;
 
           var endInd = getBucketIndAt(group.endLoc);
           var startInd = getBucketIndAt(group.startLoc);
-          var UniqueadajcenReceptor =  (endInd > startInd + 1) || (jxnGroup.groups.length > 1);
+          var UniqueadajcenReceptor =  (endInd == startInd + 1) && (jxnGroup.groups.length == 1);
             linesGroup.append("line").attr({
               "type": "receptor",
               "anchorX": anchorX,
@@ -726,8 +691,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           // --- adding Element to class jxnCircle
           var jxnCircleEnter = jxnCircle.enter().append("circle").attr({
               "class":"jxnCircle",
-              "sourceExonInd": function(d){return d.start;},
-              "targetExonInd": function(d){return d.end;},
               "r": jxnCircleRadius,
               "outlier": function(jxnData){
                 return jxnData.weight < boxplotInfo.whiskerDown || jxnData.weight > boxplotInfo.whiskerTop
@@ -737,10 +700,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           jxnCircleEnter.on('mouseover', function (d) {
             // == fire sample select event
             event.fire("sampleHighlight", d.sample, true);
+            event.fire("jxnHighlight", {"startLoc": d.start, "endLoc":d.end,"highlight": true});
 
           }).on('mouseout', function (d) {
             event.fire("sampleHighlight", d.sample, false);
-
+            event.fire("jxnHighlight", {"startLoc": d.start, "endLoc":d.end,"highlight": false});
           });
 
           jxnCircleEnter.append("svg:title")
@@ -781,6 +745,52 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           .style('fill', defaultDotColor);
       }
     })
+
+
+      event.on("jxnHighlight", function(event, data){
+
+
+      if (selectedIsoform != null)
+        return;
+
+        var startLoc = data.startLoc;
+        var endLoc = data.endLoc;
+        var highlight = data.highlight;
+
+        if (highlight){
+          RNAArea.selectAll(".RNASite, .RNASiteConnector").style({
+            "opacity" : function (d2, i2) {
+              return startLoc == d2.loc || endLoc == d2.loc ? 1 : 0.1
+            }
+          })
+
+          d3.selectAll(".JXNAreaConnector").style({
+            "opacity": 0.1
+          })
+
+          d3.selectAll(".edgeConnector").style({
+            "visibility": function () {
+              var match = startLoc == this.getAttribute("startLoc") && endLoc == this.getAttribute("endLoc");
+              return match ? "visible" : "hidden"
+            }
+          })
+        }
+        else {
+          d3.selectAll(".RNASite, .RNASiteConnector, .JXNAreaConnector").style({
+            "opacity":  1
+          })
+
+          d3.selectAll(".edgeConnector").style({
+            "visibility": function () {
+              if (this.getAttribute("type") == "donor")
+                return "hidden"
+              else if (this.getAttribute("UniqueAdajcenReceptor") == "true")
+                return "hidden"
+              return "visible";
+            }
+          })
+        }
+      })
 
 
 
