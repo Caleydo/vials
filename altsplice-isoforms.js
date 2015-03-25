@@ -433,7 +433,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
         var line = d3.svg.line()
-          .interpolate("cardinal")
+          .interpolate("linear")
           .x(function(d){return d.x})
           .y(function(d){return d.y});
 

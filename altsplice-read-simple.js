@@ -63,6 +63,83 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       "transform":"translate("+margin.left+","+margin.top+")"
     })
 
+    function createLocalGui(){
+      var gGui = svg.append("g").attr({
+        class:"groupGUI",
+        "transform":"translate("+margin.left+","+2+")"
+      })
+
+      // ==> group selected button
+
+      var guiSel = gGui.append("g").attr({
+        "id":"groupSelected"
+      })
+      guiSel.append("rect").attr({
+        "class":"groupSelectedRect isoMenu",
+        "width":150,
+        "height": 20,
+        "rx":3,
+        "ry":3
+      }).on({
+        "mouseover":function(){d3.select(this).classed("selected", true)},
+        "mouseout":function(){d3.select(this).classed("selected", null)},
+        "click":function(){
+          var allSelected = [];
+
+          gIso.selectAll(".background.fixed")
+            .each(function(d,i){
+                allSelected.push(d.sample);
+            })
+
+          if (allSelected.length){
+            joinGroups(allSelected);
+
+
+          }
+        }
+
+
+      })
+      guiSel.append("text").attr({
+        class:"groupSelectedRect isoMenuText",
+        x:75,
+        y:15
+      }).style({
+        "text-anchor":"middle",
+        "pointer-events":"none"
+      }).text("group selected")
+
+      // ==> group by feature button
+      var guiGroupBy = gGui.append("g").attr({
+        "id":"groupByX",
+        "transform":"translate("+160+","+0+")"
+      })
+      guiGroupBy.append("rect").attr({
+        "class":"groupByXRect isoMenu",
+        "width":150,
+        "height": 20,
+        "rx":3,
+        "ry":3
+      }).on({
+        "mouseover":function(){d3.select(this).classed("selected", true)},
+        "mouseout":function(){d3.select(this).classed("selected", null)}
+      })
+      guiGroupBy.append("text").attr({
+        class:"groupByXText isoMenuText",
+        x:75,
+        y:15
+      }).style({
+        "text-anchor":"middle",
+        "pointer-events":"none"
+      }).text("group by src")
+
+    }
+
+    createLocalGui();
+
+
+
+
     // create crosshair
     var crosshair = svg.append("line").attr({
       "class":"crosshair",

@@ -35,16 +35,26 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
 
 
     this.getColorForSelection=function(name){
-      if (!(that.mappedColors.has(name)))
-        that.mappedColors.set(name,that.availableColors.pop());
+      if (!(that.mappedColors.has(name))){
+        var theColor = "#666666"
+        if (that.availableColors.length>0){
+          theColor =that.availableColors.pop()
+        }
+
+        that.mappedColors.set(name,theColor);
+      }
+
 
       return that.mappedColors.get(name);
     }
 
     this.releaseColorForSelection= function(name){
       if (that.mappedColors.has(name)){
+          var theColor = that.mappedColors.get(name);
 
-          that.availableColors.push(that.mappedColors.get(name))
+          if (theColor!="#666666"){
+            that.availableColors.push(theColor);
+          }
           that.mappedColors.remove(name)
 
       }
