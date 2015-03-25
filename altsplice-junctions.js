@@ -84,7 +84,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var xJxnBoxScale = d3.scale.linear();
   var showAllDots = false;
   var showDotGroups = false;
-  var jitterDots = false;
+  var jitterDots = true;
   var groups = [];
 
   var groupColors = [
@@ -254,6 +254,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var highlight = data.highlight;
         updateEdgeConnectorsVisibility();
 
+        var jxnList = [];
         if (highlight) {
           RNAArea.selectAll(".RNASite, .RNASiteConnector").each(function (d2, i2) {
             d3.select(this).style({
@@ -285,6 +286,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                   d3.select(this).style({"opacity" :1})
                 }
               })
+              // use of to avoid duplicate jxns due to donor / receptor
+              if (this.getAttribute("type") == "receptor")
+                jxnList.push({"start": startLoc, "end":endLoc})
             }
           })
         }
@@ -293,6 +297,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "opacity" : 1
           })
         }
+
+//        console.log("jxnList: " + jxnList);
+        if (clickedElement == null)
+          event.fire("jxnListHighlighted", {"jxns": jxnList, "highlighted": highlight})
+        else
+          event.fire("jxnListSelected", {"jxns": jxnList, "selected": highlight})
+
       })
 
 
@@ -679,8 +690,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             }
             else {
               //TODO: hen -- fix this use multiple parameters
-              event.fire("jxnHighlight", {"startLoc":d.startLoc, "endLoc":d.endLoc,"highlight": true});
               clickedElement = this;
+              event.fire("jxnHighlight", {"startLoc":d.startLoc, "endLoc":d.endLoc,"highlight": true});
             }
           }).on("dblclick", function() {
             if (selectedIsoform.index == this.parentNode.getAttribute("ActiveIsoform")) {
@@ -833,8 +844,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     })
 
 
-      event.on("jxnHighlight", function(event, data){
-
+      event.on("jxnHighlight", function(ev, data){
 
       if (selectedIsoform != null)
         return;
@@ -875,6 +885,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
           updateEdgeConnectorsVisibility();
         }
+        var jxnList = [{"start": data.startLoc, "end":data.endLoc}];
+        if (clickedElement == null)
+          event.fire("jxnListHighlighted", {"jxns": jxnList, "highlighted": data.highlight})
+        else
+          event.fire("jxnListSelected", {"jxns": jxnList, "selected": data.highlight})
+
       })
 
 
@@ -997,7 +1013,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         //TODO: hen -- fix this use multiple parameters
         event.fire("LocHighlight", {"loc": d1.loc, "highlight": true})
 
-
       }).on('mouseout', function (d1, i1) {
         if (selectedIsoform != null || clickedElement != null)
           return;
@@ -1011,8 +1026,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }
         else {
           //TODO: hen -- fix this use multiple parameters
-          event.fire("LocHighlight", {"loc":d.loc,"highlight": true});
           clickedElement = this;
+          event.fire("LocHighlight", {"loc":d.loc,"highlight": true});
         }
       }).on("dblclick", function() {
         if (selectedIsoform.index == this.parentNode.getAttribute("ActiveIsoform")) {
