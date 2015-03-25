@@ -84,8 +84,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var showAllDots = false;
   var showDotGroups = false;
   var jitterDots = false;
-/*  var groups = [{"samples": ["heartWT1", "heartWT2"], "color": "#a6cee3"},
-    {"samples": ["heartKOa", "heartKOb"], "color": "#b2df8a"}]; */
   var groups = [];
 
   var groupColors = [
@@ -150,7 +148,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     });
 
       event.on("GroupingChanged", function(ev,data){
-      groups = []
+     /*  groups = []
       var otherSamples = []
         for (var i = 0; i < data.collections.length; i++) {
           var col = data.collections[i]
@@ -165,6 +163,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         if (otherSamples.length > 0)
           groups.push({"samples": otherSamples, "color": "gray"})
       }
+      */
       if ((expandedIsoform != null) && showDotGroups) {
         createGroups(expandedIsoform);
       }
@@ -225,6 +224,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
       event.on("LocHighlight", function(ev, data){
+
+        if (selectedIsoform != null)
+          return;
 
         var loc = data.loc;
         var highlight = data.highlight;
@@ -315,7 +317,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         jxnsData = sampleData.measures.jxns;
         allSamples = sampleData.samples;
-        sampleLength = Object.keys(allSamples).length;
+
+        var sampleKeys = Object.keys(allSamples);
+        // TODO: remove following test data after group definition is implemented
+        groups = [
+          {"samples": sampleKeys.filter(function(d, i)
+            {return i < sampleKeys.length / 3}), "color": "cyan"
+          },          {"samples": sampleKeys.filter(function(d, i)
+          {return (i >= sampleKeys.length / 3) && (i < 2 * sampleKeys.length / 3)}), "color": "yellow"
+          },
+          {"samples": sampleKeys.filter(function(d, i)
+          {return i >= 2 * sampleKeys.length / 3}), "color": "green"
+          }];
+
+
+        sampleLength = sampleKeys.length;
         allIsoforms = sampleData.gene.isoforms;
         allExons = sampleData.gene.exons;
         // TODO: Hen: workaround for missing update cycle
@@ -628,7 +644,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             sortDots(this.parentNode);
           })
 
-
           groupNode.append("rect").attr({
             "class": "edgeAnchor",
             "startLoc": group.startLoc,
@@ -638,10 +653,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "transform": "translate(" + groupWidth / 4 + ", " + (jxnWrapperHeight - 6) + ")"
           }).on("click", function(d) {
             if (this == clickedElement) {
+              //TODO: hen -- fix this use multiple parameters
               event.fire("jxnHighlight", {"highlight":d.startLoc, "endLoc":d.endLoc,"highlight": false});
               clickedElement = null;
             }
             else {
+              //TODO: hen -- fix this use multiple parameters
               event.fire("jxnHighlight", {"startLoc":d.startLoc, "endLoc":d.endLoc,"highlight": true});
               clickedElement = this;
             }
@@ -657,14 +674,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             }
           }).on('mouseover', function(d) {
               if (clickedElement == null) {
+                //TODO: hen -- fix this use multiple parameters
                 event.fire("jxnHighlight", {"startLoc": d.startLoc, "endLoc": d.endLoc, "highlight": true});
               }
             })
             .on("mouseout", function(d) {
               if (clickedElement == null) {
+                //TODO: hen -- fix this use multiple parameters
                 event.fire("jxnHighlight", {"startLoc": d.startLoc, "endLoc": d.endLoc, "highlight": false});
               }
             })
+
+          groupNode.append("g").attr({
+            "class": "subboxplotsContainer",
+            "transform": "translate(" + groupWidth / 2 + ", 0)"
+          })
 
           var anchorX = startX + (groupInd + 0.5) * groupWidth;
 
@@ -701,21 +725,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
           var boxPlotData = new Array(sampleLength);
           var nonZeroCount = (group.end - group.start + 1);
-          var subBoxPlot1Data = new Array(Math.round(nonZeroCount / 2));
-          var subBoxPlot2Data = new Array(Math.round(nonZeroCount / 2));
           var nonZeroStartIndex = sampleLength - nonZeroCount;
           for (var i = 0; i < sampleLength; i++) {
             if (i < nonZeroStartIndex)
               boxPlotData[i] = 0;
             else {
               boxPlotData[i] = jxnsData.weights[group.start + i - nonZeroStartIndex].weight;
-              var newInd = i - nonZeroStartIndex;
-              if (newInd <  nonZeroCount / 2)
-                subBoxPlot1Data[newInd] = boxPlotData[i];
-              else
-                subBoxPlot2Data[newInd - nonZeroCount / 2] = boxPlotData[i];
             }
-
           }
           var boxplotInfo = computeBoxPlot(boxPlotData, 1);
           var boxplot = createBoxPlot(groupNode, "boxplot",
@@ -724,27 +740,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             }).style({
             });
 
-          var subboxplot1Info = computeBoxPlot(subBoxPlot1Data, 1);
-          var subboxplot1 = createBoxPlot(groupNode, "subboxplot",
-            subboxplot1Info.whiskerDown, subboxplot1Info.whiskerTop, subboxplot1Info.Q).attr({
-            }).style({
-              "visibility": "hidden"
-            });
-
-          var subboxplot2Info = computeBoxPlot(subBoxPlot2Data, 1);
-          var subboxplot2 = createBoxPlot(groupNode, "subboxplot",
-            subboxplot2Info.whiskerDown, subboxplot2Info.whiskerTop, subboxplot2Info.Q).attr({
-            }).style({
-              "visibility": "hidden"
-            });
-
-
-          var dotsGroup = groupNode.append("g");
-
+          var dotsGroup = groupNode.append("g").attr({
+            "class": "dotsGroup",
+            "transform": "translate(" + groupWidth / 2 + ", 0)"
+          });
 
           // == jxnCircles !!
-
-          console.log(jxnsData);
 
           var jxnCircle = dotsGroup.selectAll(".jxnCircle").data(jxnsData.weights.filter(function(d,ind){
             return ind >= group.start && ind <= group.end // TODO: VERY BAD CODE
@@ -763,10 +764,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           jxnCircleEnter.on('mouseover', function (d) {
             // == fire sample select event
             event.fire("sampleHighlight", d.sample, true);
+            //TODO: hen -- fix this use multiple parameters
             event.fire("jxnHighlight", {"startLoc": d.start, "endLoc":d.end,"highlight": true});
 
           }).on('mouseout', function (d) {
             event.fire("sampleHighlight", d.sample, false);
+            //TODO: hen -- fix this use multiple parameters
             event.fire("jxnHighlight", {"startLoc": d.start, "endLoc":d.end,"highlight": false});
           });
 
@@ -777,7 +780,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
           // --- changing nodes for jxnCircle
           jxnCircle.attr({
-            "cx": groupWidth / 2,
+            "cx": 0,
             "cy": function(jxnData){return yScaleContJxn(jxnData.weight)}
           })
 
@@ -971,19 +974,23 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         if (selectedIsoform != null || clickedElement != null)
           return;
 
+        //TODO: hen -- fix this use multiple parameters
         event.fire("LocHighlight", {"loc": d1.loc, "highlight": true})
 
 
       }).on('mouseout', function (d1, i1) {
         if (selectedIsoform != null || clickedElement != null)
           return;
+        //TODO: hen -- fix this use multiple parameters
         event.fire("LocHighlight", {"loc": d1.loc, "highlight": false})
       }).on("click", function(d) {
         if (this == clickedElement) {
+          //TODO: hen -- fix this use multiple parameters
           event.fire("LocHighlight", {"loc":d.loc,"highlight": false});
           clickedElement = null;
         }
         else {
+          //TODO: hen -- fix this use multiple parameters
           event.fire("LocHighlight", {"loc":d.loc,"highlight": true});
           clickedElement = this;
         }
@@ -1090,21 +1097,41 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       return {"whiskerTop": whiskerTop, "whiskerDown": whiskerDown, "Q": Q};
     }
 
-    function createSubBoxPlots(parent, data, groups) {
-      var transformation;
+    function createSubBoxPlots(parent, edgeGroup) {
+
       var parentNode = d3.select(parent);
 
-      var effectiveWidth = getExpandJxnWidth() -  jxnBBoxWidth;
-      var subplotsContainer = parentNode.select(".subboxplots");
+      var effectiveWidth = expandedWidth -  jxnBBoxWidth / 2;
+      var subplotsContainer = parentNode.select(".subboxplotsContainer");
+
+      var groupData = new Array(groups.length);
+//      var groupIndices = new Array(groups.length);
+      var sampleToGroup = [];
+      for (var gr = 0; gr < groups.length; gr++) {
+        var groupSamples = groups[gr].samples;
+        groupData[gr] = []
+        for (var sampleInd = 0; sampleInd < groupSamples.length; sampleInd++) {
+          var sample = groupSamples[sampleInd]
+          sampleToGroup[sample] = gr;
+        }
+//        groupIndices[gr] = 0;
+      }
+
+      for (var ind = edgeGroup.start; ind <= edgeGroup.end; ind++) {
+        var sample = jxnsData.weights[ind].sample;
+        var weight = jxnsData.weights[ind].weight;
+        var gr = sampleToGroup[sample];
+        groupData[gr].push(weight);
+      }
 
       for (var gr = 0; gr < groups.length; gr++) {
 
-        var boxplotData = computeBoxPlot(jxns);
+        var boxPlotData = groupData[gr].sort(d3.ascending);
+        var boxplotInfo = computeBoxPlot(boxPlotData);
         var xShift = jxnBBoxWidth / 2 + effectiveWidth * (gr + 1) / (groups.length + 1);
         var boxplot = createBoxPlot(subplotsContainer, "subboxplot",
-          boxplotData.whiskerDown, boxplotData.whiskerTop, boxplotData.Q).attr({
-          "transform": transformation +
-          " translate(" + xShift + ", 0)"
+          boxplotInfo.whiskerDown, boxplotInfo.whiskerTop, boxplotInfo.Q).attr({
+          "transform": " translate(" + xShift + ", 0)"
         }).style({
             "opacity": 0
           });
@@ -1120,7 +1147,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "cx": function(d, i) {
             return xShift
           },
-          "transform" : transformation
         })
 
       }
@@ -1200,9 +1226,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     function expandJxn(boxPlotGroup, callback) {
 
-      var jxnWrapper = boxPlotGroup.parentNode;
-
-      jxnWrapper.parentNode.appendChild(jxnWrapper);
+//      var jxnWrapper = boxPlotGroup.parentNode;
+//      var wrapperParent =   jxnWrapper.parentNode;
+   //   wrapperParent.removeChild(jxnWrapper);
+//      wrapperParent.appendChild(jxnWrapper);
 
       var parentNode = d3.select(boxPlotGroup);
       parentNode.selectAll(".jxnContainer").attr({
@@ -1211,23 +1238,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         .transition().duration(300).style({
         "opacity": 1,
       }).each("end", callback);
-
-      var boxplots = parentNode.selectAll(".subboxplot").style({
-          "visibility": "visible"
-
-      }).transition().duration(300).attr({
-        "transform": function(d, i) {
-          var xShift = jxnBBoxWidth  + (i + 0.5) * expandedWidth / 2;
-          return "translate(" + xShift + ", 0)"
-        }
-      });
-
-      parentNode.selectAll(".jxnCircle").transition().duration(300).attr({
-        "cx": function(d, i) {
-          var ind = i < sampleLength / 2 ? 0 : 1;
-          return jxnBBoxWidth  + (ind + 0.5) * expandedWidth / 2
-        },
-      })
 
         /*      boxplots.transition().duration(400).attr({
                 "transform": transformation,
@@ -1274,8 +1284,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         });
 */
       parentNode.selectAll(".jxnCircle").transition().duration(400).attr({
-        "cx": groupWidth / 2,
-        "transform": ""
+        "cx": 0,
       })
 //      parentNode.transition().delay(400).selectAll(".boxPlotLine").style({
 //        "visibility": "visible"
@@ -1283,7 +1292,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     }
 
-    function expandIsoform(isoform, sortBy) {
+    function expandIsoform(isoform) {
 
       var numOfJunctions = allIsoforms[isoform.isoform].exons.length - 1;
 
@@ -1293,21 +1302,25 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var totalWidth = expandedSpace * numOfJunctions;
 
       var activeEdgeGroups = d3.selectAll(".edgeGroup").filter(function () {
-        return this.getAttribute("ActiveIsoform") == isoform.index}
-      ).sort(function(a, b) {
-          return a.start < b.start ? -1 : 1
-        });
+        var include = this.getAttribute("ActiveIsoform") == isoform.index;
+        if (!include)
+          d3.select(this).style({
+            "visibility" : "hidden"
+            })
+        return include;
+      })
 
       var leftMostGroupX = width, rightMostGroupX = 0;
 
       activeEdgeGroups.each(function (d) {
         console.log("Group: " + d.start + " - " + d.end)
-        var x = parseInt(this.getAttribute("startX"));
+        var x = axis.genePosToScreenPos(this.getAttribute("startLoc"));
         leftMostGroupX = Math.min(leftMostGroupX, x);
+        var x = axis.genePosToScreenPos(this.getAttribute("endLoc"));
         rightMostGroupX = Math.max(rightMostGroupX, x);
       })
 
-      var startX = (rightMostGroupX + leftMostGroupX  + expandedSpace - totalWidth) / 2
+      var startX = (rightMostGroupX + leftMostGroupX - totalWidth) / 2
       startX = Math.min(startX, availableWidth - totalWidth)
       startX = Math.max(startX, weightAxisCaptionWidth + jxnWrapperPadding)
       expandedWidth = expandedSpace - 2 * jxnBBoxWidth;
@@ -1330,14 +1343,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
       expandedIsoform = isoform;
+      createGroups(isoform);
     }
 
     function createGroups(activeIsoform) {
-      d3.selectAll(".boxplotWithDots").each(function () {
-        if (this.getAttribute("ActiveIsoform") == activeIsoform) {
+      d3.selectAll(".edgeGroup").each(function (d) {
+        if (this.getAttribute("ActiveIsoform") == activeIsoform.index) {
           removeSubboxplots(d3.select(this));
           if (showDotGroups && (groups.length > 0)) {
-            createSubBoxPlots(this, groups);
+            createSubBoxPlots(this, d);
           }
           else {
             sortDots(this)
@@ -1347,7 +1361,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function collapseIsoform(isoform, callback) {
-    var selection = d3.selectAll(".edgeGroup").filter(function (d, i) {
+    var selection = d3.selectAll(".edgeGroup").style({
+          "visibility" : "visible"
+    }).filter(function (d, i) {
       return this.getAttribute("ActiveIsoform") == isoform.index;
     })
     var size = 0;
@@ -1370,20 +1386,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     });
     expandedIsoform = null;
   }
-
-    function getExpandJxnWidth() {
-      var axis = that.axis;
-      var jxnWidth = width;
-      var x1 = (axis.getXPos(curExons[0][0]) + axis.getXPos(curExons[0][1])) / 2;
-
-      for (i = 1; i < curExons.length; i++) {
-        var x2 = (axis.getXPos(curExons[i][0]) + axis.getXPos(curExons[i][1])) / 2;
-        if (x2 - x1 < jxnWidth)
-          jxnWidth = x2 - x1;
-        x1 = x2;
-      }
-      return jxnWidth - 4 * isoformEdgePadding - jxnBBoxWidth;
-    }
 
     function deSelectIsoforms() {
       d3.selectAll(".edgeConnector").style({
@@ -1409,8 +1411,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "opacity" : 0.1
         })
 
-      d3.selectAll(".RNASite, .RNASiteConnector, .JXNAreaConnector, .edgeAnchor, .edgeConnector, .edgeGroup").style({
+      d3.selectAll(".RNASite, .RNASiteConnector, .JXNAreaConnector, .edgeAnchor, .edgeGroup").style({
         "opacity" : 0.1,
+      })
+      d3.selectAll(".edgeConnector").style({
+        "opacity" : 0,
       })
 
       var exonIDs = allIsoforms[data.isoform].exons;
@@ -1490,7 +1495,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         indices.sort(function (a, b) { return activeJxnWeights[a] < activeJxnWeights[b] ? -1 : 1; });
  */
 
-      xJxnBoxScale.domain([0, indices.length - 1]).range([jxnBBoxWidth + 3 * dotRadius, expandedWidth + groupWidth / 2 - 3 * dotRadius])
+      xJxnBoxScale.domain([0, indices.length - 1]).range([jxnBBoxWidth + 3 * dotRadius, expandedWidth - 3 * dotRadius])
 
       var newKeysCount = 0;
 
