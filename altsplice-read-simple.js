@@ -519,6 +519,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     event.on("groupSelect", function(e, groupID, isSelected) {
       var group = getGroup(groupID);
+      if (group && group.samples) event.fire("sampleGroupSelected", groupID, group.samples, isSelected)
       group.selected = isSelected;
       group.g.selectAll(".background").classed("fixed", isSelected);
     })
