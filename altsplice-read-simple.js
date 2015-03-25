@@ -101,7 +101,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             })
             if (groupIDs.length > 1) {
               joinGroups(groupIDs);
-              drawGroups(sampleGroups, minMax);
+              drawGroups();
             }
           }
         }
@@ -371,8 +371,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
 
-    function drawSamples(group, minMaxValues, g){
-
+    function drawSamples(group){
+      var g = group.g;
       var exonHeight = 30;
       var scatterWidth = 200;
       var axisOffset =  that.axis.getWidth() + 10;
@@ -537,7 +537,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     function repositionGroups() {
       var noSamplesBefore = 0;
       var groupScaleY = function(x, noSamplesBefore){return noSamplesBefore*(sampleHeight+3)+20};
-      var groups = gIso.selectAll(".sampleGroup").transition().attr({
+      var groups = gIso.selectAll(".sampleGroup").sort(function (group1, group2) {
+        var sizeDiff = group2.samples.length - group1.samples.length;
+        if (sizeDiff != 0) {
+          return sizeDiff;
+        }
+        else {
+          return d3.ascending(group1.samples[0], group2.samples[0])
+        }
+      });
+      groups.transition().attr({
         "transform":function(d,i) {
           groupPos = groupScaleY(i, noSamplesBefore);
           noSamplesBefore += (d.collapse ? 1 : d.samples.length);
@@ -545,6 +554,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }
       })
       groups.each(function(group) {
+        console.log(group.samples)
         var g = d3.select(this);
         g.selectAll(".abundance").transition().attr({
           "transform":function(d,i) {
@@ -681,11 +691,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       });
     }
 
-    function drawGroups(groupData, minMax) {
+    function drawGroups() {
       var group = gIso.selectAll(".sampleGroup")
-                      .data(groupData, function (group) {
+                      .data(sampleGroups, function (group) {
                         return group.data.map(function(d) {return d.sample})
-                      });
+                      })
 
       group.exit().remove();
 
@@ -695,11 +705,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       groupEnter.each(function(group) {
         group.g = d3.select(this);
-        drawLinesGroup(group, d3.select(this));
+        drawLinesGroup(group);
       })
 
       group.each(function(group) {
-        drawSamples(group, minMax, d3.select(this));
+        drawSamples(group);
       })
 
       expandGroups();
@@ -806,7 +816,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }
 
         groupData(readData);
-        drawGroups(sampleGroups, minMax);
+        drawGroups();
 
         curProject = updatedProject;
       })
