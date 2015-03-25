@@ -891,11 +891,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       triangles.on('mouseover', function (d1, i1) {
 
-        if (selectedIsoform != null)
-          return;
-
         // == move crosshair there..
         event.fire("crosshair", axis.genePosToScreenPos(d1.loc))
+
+        if (selectedIsoform != null)
+          return;
 
         RNAArea.selectAll(".RNASite, .RNASiteConnector").each(function (d2, i2) {
           d3.select(this).style({
