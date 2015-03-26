@@ -276,7 +276,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     function getMetaFromSample(sample) {
       for (curSample in sampleInfo) {
         if (curSample == sample) {
-          return sampleInfo[curSample].meta.disease; // TODO: list all meta keys to sort by
+          if (sampleInfo[curSample].meta)
+            return sampleInfo[curSample].meta.disease; // TODO: list all meta keys to sort by
+          else return "none";
         }
       }
     }
@@ -463,7 +465,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "mouseover": function(d){
           var group = getGroupFromSample(d.sample);
           if (group.collapse) {
-            event.fire("groupHighlight", group.groupID, true);            
+            event.fire("groupHighlight", group.groupID, true);
           }
           else {
             event.fire("sampleHighlight", d.sample, true);
@@ -476,7 +478,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             event.fire("groupHighlight", group.groupID, false);
           }
           else {
-            event.fire("sampleHighlight", d.sample, false);            
+            event.fire("sampleHighlight", d.sample, false);
           }
           d3.select(this).classed("selected", false);
         },
@@ -676,7 +678,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "transform": "translate(" + (that.axis.getWidth() + 10) + "," + sampleHeight + ")"
       }).text("Group: " + group.groupID.meta).each(wrapText);
       groupText.append("title")
-               .text("Group: \nMeta: " + group.groupID.meta + "\nSamples: " 
+               .text("Group: \nMeta: " + group.groupID.meta + "\nSamples: "
                       + group.groupID.samples.map(function(s) {return "\n" + s}));
 
       summaryEnter.append("svg:path").attr({

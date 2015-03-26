@@ -775,17 +775,25 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var allExons = sampleData.gene.exons;
 
 
-        var usedIsoformsList =  Object.keys(usedIsoforms).map(function(isokey){
-          var res = {weights:usedIsoforms[isokey], id: isokey}
-          res.ranges =
-            allIsoforms[isokey].exons.map(function(exKey){
-              var ex = allExons[exKey];
-              return {"start": ex.start, "end": ex.end, "id": ex.id}
-            });
+        var usedIsoformsList =  []
+        Object.keys(usedIsoforms).map(function(isokey){
+
+          if (isokey in allIsoforms){
+            var res = {weights:usedIsoforms[isokey], id: isokey}
+            res.ranges =
+              allIsoforms[isokey].exons.map(function(exKey){
+                var ex = allExons[exKey];
+                return {"start": ex.start, "end": ex.end, "id": ex.id}
+              });
 
 
-          res.mean = d3.mean(res.weights.map(function(d){return d.weight;}))
-          return res;
+            res.mean = d3.mean(res.weights.map(function(d){return d.weight;}))
+            usedIsoformsList.push(res)
+          }else{
+            console.log("isoform measured but no meta: ", isokey);
+          }
+
+
 
         })
 

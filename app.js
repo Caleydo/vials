@@ -74,7 +74,7 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui',
 
     // start here !!
     C.all([vis1Loaded, vis2Loaded, vis3Loaded]).then(function () {
-      gui.current.start(options.projectID);
+      gui.current.start(options.projectID, options.geneID);
     })
 
 

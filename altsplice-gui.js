@@ -165,14 +165,18 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
     };
 
 
-    function updateGeneSelector(selectedProject) {
+    function updateGeneSelector(selectedProject, selectedGene) {
       //console.log(that.genomeDataLink.getAllGenes(selectedProject));
       that.genomeDataLink.getAllGenes(selectedProject).then(function (genes) {
 
         that.geneSelector.selectAll("option").remove();
         genes.forEach(function (gene) {
-          that.geneSelector.append("option").attr('value', gene).text(gene);
+          that.geneSelector.append("option")
+            .attr("selected", (gene==selectedGene)?true:null)
+            .attr('value', gene)
+            .text(gene);
         })
+
         that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
 
         // activate GeneSelector
@@ -185,7 +189,7 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
       });
     }
 
-    this.start = function(selectedProject){
+    this.start = function(selectedProject, selectedGene){
       that.genomeDataLink.getAllProjects().then(function (projects) {
         //console.log("allProjects", projects);
 
@@ -206,7 +210,7 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
           }
         });
 
-        updateGeneSelector(selectedProject);
+        updateGeneSelector(selectedProject, selectedGene);
       })
 
     };
