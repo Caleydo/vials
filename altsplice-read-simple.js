@@ -915,7 +915,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               "data": [d],
             });
           })
-          event.fire("groupingChanged", sampleGroups.map(function(group) {return group.samples}))
+          event.fire("groupingChanged", sampleGroups.map(function(group) {return group.groupID}), [])
         }
 
         groupData(readData);
