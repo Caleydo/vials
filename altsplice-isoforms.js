@@ -419,7 +419,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       function showGroupSplits(data,index,parent, show){
         console.log(data,index, parent);
 
-        var allDots = d3.select(parent).selectAll(".sampleDot")
+        var allDots = d3.select(parent).selectAll(".isoform .sampleDot")
 
         var colors = []
         var allDInfos = []
@@ -488,7 +488,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
         }else{
+
           gIso.selectAll(".groupSplitView").remove();
+          gIso.selectAll(".groupDots").remove();
         }
 
 
@@ -547,7 +549,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     // event handling for highlights
     function highlightSample(event, sample, highlight){
-      var highlightSel = svg.selectAll(".sample"+ cleanSelectors(sample));
+      var highlightSel = svg.selectAll(".isoforms .sample"+ cleanSelectors(sample));
       highlightSel.classed("highlighted", highlight).moveToFront();
 
       if (highlight){
