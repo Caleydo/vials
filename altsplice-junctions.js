@@ -42,7 +42,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var defaultDotColor = "rgba(90,90,90,0.3)";
   var dehighlightedDotColor = "rgba(120,120,120,0.05)";
   var highlightedDotColor = "red";
-  var weightAxisCaptionWidth = 25;
+  var weightAxisCaptionWidth = 35;
   var exonWeightsAreaHeight;
   var jxnWrapperPadding = 6;
   var sitePadding = 2;
