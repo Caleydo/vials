@@ -129,7 +129,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var axisOffset =  that.axis.getWidth() + 10;
         var noIsoforms = isoformList.length;
 
-        width = axisOffset+ scatterWidth+extraLabel;
+        width = axisOffset+ 2* scatterWidth+extraLabel;
         height = (exonHeight+3)*noIsoforms;
         svg.attr("height", height+margin.top+margin.bottom)
           .attr("width", width + margin.left + margin.right);
@@ -412,6 +412,136 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             cy: function(){return exonHeight/4+Math.random()*exonHeight/2}
         })
 
+
+
+
+
+      function showGroupSplits(data,index,parent, show){
+        console.log(data,index, parent);
+
+        var allDots = d3.select(parent).selectAll(".sampleDot")
+
+        var colors = []
+        var allDInfos = []
+
+        allDots.each(function(d,i){
+          var f = d3.select(this).style("fill")
+          var cx = d3.select(this).attr("cx")
+          allDInfos.push({cx: cx, color:f, d:d})
+          if (colors.indexOf(f)<0){
+            colors.push(f)
+          }
+        })
+
+        console.log(colors);
+
+        if (show){
+
+          var splitG = gIso.selectAll(".groupSplitView").data([1])
+          var splitGenter = splitG.enter().append("g").attr("class","groupSplitView");
+          //splitGenter.append("circle").attr({
+          //    "class":"tickleftCircle",
+          //    "cx":-15,
+          //    "cy":-5,
+          //    "r":5
+          //})
+
+          console.log("index:",index);
+          splitG.attr({
+            "transform":"translate("+(scaleXScatter.range()[1]+25)+","+groupScale(index)+")"
+          })
+
+          var bg = splitG.selectAll(".background").data([1])
+          bg.enter().append("rect")
+          bg.attr({
+              "class":"background",
+              "height":groupScale(colors.length),
+              "width":scatterWidth+10
+          })
+
+
+
+          var groupDots = splitG.selectAll(".groupDots").data(allDInfos);
+          groupDots.exit().remove();
+
+          // --- adding Element to class groupDots
+          var groupDotsEnter = groupDots.enter().append("circle").attr({
+            r:3
+          })
+
+          // --- changing nodes for groupDots
+          groupDots.attr({
+            "class":function(d,i){return "groupDots sampleDot sample"+cleanSelectors(d.d.sample)},
+            "cx":function(d,i){return d.cx-scaleXScatter.range()[0]},
+            "cy":function(d,i){return groupScale(colors.indexOf(d.color))+Math.random()*exonHeight/2},
+            "fill":function(d,i){return d.color}
+          })
+
+
+
+            console.log(allDots);
+            allDots.each(function(d,i){
+
+              //console.log(d, d3.select(this).style("fill"));
+            })
+
+
+
+        }else{
+          gIso.selectAll(".groupSplitView").remove();
+        }
+
+
+
+      }
+
+
+
+      var showGroups = isoform.selectAll(".showGroups").data(function (d) {
+          return [d];
+      });
+      showGroups.exit().remove();
+
+      // --- adding Element to class showGroups
+      var showGroupsEnter = showGroups.enter().append("text").attr({
+          "class":"showGroups",
+          "x":scaleXScatter.range()[1]+10,
+          "y":exonHeight-4
+      }).text("+").style({
+          "font-weight":"bold",
+          "cursor":"pointer"
+      }).on({
+        "click":function(d,i){
+
+          var parent = d3.select(this).node().parentNode;
+          if (d3.select(this).classed("selected")){
+
+            d3.selectAll(".showGroups").classed("selected", false);
+            showGroupSplits(d,i, parent, false);
+
+
+            // unselect
+          }else{
+            var me= this;
+            d3.selectAll(".showGroups").classed("selected", function(){return this==me})
+              showGroupSplits(d,i, parent, true);
+
+
+
+          }
+        }
+
+
+      })
+
+      //// --- changing nodes for showGroups
+      //showGroups.attr({
+      //
+      //})
+
+
+
+
     }
 
 
@@ -567,6 +697,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     event.on("groupSelect", function(e, groupID, isSelected) {
 
+      console.log(groupID, isSelected);
+
       var sall = groupID.samples.map(function (d, i) {
         return ".sample" + cleanSelectors(d)
       }).join(", ");
@@ -582,7 +714,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             .select(".highlight")
 
           d3.select(this).style({
-            fill: gui.current.getColorForSelection(groupID),
+            fill: gui.current.getColorForSelection(JSON.stringify(groupID)),
             "fill-opacity": 1,
             stroke: 1
           })
@@ -599,7 +731,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
       } else {
-        gui.current.releaseColorForSelection(groupID);
+        gui.current.releaseColorForSelection(JSON.stringify(groupID));
 
         var allX = gIso.selectAll(".highlight " + sall)
         allX.classed("selected", null);
@@ -815,13 +947,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
-
+    event.on("groupingChanged", function(e,a,b,c){
+      console.log("gc",a,b,c);
+    })
 
 
     gui.current.addUpdateEvent(updateData);
 
 
     event.on("axisChange", axisUpdate)
+
 
     return head.node();
 

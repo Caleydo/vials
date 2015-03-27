@@ -69,10 +69,36 @@ $wes-red: #D16B54;
     fill:$wes-red;
     fill-opacity: 1;
   }
+  .sampleDot.selected{
+    fill-opacity: 1;
+    stroke:none;
+  }
+
   .highlightBG{
     pointer-events: none;
   }
+
+.showGroups{
+  font-size:12pt;
 }
+  .showGroups.selected{
+    background-color: #000066;
+  }
+
+
+}
+.groupSplitView{
+  .background{
+    fill: none;
+    stroke:$wes-gray;
+  }
+  .tickleftCircle{
+    fill:$wes-gray;
+    opacity: .3;
+    pointer-events: none;
+  }
+}
+
 
 path.selectionParco{
   fill:none;
