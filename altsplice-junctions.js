@@ -152,10 +152,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     event.on("sampleSelect", function(e,sampleID, isSelected){
 
-
-
-          // TODO: bilal, here you have the infos about a single somple selection. Have fun coding :)
-
           if (isSelected) {
             var sampleColor = gui.current.getColorForSelection(sampleID);
             svg.selectAll('.jxnCircle').filter(function(d) {
@@ -182,17 +178,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
       event.on("groupSelect", function(ev, group, isSelected) {
-        if (isSelected) {
-          var groupID = JSON.stringify(group);
-          var color = gui.current.getColorForSelection(groupID);
+          var color = isSelected ? gui.current.getColorForSelection(JSON.stringify(group)) : defaultDotColor;
           jxnArea.selectAll(".jxnCircle").filter(function(d) {
             return group.samples.indexOf(d.sample) >= 0;
+          }).attr({
+            "selected": isSelected ? 1 : 0
           }).style({
             "fill": color,
-            "opacity": 0.8
+            "opacity": isSelected ? 0.8 : 1
           })
-          return;
-          group.samples()
+        }
+        else {
+
         }
 
       })
@@ -240,8 +237,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           groups.push({"samples": otherSamples, "color": "gray"})
       }
       */
-        groups.push(newGroups[0]);
-
+        for (var i = 0; i < oldGroups.length; i++) {
+          var ind = groups.indexOf(oldGroups[i]);
+          if (ind >= 0)
+            groups.splice(ind, 1);
+        }
+        for (var i = 0; i < newGroups.length; i++) {
+          groups.push(newGroups[i]);
+        }
 //        event.fire("groupingChanged",  [ ["heart", "adipose"], ["thyroid", ...], ...] )
 
       if ((expandedIsoform != null) && showDotGroups) {
@@ -405,6 +408,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       //console.log("ppp", curProject, curGene );
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
+
+
 
         jxnsData = sampleData.measures.jxns;
         allSamples = sampleData.samples;
@@ -1200,10 +1205,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function createSubBoxPlots(parent, edgeGroup) {
-      if (groups.length > 2)
-      groups = groups.filter(function(d,ind){
-        return ind > 0
-        })
 
       var parentNode = d3.select(parent);
 
