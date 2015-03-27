@@ -88,18 +88,19 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var groups = [];
 
   var groupColors = [
-    "#a6cee3",
-    "#1f78b4",
-    "#b2df8a",
-    "#33a02c",
-    "#fb9a99",
-    "#e31a1cv",
     "#fdbf6f",
-    "#ff7f00",
     "#cab2d6",
+    "#a6cee3",
+    "#fb9a99",
+    "#b2df8a",
+    "#1f78b4",
+    "#33a02c",
+    "#e31a1cv",
+    "#ff7f00",
     "#6a3d9a",
 
   ];
+
 
     GenomeVis.prototype.build = function ($parent) {
 
@@ -180,7 +181,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
 
+      event.on("groupSelect", function(ev, group, isSelected) {
+        if (isSelected) {
+          var groupID = JSON.stringify(group);
+          var color = gui.current.getColorForSelection(groupID);
+          jxnArea.selectAll(".jxnCircle").filter(function(d) {
+            return group.samples.indexOf(d.sample) >= 0;
+          }).style({
+            "fill": color,
+            "opacity": 0.8
+          })
+          return;
+          group.samples()
+        }
 
+      })
 
       event.on("sampleGroupSelected", function(ev,groupID, samples, isSelected){
         /*  groups = []
@@ -208,7 +223,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       });
 
 
-      event.on("groupingChanged", function(ev, newGroups){
+      event.on("groupingChanged", function(ev, newGroups, oldGroups){
      /*  groups = []
       var otherSamples = []
         for (var i = 0; i < data.collections.length; i++) {
@@ -225,7 +240,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           groups.push({"samples": otherSamples, "color": "gray"})
       }
       */
-        groups = newGroups;
+        groups.push(newGroups[0]);
 
 //        event.fire("groupingChanged",  [ ["heart", "adipose"], ["thyroid", ...], ...] )
 
@@ -396,7 +411,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         var sampleKeys = Object.keys(allSamples);
         // TODO: remove following test data after group definition is implemented
-        groups = [
+        groups = [];
+        /*
           {"samples": sampleKeys.filter(function(d, i)
             {return i < sampleKeys.length / 3}), "color": "cyan"
           },          {"samples": sampleKeys.filter(function(d, i)
@@ -405,7 +421,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           {"samples": sampleKeys.filter(function(d, i)
           {return i >= 2 * sampleKeys.length / 3}), "color": "green"
           }];
-
+*/
 
         sampleLength = sampleKeys.length;
         allIsoforms = sampleData.gene.isoforms;
@@ -723,8 +739,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "startLoc": group.startLoc,
             "endLoc": group.endLoc,
             "height": 5,
-            "width": groupWidth / 2,
-            "transform": "translate(" + groupWidth / 4 + ", " + (jxnWrapperHeight - 6) + ")"
+            "width": groupWidth / 3,
+            "transform": "translate(" + groupWidth / 3 + ", " + (jxnWrapperHeight - 6) + ")"
           }).on("click", function(d) {
             if (this == clickedElement) {
               //TODO: hen -- fix this use multiple parameters
@@ -1184,6 +1200,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function createSubBoxPlots(parent, edgeGroup) {
+      if (groups.length > 2)
+      groups = groups.filter(function(d,ind){
+        return ind > 0
+        })
 
       var parentNode = d3.select(parent);
 
@@ -1194,7 +1214,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 //      var groupIndices = new Array(groups.length);
       var sampleToGroup = [];
       for (var gr = 0; gr < groups.length; gr++) {
-        var groupSamples = groups[gr];
+        var groupSamples = groups[gr].samples;
         groupData[gr] = []
         for (var sampleInd = 0; sampleInd < groupSamples.length; sampleInd++) {
           var sample = groupSamples[sampleInd]
@@ -1202,6 +1222,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }
 //        groupIndices[gr] = 0;
       }
+
+
 
       for (var ind = edgeGroup.start; ind <= edgeGroup.end; ind++) {
         var sample = sortedWeights[ind].sample;
@@ -1223,13 +1245,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "opacity": 0
           });
         boxplot.selectAll(".jxnBBox").style({
-          "fill" : gui.current.getColorForSelection(groups[gr])
+          "fill" : gui.current.getColorForSelection(JSON.stringify(groups[gr]))
         })
         boxplot.transition().duration(400).style({
             "opacity": 1
           });
         parentNode.selectAll(".jxnCircle").filter(function (d) {
-          return groups[gr].indexOf(d.sample) >= 0
+          return groups[gr].samples.indexOf(d.sample) >= 0
         }).transition().duration(400).attr({
           "cx": function(d, i) {
             return xShift
