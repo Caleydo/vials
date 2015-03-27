@@ -676,7 +676,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var groupText = summaryEnter.append("text").attr({
           "class": "summaryLabel",
           "transform": "translate(" + (that.axis.getWidth() + 10) + "," + sampleHeight + ")"
-      }).text("Group: " + group.groupID.meta).each(wrapText);
+      }).text("Group:" + group.groupID.samples.map(function(s) {return " " + s})).each(wrapText);
       groupText.append("title")
                .text("Group: \nMeta: " + group.groupID.meta + "\nSamples: "
                       + group.groupID.samples.map(function(s) {return "\n" + s}));
