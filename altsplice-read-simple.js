@@ -560,10 +560,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       if (group && group.samples) event.fire("sampleGroupSelected", groupID, group.samples, isSelected)
       group.selected = isSelected;
       var allBG = getGroup(groupID).g.selectAll(".background");
-      drawSampleMark(allBG, groupID, isSelected);
+      drawSampleMark(allBG, "group", groupID, isSelected);
       allBG.classed("fixed", isSelected);
       if (!isSelected) {
-        gui.current.releaseColorForSelection(group.groupID);
+        gui.current.releaseColorForSelection(JSON.stringify(groupID));
       }
     })
 
@@ -572,16 +572,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var sampleBG = group.g.selectAll(".background").filter(function(d) {
                                                         return d.sample === sample
                                                       })
-      var sampleID = {"samples": [sample], "meta": getMetaFromSample(sample)};
-      drawSampleMark(sampleBG, sampleID, isSelected);
+      drawSampleMark(sampleBG, "sample", sample, isSelected);
       sampleBG.classed("fixed", isSelected);
       if (!isSelected) {
-        gui.current.releaseColorForSelection(sampleID);
+        gui.current.releaseColorForSelection(sample);
       }
     });
 
-    function drawSampleMark(g, groupID, isSelected) {
-      var selMark = isSelected?[gui.current.getColorForSelection(JSON.stringify(groupID))]:[]
+    function drawSampleMark(g, type, identifier, isSelected) {
+      var color = gui.current.getColorForSelection(type == "group" ? JSON.stringify(identifier) : identifier);
+      var selMark = isSelected ? [color] : []
 
       g.each(function(){
         var w = d3.select(this).attr("width");
@@ -673,11 +673,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "class": "summary",
         "transform": "translate(0, 0)"
       });
-      var groupText = summaryEnter.append("text").attr({
+      var groupText = group.groupID.meta != "none" ? " " + group.groupID.meta : group.groupID.samples.map(function(s) {return " " + s});
+      var groupLabel = summaryEnter.append("text").attr({
           "class": "summaryLabel",
           "transform": "translate(" + (that.axis.getWidth() + 10) + "," + sampleHeight + ")"
-      }).text("Group: " + group.groupID.meta).each(wrapText);
-      groupText.append("title")
+      }).text("Group:" + groupText).each(wrapText);
+      groupLabel.append("title")
                .text("Group: \nMeta: " + group.groupID.meta + "\nSamples: "
                       + group.groupID.samples.map(function(s) {return "\n" + s}));
 
