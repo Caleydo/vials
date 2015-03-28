@@ -1562,7 +1562,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         d3.selectAll(".edgeAnchor, .edgeConnector, .edgeGroup").filter(function () {
           var startLoc = this.getAttribute("startLoc");
           var endLoc = this.getAttribute("endLoc");
-          var include = startLoc == lastExonEnd && endLoc == exon.start
+          var include = positiveStrand ? (startLoc == lastExonEnd && endLoc == exon.start)
+            : endLoc == lastExonEnd && startLoc == exon.start;
           if (include && this.getAttribute("class") == "edgeGroup") {
             d3.select(this).attr({
               "ActiveIsoform": data.index
