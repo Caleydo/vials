@@ -1,5 +1,4 @@
-/**
- * Created by Bilal Alsallakh 02/01/14
+/* Created by Bilal Alsallakh 02/01/14
  * Based on work by Joseph Botros
  */
 
@@ -43,7 +42,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var defaultDotColor = "rgba(90,90,90,0.3)";
   var dehighlightedDotColor = "rgba(120,120,120,0.05)";
   var highlightedDotColor = "red";
-  var weightAxisCaptionWidth = 25;
+  var weightAxisCaptionWidth = 35;
   var exonWeightsAreaHeight;
   var jxnWrapperPadding = 6;
   var sitePadding = 2;
@@ -64,17 +63,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var clickedElement = null;
 
   var jxnsData;
+  var all_starts, all_ends;
   var sortedWeights;
   var allSamples;
   var sampleLength;
+  var positiveStrand;
 
   var allIsoforms;
   var allExons;
   var jxnGroups = [];
   var edgeCount;
   var axis;
-  var startCoord;
-  var endCoord;
   var buckets;
 
 
@@ -187,10 +186,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "fill": color,
             "opacity": isSelected ? 0.8 : 1
           })
-        }
-        else {
-
-        }
 
       })
 
@@ -409,10 +404,20 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       //console.log("ppp", curProject, curGene );
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
 
-
+        positiveStrand = sampleData.gene.strand == "+";
 
         jxnsData = sampleData.measures.jxns;
         allSamples = sampleData.samples;
+        all_starts = positiveStrand ? jxnsData.all_starts : jxnsData.all_ends;
+        all_ends = positiveStrand ? jxnsData.all_ends : jxnsData.all_starts;
+        if (!positiveStrand) {
+          for (var i = 0; i < jxnsData.weights.length; i++) {
+            var temp = jxnsData.weights[i].start;
+            jxnsData.weights[i].start = jxnsData.weights[i].end;
+            jxnsData.weights[i].end = temp;
+          }
+        }
+
 
         var sampleKeys = Object.keys(allSamples);
         // TODO: remove following test data after group definition is implemented
@@ -442,8 +447,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "id": "RNAArea",
           "transform": "translate(0," + (jxnWrapperHeight+RNAMargin) + ")"
         });
-        startCoord = d3.min(jxnsData.all_starts);
-        endCoord = d3.max(jxnsData.all_ends);
         // RNAScale = d3.scale.linear().domain([startCoord, endCoord]).range([triangleLength, width - triangleLength]);
 
         drawRNA(RNAArea);
@@ -636,12 +639,19 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           ]
         }
         else {
-          return [
+
+          return positiveStrand ? [
             connector.getAttribute("x1"), jxnWrapperHeight,
             connector.getAttribute("x2"), jxnWrapperHeight,
-            buckets[bucketInd].xStart, getDonorY(),
+            buckets[bucketInd].anchor, getDonorY(),
             connector.getAttribute("x3"), getDonorY(),
-          ]
+          ] :
+            [
+              connector.getAttribute("x1"), jxnWrapperHeight,
+              connector.getAttribute("x2"), jxnWrapperHeight,
+              connector.getAttribute("x3"), getDonorY(),
+              buckets[bucketInd].anchor, getDonorY(),
+            ]
         }
       }
 
@@ -678,13 +688,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           jxnArea.append("polygon").attr({
             x1: startX +1,
             x2: startX + wrapperWidth -1,
-            x3: buckets[donorInd].xEnd,
+            x3: buckets[donorInd].anchor,
             "loc": donorLoc,
             "adjacentSingletonReceptorBucket": function() {
               if (jxnGroup.groups.length == 1) {
                 var loc = jxnGroup.groups[0].endLoc;
+                var adjacentInd = positiveStrand ? donorInd + 1 : donorInd - 1;
                 var receptorInd = getBucketIndAt(loc);
-                return receptorInd == donorInd + 1 ? receptorInd : "none"
+                return receptorInd == adjacentInd ? receptorInd : "none"
               }
               return "none"
             },
@@ -789,13 +800,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
           var endInd = getBucketIndAt(group.endLoc);
           var startInd = getBucketIndAt(group.startLoc);
-          var UniqueadajcenReceptor =  (endInd == startInd + 1) && (jxnGroup.groups.length == 1);
+          var adjacentSites = positiveStrand ? (endInd == startInd + 1) : (endInd == startInd - 1)
+          var UniqueadajcenReceptor =  adjacentSites && (jxnGroup.groups.length == 1);
             linesGroup.append("line").attr({
               "type": "receptor",
               "anchorX": anchorX,
               "x1": anchorX,
               "UniqueAdajcenReceptor": UniqueadajcenReceptor,
-              "x2": buckets[endInd].xStart,
+              "x2": buckets[endInd].anchor,
               "startLoc": group.startLoc,
               "endLoc": group.endLoc,
               "y1": jxnWrapperHeight,
@@ -808,7 +820,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "type": "donor",
             "anchorX": anchorX,
             "x1": anchorX,
-            "x2": buckets[startInd].xEnd,
+            "x2": buckets[startInd].anchor,
             "startLoc": group.startLoc,
             "endLoc": group.endLoc,
             "y1": jxnWrapperHeight,
@@ -1013,15 +1025,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       //  "stroke": "#666"
       //});
 
-      buckets = new Array(jxnsData.all_starts.length + jxnsData.all_ends.length);
+      buckets = new Array(all_starts.length + all_ends.length);
       for (var i = 0; i < buckets.length; ++i) {
-        if(i < jxnsData.all_starts.length) {
-          var loc = jxnsData.all_starts[i];
+        if(i < all_starts.length) {
+          var loc = all_starts[i];
           buckets[i] = {
           "type" : "donor",
           "loc": loc,
           "xStart": 0,
           "xEnd": 0,
+          "anchor": 0,
           "xStartDesired": 0,
           "xEndDesired": 0,
           "firstGroupBucket": i,
@@ -1029,12 +1042,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           }
         }
         else {
-          var loc = jxnsData.all_ends[i - jxnsData.all_starts.length];
+          var loc = all_ends[i - all_starts.length];
           buckets[i] = {
           "type" : "receptor",
           "loc": loc,
           "xStart": 0,
           "xEnd": 0,
+          "anchor": 0,
           "xStartDesired": 0,
           "xEndDesired": 0,
           "firstGroupBucket": 0,
@@ -1052,7 +1066,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "class": "RNASite",
         "type":function (d, i) {return d.type},
         "points": function (d, i) {
-          return d.type == "donor" ? [
+          return d.type ==  (positiveStrand ? "donor" : "receptor")  ? [
             0, RNAHeight/2,
             triangleLength, RNAHeight/2 - 5,
             triangleLength, RNAHeight/2 + 5,
@@ -1117,10 +1131,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "class": "RNASiteConnector",
         "type":function (d, i) {return d.type},
         "points": function (d, i) {
-          var x1 =  d.type == "donor" ? d.xEnd : d.xStart;
+          // var x1 =  d.type == "donor" ? d.xEnd : d.xStart;
           return [
-            x1, (RNAHeight + triangleLength)/2,
-            x1, RNAHeight/2 + triangleLength,
+            d.anchor, (RNAHeight + triangleLength)/2,
+            d.anchor, RNAHeight/2 + triangleLength,
             axis.genePosToScreenPos(d.loc), RNAHeight,
           ]
         }
@@ -1133,7 +1147,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         // compute desired positions
         for (var i = 0; i < buckets.length; ++i) {
           var axisLoc = axis.genePosToScreenPos(buckets[i].loc);
-          if(buckets[i].type == "donor") {
+          if (buckets[i].type == "donor") {
             buckets[i].xStart = buckets[i].xStartDesired = axisLoc - triangleLength;
             buckets[i].xEnd = buckets[i].xEndDesired = axisLoc;
           }
@@ -1147,10 +1161,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           buckets[i].firstGroupBucket = i;
           var ind = i;
           var shift = -1;
-          while(shift < 0 && ind > 0 && (buckets[ind].xStart < buckets[ind - 1].xEnd + sitePadding)) {
+          while (shift < 0 && ind > 0 && (buckets[ind].xStart < buckets[ind - 1].xEnd + sitePadding)) {
             var firstInd = buckets[ind - 1].firstGroupBucket;
             var overlap = buckets[ind - 1].xEnd + sitePadding - buckets[ind].xStart;
-            for (var j = ind; j <= i ; ++j) {
+            for (var j = ind; j <= i; ++j) {
               buckets[j].xStart += overlap
               buckets[j].xEnd += overlap
               buckets[j].firstGroupBucket = firstInd
@@ -1158,16 +1172,19 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             var leftGap = buckets[firstInd].xStartDesired - buckets[firstInd].xStart;
             var rightGap = buckets[i].xStart - buckets[i].xStartDesired;
             shift = (leftGap - rightGap) / 2;
-            shift = Math.min(shift, axis.genePosToScreenPos(endCoord) - buckets[i].xStart)
-            for (var j = firstInd; j <= i ; ++j) {
+            shift = Math.min(shift, axis.getWidth() - buckets[i].xStart)
+            for (var j = firstInd; j <= i; ++j) {
               buckets[j].xStart += shift
               buckets[j].xEnd += shift
             }
             ind = firstInd;
           }
         }
+        for (var i = 0; i < buckets.length; ++i) {
+          var b = buckets[i];
+          b.anchor = b.type == (positiveStrand ? "donor" : "receptor") ? b.xEnd : b.xStart;
+        }
       }
-
 
 
       function getJxnsFromSpan(data, curExon, otherExon) {
