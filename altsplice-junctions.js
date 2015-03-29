@@ -251,18 +251,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         computeFlagPositions()
 
-        d3.selectAll(".RNASite").transition()
+
+          d3.selectAll(".RNASite").transition()
           .duration(300).attr({
             "transform": function(d, i) {return "translate(" + d.xStart + ",0)"}
           })
 
-        d3.selectAll(".RNASiteConnector").transition()
+          d3.selectAll(".RNASiteConnector").transition()
           .duration(300).attr({
             "points": function (d, i) {
-              var x1 =  d.type == "donor" ? d.xEnd : d.xStart;
               return [
-                x1, (RNAHeight + triangleLength)/2,
-                x1, RNAHeight/2 + triangleLength,
+                d.anchor, (RNAHeight + triangleLength)/2,
+                d.anchor, RNAHeight/2 + triangleLength,
                 axis.genePosToScreenPos(d.loc), RNAHeight,
               ]
             }
@@ -275,7 +275,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               var type = this.getAttribute("type");
               var loc = type == "donor" ?
                 this.getAttribute("startLoc") :  this.getAttribute("endLoc");
-              return type ==  "donor" ? getBucketAt(loc).xEnd : getBucketAt(loc).xStart;
+              // return type ==  "donor" ? getBucketAt(loc).xEnd : getBucketAt(loc).xStart;
+              var endInd = getBucketIndAt(loc)
+              return buckets[endInd].anchor;
             }
           })
 
@@ -283,7 +285,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         connectors.attr({
           "x3": function() {
             var loc = this.getAttribute("loc");
-            return getBucketAt(loc).xEnd
+            return getBucketAt(loc).anchor
           }
         })
         connectors.transition()
@@ -404,7 +406,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       //console.log("ppp", curProject, curGene );
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
 
-        positiveStrand = sampleData.gene.strand == "-";
+        positiveStrand = sampleData.gene.strand == "+";
 
         jxnsData = sampleData.measures.jxns;
         allSamples = sampleData.samples;
@@ -760,7 +762,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           }).on("click", function(d) {
             if (this == clickedElement) {
               //TODO: hen -- fix this use multiple parameters
-              event.fire("jxnHighlight", {"highlight":d.startLoc, "endLoc":d.endLoc,"highlight": false});
+              event.fire("jxnHighlight", {"startLoc":d.startLoc, "endLoc":d.endLoc,"highlight": false});
               clickedElement = null;
             }
             else {
@@ -1173,6 +1175,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             var rightGap = buckets[i].xStart - buckets[i].xStartDesired;
             shift = (leftGap - rightGap) / 2;
             shift = Math.min(shift, axis.getWidth() - buckets[i].xStart)
+            shift = Math.max(shift,  -buckets[firstInd].xStart)
             for (var j = firstInd; j <= i; ++j) {
               buckets[j].xStart += shift
               buckets[j].xEnd += shift
