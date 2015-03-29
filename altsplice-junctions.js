@@ -275,7 +275,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               var type = this.getAttribute("type");
               var loc = type == "donor" ?
                 this.getAttribute("startLoc") :  this.getAttribute("endLoc");
-              // return type ==  "donor" ? getBucketAt(loc).xEnd : getBucketAt(loc).xStart;
               var endInd = getBucketIndAt(loc)
               return buckets[endInd].anchor;
             }
