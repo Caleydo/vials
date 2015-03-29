@@ -404,7 +404,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       //console.log("ppp", curProject, curGene );
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
 
-        positiveStrand = sampleData.gene.strand == "+";
+        positiveStrand = sampleData.gene.strand == "-";
 
         jxnsData = sampleData.measures.jxns;
         allSamples = sampleData.samples;
