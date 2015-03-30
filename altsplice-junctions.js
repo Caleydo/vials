@@ -631,7 +631,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               var self = d3.select(this),
               bb = self.node().getBBox();
               self.attr({
-                "x": x + 5,
+                "x": x + 10,
                 "y": (heatMapExtendedHeight + bb.height)/2
               });
             })
