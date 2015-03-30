@@ -187,7 +187,8 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
       });
     }
 
-    this.start = function(selectedProject, selectedGene){
+    this.start = function(selectedProject, selectedGene, exonLength){
+      that.genomeDataLink.genomeAxis.avrgExonLength = +exonLength || 30;
       that.genomeDataLink.getAllProjects().then(function (projects) {
         //console.log("allProjects", projects);
 
