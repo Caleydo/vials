@@ -502,22 +502,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class":"abundanceGraph"
       })
 
-      var sampleText = abundanceEnter.append("text").attr({
-          "class": "sampleLabel",
-      }).text(function(d) {return d.sample}).each(wrapText)
-
-      sampleText.each(function() {
-        var self = d3.select(this),
-        bb = self.node().getBBox();
-        self.attr("transform",
-          "translate(" + (that.axis.getWidth() + 10) + "," + (exonHeight + bb.height)/2 + ")"
-        );
-      })
-
-      sampleText.append("title").text(function(d) {return d.sample});
+      var sampleName = function(d) {return d.sample};
+      drawLabelGroup(abundanceEnter, sampleName, sampleName, ["sample"])
 
       // update !!!
-
       abundance.select(".abundanceGraph").attr({
         "class": function(d){return "abundanceGraph sample" +  cleanSelectors(d.sample)},
         "d":function(d){return dataFuncs[dataType].line(d)}
@@ -556,8 +544,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var group = getGroup(groupID);
       if (group && group.samples) event.fire("sampleGroupSelected", groupID, group.samples, isSelected)
       group.selected = isSelected;
-      var allBG = getGroup(groupID).g.selectAll(".background");
-      drawSampleMark(allBG, "group", groupID, isSelected);
+      drawSelectionMark(group.g, "group", groupID, isSelected);
+      var allBG = group.g.selectAll(".background");
       allBG.classed("fixed", isSelected);
       if (!isSelected) {
         gui.current.releaseColorForSelection(JSON.stringify(groupID));
@@ -566,44 +554,24 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     event.on("sampleSelect", function(e, sample, isSelected){
       var group = getGroupFromSample(sample);
-      var sampleBG = group.g.selectAll(".background").filter(function(d) {
+      var abundance = group.g.selectAll(".abundance").filter(function(d) {
                                                         return d.sample === sample
                                                       })
-      drawSampleMark(sampleBG, "sample", sample, isSelected);
-      sampleBG.classed("fixed", isSelected);
+      drawSelectionMark(abundance, "sample", sample, isSelected);
+      abundance.selectAll(".background").classed("fixed", isSelected);
+
       if (!isSelected) {
         gui.current.releaseColorForSelection(sample);
       }
     });
 
-    function drawSampleMark(g, type, identifier, isSelected) {
+    function drawSelectionMark(g, type, identifier, isSelected) {
       var color = gui.current.getColorForSelection(type == "group" ? JSON.stringify(identifier) : identifier);
       var selMark = isSelected ? [color] : []
 
       g.each(function(){
-        var w = d3.select(this).attr("width");
-
-        var selectionMarker =  d3.select(this.parentNode).selectAll(".selectionMarker").data(selMark);
-        selectionMarker.exit().remove();
-
-        // --- adding Element to class selectionMarker
-        var selectionMarkerEnter = selectionMarker.enter().append("circle").attr({
-            "class":"selectionMarker",
-            r:5,
-            cx:w,
-            cy: sampleHeight/2
-        }).attr({
-          "fill":function(d){
-            return d;
-          }
-        })
-
-        //// --- changing nodes for selectionMarker
-        //selectionMarker.attr({
-        //
-        //})
-
-        d3.select(this.parentNode).selectAll(".selectionMarker").data([]);
+        g.selectAll(".labelBox").attr("fill", isSelected ? color : "white");
+        g.selectAll(".labelGroup text").attr("fill", isSelected ? "white" : "");
       })
     }
 
@@ -662,6 +630,41 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       });
     }
 
+    function drawLabelGroup(group, text, title, classes) {
+      var labelGroup = group.append("g").attr({
+        "class": "labelGroup",
+        "transform": "translate(" + that.axis.getWidth() + ", 0)"
+      })
+
+      labelGroup.append("rect").attr({
+        "class": "labelBox",
+        "width": scatterWidth-35,
+        "height": sampleHeight,
+        "fill": "white"
+      })
+
+      if (classes) {
+        classes.forEach(function(c) {
+          labelGroup.classed(c, true);
+        })
+      }
+
+      var label = labelGroup.append("text")
+                            .attr("pointer-events", "none")
+                            .text(text)
+                            .each(wrapText);
+
+      label.each(function() {
+        var self = d3.select(this),
+        bb = self.node().getBBox();
+        self.attr("transform",
+          "translate(10," + (sampleHeight + bb.height)/2 + ")"
+        );
+      })
+
+      labelGroup.append("title").text(title);
+    }
+
     function summarizeData(group) {
       var g = group.g;
       var summary = g.selectAll(".summary").data([group.data]);
@@ -670,14 +673,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "class": "summary",
         "transform": "translate(0, 0)"
       });
+
       var groupText = group.groupID.meta != "none" ? " " + group.groupID.meta : group.groupID.samples.map(function(s) {return " " + s});
-      var groupLabel = summaryEnter.append("text").attr({
-          "class": "summaryLabel",
-          "transform": "translate(" + (that.axis.getWidth() + 10) + "," + sampleHeight + ")"
-      }).text("Group:" + groupText).each(wrapText);
-      groupLabel.append("title")
-               .text("Group: \nMeta: " + group.groupID.meta + "\nSamples: "
-                      + group.groupID.samples.map(function(s) {return "\n" + s}));
+      groupText = "Group" + groupText;
+      var titleText = "Group: \nMeta: " + group.groupID.meta + "\nSamples: "
+                      + group.groupID.samples.map(function(s) {return "\n" + s});
+      drawLabelGroup(summaryEnter, groupText, titleText);
 
       // TODO: zipping inside the dataFuncs object
       var zipped = zipData(group.data);
@@ -693,7 +694,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         g.selectAll(".abundanceGraph").transition().attr({
           "opacity": group.collapse ? 0 : 1
         });
-        g.selectAll(".sampleLabel").transition().attr("opacity", group.collapse ? 0 : 1);
+        g.selectAll(".labelGroup.sample").transition().attr("visibility", group.collapse ? "hidden" : "visible");
         g.selectAll(".summary").transition().attr({
           "opacity": group.collapse ? 1 : 0
         });
@@ -769,13 +770,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "class":"sampleGroup"
       })
 
-      groupEnter.each(function(group) {
-        group.g = d3.select(this);
-        drawLinesGroup(group);
-      })
-
       group.each(function(group) {
+        group.g = d3.select(this);
         drawSamples(group);
+        drawLinesGroup(group);
       })
 
       repositionGroups();
