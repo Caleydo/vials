@@ -13,7 +13,7 @@ define(['exports','d3'],function(exports,d3){
     this.geneStart = 0;
     this.geneEnd = 1000;
 
-    this.arrayWidth = 10000;
+    this.arrayWidth = 2000;
 
     this.brokenDomain = [0,100];
     this.brokenRange = [0,100];
