@@ -173,8 +173,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             ungroup(group);
           })
 
-          console.log(metaGroups);
-
           for (meta in metaGroups) {
             joinGroups(metaGroups[meta].map(function(sample) {return getGroupFromSample(sample).groupID}));
           }
@@ -348,7 +346,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               return heightScale(d.weight);
             })
             .interpolate('step');
-            // TODO: step interpolation happens in the middle of the intron; need to correct this manually
           return mean(mappedReads);
         },
         "stdDev": function(zipped) {
@@ -682,17 +679,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                .text("Group: \nMeta: " + group.groupID.meta + "\nSamples: "
                       + group.groupID.samples.map(function(s) {return "\n" + s}));
 
-      summaryEnter.append("svg:path").attr({
-        fill: "none",
-        stroke: "red",
-        class: "mean",
-      })
       // TODO: zipping inside the dataFuncs object
       var zipped = zipData(group.data);
-      summary.selectAll(".mean").attr("d", dataFuncs[dataType].mean(zipped));
       summaryEnter.append("svg:path").attr({
-        fill: "red",
-        class: "stdDev",
+        "fill": "red",
+        "class": "stdDev",
       })
       summary.selectAll(".stdDev").attr("d", dataFuncs[dataType].stdDev(zipped));
     }
@@ -799,6 +790,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         //opacity:.1
       })
 
+      gIso.selectAll(".stdDev").attr({
+        "d":function(d){
+          var zipped = zipData(d);
+          return dataFuncs[dataType].stdDev(zipped);
+        }
+      })
+
       repositionGroups();
     }
 
@@ -887,6 +885,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         updatedProject = gui.current.getSelectedProject();
 
       that.data.getGeneData(updatedProject, curGene).then(function(sampleData) {
+        that.axis.setArrayWidth(sampleData.measures.reads[0].weights.length);
+
         dataType = sampleData.measures.data_type;
         sampleInfo = sampleData.samples;
 
