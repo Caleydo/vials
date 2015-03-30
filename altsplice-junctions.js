@@ -108,6 +108,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     width = axis.getWidth();
 
+
       event.on("dotsJittering", function(e,state){
         jitterDots = state;
         updateDotJitter();
@@ -120,32 +121,100 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
 
-/*      var viewOptionsDiv = $parent.append("div").style({
+      var viewOptionsDiv = $parent.append("div").style({
         "left": "20px",
       });
 
-      $('<input />', { type: 'checkbox', id: 'cbshowGroups', value: "showGroups" }).appendTo(viewOptionsDiv);
-      $('<label />', { 'for': 'cb', text: "Show groups &nbsp" }).appendTo(viewOptionsDiv);
-      $('#cbshowGroups').change(function() {
-        showDotGroups = $(this).is(":checked")
-        if (expandedIsoform != null) {
-          expandIsoform(expandedIsoform);
-        }
-      });
+      var viewOptionsDiv1 = $parent.append("div").attr({
+        "left": "20px"
+      })
 
-      $('<input />', { type: 'checkbox', id: 'cbDotVisibility', value: "DotVisibility", checked: "true"}).appendTo(viewOptionsDiv);
-      $('<label />', { 'for': 'cb', text: "Show all dots " }).appendTo(viewOptionsDiv);
-      $('#cbDotVisibility').change(function() {
-        showAllDots = $(this).is(":checked")
-        updateDotVisibility();
-      });
 
-      $('<input />', { type: 'checkbox', id: 'cbJitterDots', value: "jitterDots", checked: "true"}).appendTo(viewOptionsDiv);
-      $('<label />', { 'for': 'cb', text: "Jitter dots" }).appendTo(viewOptionsDiv);
-      $('#cbJitterDots').change(function() {
-        jitterDots = $(this).is(":checked")
-        updateDotJitter();
-      }); */
+      var chkAutoExpandIsoform = document.createElement("input");
+      chkAutoExpandIsoform.type = 'checkbox';
+      chkAutoExpandIsoform.id = 'chkAutoExpandIsoform';
+      var chkAutoExpandLabel = document.createElement('label')
+      chkAutoExpandLabel.htmlFor = "chkAutoExpandIsoform";
+      chkAutoExpandLabel.appendChild(document.createTextNode("Auto. expand selected isoform: "));
+      viewOptionsDiv1.node().appendChild(chkAutoExpandIsoform);
+      viewOptionsDiv1.node().appendChild(chkAutoExpandLabel);
+      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
+      viewOptionsDiv1.select("#chkAutoExpandIsoform")
+        .on({
+          click: function () {
+            var el = d3.select(this);
+            showAllDots  = !el.classed("buttonSelected");
+            el.classed("buttonSelected", showAllDots );
+            updateDotVisibility();
+          }
+        })
+
+      var rbScatterplot = document.createElement("input");
+      rbScatterplot.type = 'radio';
+      rbScatterplot.id = 'rbScatterplot';
+      rbScatterplot.name='rgExpandedIsoform';
+      var rbScatterplotLabel = document.createElement('label')
+      rbScatterplotLabel.htmlFor = "chkAutoExpandIsoform";
+      rbScatterplotLabel.appendChild(document.createTextNode("scatterplots"));
+      viewOptionsDiv1.node().appendChild(rbScatterplot);
+      viewOptionsDiv1.node().appendChild(rbScatterplotLabel);
+      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
+      viewOptionsDiv1.select("#rbScatterplot")
+        .on({
+          click: function () {
+            var el = d3.select(this);
+            showAllDots  = !el.classed("buttonSelected");
+            el.classed("buttonSelected", showAllDots );
+            updateDotVisibility();
+          }
+        })
+
+      var rbSubgroups = document.createElement("input");
+      rbSubgroups.type = 'radio';
+      rbSubgroups.name='rgExpandedIsoform';
+      rbSubgroups.id = 'chkAutoExpandIsoform';
+      var rbSubgroupsLabel = document.createElement('label')
+      rbSubgroupsLabel.htmlFor = "rbSubgroups";
+      rbSubgroupsLabel.appendChild(document.createTextNode("sub-groups"));
+      viewOptionsDiv1.node().appendChild(rbSubgroups);
+      viewOptionsDiv1.node().appendChild(rbSubgroupsLabel);
+      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
+      viewOptionsDiv1.select("#rbSubgroups")
+        .on({
+          click: function () {
+            var el = d3.select(this);
+            showAllDots  = !el.classed("buttonSelected");
+            el.classed("buttonSelected", showAllDots );
+            updateDotVisibility();
+          }
+        })
+
+      /*      var viewOptionsDiv = $parent.append("div").style({
+              "left": "20px",
+            });
+
+            $('<input />', { type: 'checkbox', id: 'cbshowGroups', value: "showGroups" }).appendTo(viewOptionsDiv);
+            $('<label />', { 'for': 'cb', text: "Show groups &nbsp" }).appendTo(viewOptionsDiv);
+            $('#cbshowGroups').change(function() {
+              showDotGroups = $(this).is(":checked")
+              if (expandedIsoform != null) {
+                expandIsoform(expandedIsoform);
+              }
+            });
+
+            $('<input />', { type: 'checkbox', id: 'cbDotVisibility', value: "DotVisibility", checked: "true"}).appendTo(viewOptionsDiv);
+            $('<label />', { 'for': 'cb', text: "Show all dots " }).appendTo(viewOptionsDiv);
+            $('#cbDotVisibility').change(function() {
+              showAllDots = $(this).is(":checked")
+              updateDotVisibility();
+            });
+
+            $('<input />', { type: 'checkbox', id: 'cbJitterDots', value: "jitterDots", checked: "true"}).appendTo(viewOptionsDiv);
+            $('<label />', { 'for': 'cb', text: "Jitter dots" }).appendTo(viewOptionsDiv);
+            $('#cbJitterDots').change(function() {
+              jitterDots = $(this).is(":checked")
+              updateDotJitter();
+            }); */
 
       event.on("isoFormSelect", function(ev,data){
       var index  = data.index;
