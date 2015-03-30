@@ -108,43 +108,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     width = axis.getWidth();
 
-      var viewOptionsDiv1 = $parent.append("div").attr({
-        "class": "form-group col-sm-10"
+      event.on("dotsJittering", function(e,state){
+        jitterDots = state;
+        updateDotJitter();
+
       })
 
-
-      var btnJitterDots = document.createElement("button");
-      btnJitterDots.setAttribute("class", "btn btn-sm btn-default");
-      btnJitterDots.setAttribute("id", "btnJitterDots");
-      btnJitterDots.appendChild(document.createTextNode("Jitter Dots"));
-      viewOptionsDiv1.node().appendChild(btnJitterDots);
-      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
-      var btnShowAllDots = document.createElement("button");
-      btnShowAllDots.setAttribute("class", "btn btn-sm btn-default");
-      btnShowAllDots.setAttribute("id", "btnShowAllDots");
-      btnShowAllDots.appendChild(document.createTextNode("Show All Dots"));
-      viewOptionsDiv1.node().appendChild(btnShowAllDots);
-      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
-      d3.select("#btnJitterDots").classed("buttonSelected", jitterDots);
-      d3.select("#btnShowAllDots").classed("buttonSelected", showAllDots);
-
-      d3.select("#btnJitterDots").on({
-        click: function () {
-          var el = d3.select(this);
-          jitterDots = !el.classed("buttonSelected");
-          el.classed("buttonSelected", jitterDots);
-          updateDotJitter();
-        }
+      event.on("overlayDots", function(e,state){
+        showAllDots = state;
+        updateDotVisibility();
       })
 
-      d3.select("#btnShowAllDots").on({
-        click: function () {
-          var el = d3.select(this);
-          showAllDots  = !el.classed("buttonSelected");
-          el.classed("buttonSelected", showAllDots );
-          updateDotVisibility();
-        }
-      })
 
 /*      var viewOptionsDiv = $parent.append("div").style({
         "left": "20px",
