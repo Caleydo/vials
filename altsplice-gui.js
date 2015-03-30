@@ -15,6 +15,8 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
 
     this.startPosDiv = d3.select("#startPos");
 
+    this.strandDiv = d3.select("#strandInfo")
+
     this.toggleIntrons = d3.select("#toggleIntrons");
 
     this.isoformSort = d3.select("#isoformSort")
@@ -117,25 +119,20 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
         }
       })
 
+      function defineButtonFire(bName){
+        d3.select("#"+bName).on("click", function(){
+          event.fire(bName, !d3.select(this).classed("buttonSelected"));
+        })
+
+        event.on(bName, function (e,state) {
+          d3.select("#"+bName).classed("buttonSelected",state);
+        })
 
 
-      //d3.select("#testIso").on({
-      //  click: function(){
-      //    event.fire("isoFormSelect", {isoform:"uc003tqh.2", index:0});
-      //  }
-      //})
-      //
-      //d3.select("#testIso2").on({
-      //  click: function(){
-      //    event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:0});
-      //  }
-      //})
-      //
-      //d3.select("#testIso3").on({
-      //  click: function(){
-      //    event.fire("isoFormSelect", {isoform:"ENSG00000146648.0", index:-1});
-      //  }
-      //})
+      }
+
+      defineButtonFire("dotsJittering");
+      defineButtonFire("overlayDots");
 
     }
 
@@ -150,10 +147,11 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
       that.genomeDataLink.getGeneData(project, geneName).then(function(geneData){
         $(that.chromIDDiv.node()).val(geneData.gene.chromID);
         $(that.startPosDiv.node()).val(geneData.gene.start);
+        $(that.strandDiv.node()).val(geneData.gene.strand);
 
         that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start,geneData.gene.end)
         that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"])
-
+        that.genomeDataLink.genomeAxis.shrinkIntrons(true);
 
         //console.log(that.genomeDataLink.genomeAxis.arrayPosToScreenPos(2), that.genomeDataLink.genomeAxis.arrayPosToGenePos(10));
         //observer

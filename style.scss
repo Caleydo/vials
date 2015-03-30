@@ -201,6 +201,17 @@ path.selectionParco{
 }
 
 
+// UI fixes:
+
+select.btn-mini {
+  height: auto;
+  line-height: 25px;
+}
+input.btn-mini {
+  height: auto;
+  width:auto;
+  //line-height: 6px;
+}
 
 // ===> here for html <===
 #visReads{
