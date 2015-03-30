@@ -128,9 +128,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var extraLabel = 100;
         var axisOffset =  that.axis.getWidth() + 10;
         var noIsoforms = isoformList.length;
+        var scaleYSpace = 25;
+
+
 
         width = axisOffset+ 2* scatterWidth+extraLabel;
-        height = (exonHeight+3)*noIsoforms;
+        height = groupScale(noIsoforms)+scaleYSpace;
         svg.attr("height", height+margin.top+margin.bottom)
           .attr("width", width + margin.left + margin.right);
 
@@ -251,7 +254,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "x":function(d,i){return that.axis.genePosToScreenPos(d.start)},
           "y":function(d,i){return 0},
           "width":function(d,i){return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)},
-          "height":function(d,i){return height}
+          "height":function(d,i){return height-scaleYSpace} // TODO: make this cleaner
       })
 
 
@@ -411,6 +414,37 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             cx: function(d){return  scaleXScatter(d.weight)},
             cy: function(){return exonHeight/4+Math.random()*exonHeight/2}
         })
+
+
+
+
+      var dotAxisDef = d3.svg.axis()
+        .scale(scaleXScatter)
+        .orient("bottom");
+
+      var dotAxis = gIso.selectAll(".dotAxis").data([scaleXScatter]);
+      dotAxis.exit().remove();
+
+      // --- adding Element to class dotAxis
+      var dotAxisEnter = dotAxis.enter().append("g").attr({
+          "class":"axis dotAxis"
+      })
+
+      // --- changing nodes for dotAxis
+      dotAxis
+        .call(dotAxisDef)
+        .attr({
+          "transform":"translate("+0+","+groupScale(noIsoforms)+")"
+        })
+      dotAxis.selectAll("text")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", ".15em")
+        .attr("transform", function(d) {
+          return "rotate(-65)"
+        });
+
+
 
 
 
