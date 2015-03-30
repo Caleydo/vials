@@ -583,8 +583,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     // event handling for highlights
     function highlightSample(event, sample, highlight){
-      var highlightSel = svg.selectAll(".isoforms .sample"+ cleanSelectors(sample));
+      var highlightSel = svg.selectAll(".isoform .sample"+ cleanSelectors(sample));
       highlightSel.classed("highlighted", highlight).moveToFront();
+
+      // highlight group dots
+      svg.selectAll(".groupSplitView .sample"+ cleanSelectors(sample)).classed("highlighted", highlight);
+
 
       if (highlight){
         var lineCoord = [];
@@ -592,6 +596,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var trans = d3.transform(d3.select(this.parentNode.parentNode).attr("transform")).translate
           var me = d3.select(this)
           //console.log(trans);
+          console.log("me", me.attr("cx"),me);
           lineCoord.push({
             "x":+me.attr("cx")+trans[0],
             "y":+me.attr("cy")+trans[1]

@@ -97,6 +97,14 @@ $wes-red: #D16B54;
     opacity: .3;
     pointer-events: none;
   }
+  .sampleDot.highlighted{
+    fill:$wes-red;
+    fill-opacity: 1;
+  }
+  .sampleDot.selected{
+    fill-opacity: 1;
+    stroke:2;
+  }
 }
 
 
