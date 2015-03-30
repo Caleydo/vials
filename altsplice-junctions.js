@@ -36,7 +36,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var width; // = 1050 - margin.left - margin.right,
   var groupWidth;
   var expandedWidth;
-  var height = 450 - margin.top - margin.bottom;
+  var height = 370 - margin.top - margin.bottom;
   var dotRadius = 4;
   var triangleLength = 8;
   var defaultDotColor = "rgba(90,90,90,0.3)";
@@ -46,7 +46,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var exonWeightsAreaHeight;
   var jxnWrapperPadding = 6;
   var sitePadding = 2;
-  var jxnWrapperHeight = 250;
+  var jxnWrapperHeight = 170;
   var miniExonHeight = 12;
   var jxnCircleRadius = 3;
   var jxnBBoxWidth = jxnCircleRadius * 4;
@@ -669,7 +669,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var grayStripesGroup = jxnArea.append("g");
         var linesGroup = jxnArea.append("g");
 
-
         var startX = weightAxisCaptionWidth + jxnWrapperPadding;
         for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
 
@@ -678,10 +677,22 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           grayStripesGroup.append("rect").attr({
             "class": "jxnWrapperBox",
             "height": jxnWrapperHeight,
+            "loc": jxnGroup.groups[0].startLoc,
             "width": function (d, i) {
               return wrapperWidth
             },
             "transform": "translate(" + startX + ", 0)"
+          }).on("click", function(d) {
+            if (this == clickedElement) {
+              //TODO: hen -- fix this use multiple parameters
+              event.fire("LocHighlight", {"loc":this.getAttribute("loc"),"highlight": false});
+              clickedElement = null;
+            }
+            else {
+              //TODO: hen -- fix this use multiple parameters
+              clickedElement = this;
+              event.fire("LocHighlight", {"loc": this.getAttribute("loc"),"highlight": true});
+            }
           })
 
           var donorLoc = sortedWeights[jxnGroup.start].start;
