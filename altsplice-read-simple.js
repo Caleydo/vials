@@ -794,7 +794,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         drawLinesGroup(group);
       })
 
-      repositionGroups();
+      expandGroups();
     }
 
     function axisUpdate(){
@@ -883,7 +883,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       var newGroup = {
         "groupID": {"samples": combinedData.samples, "meta": meta},
-        "collapse": false,
+        "collapse": true,
         "selected": false,
         "samples": combinedData.samples,
         "data": combinedData.data
