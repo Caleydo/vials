@@ -214,7 +214,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     })
 
-    var lastX = 0;
     function updateCrosshair(event, x){
       var visibility;
       if (x > that.axis.getWidth()) {
@@ -227,18 +226,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "x2":x
         })
         if (dataType == "BodyMap") {
-          svg.selectAll(".crosshairValue")
+          svg.selectAll(".abundance .crosshairValue")
             .text(function(d) {return d.weights[that.axis.screenPosToArrayPos(x)].toFixed(3)})
             .each(function() {
               var self = d3.select(this),
               bb = self.node().getBBox();
               self.attr({
-                "x": x > lastX ? x - bb.width - 5 : x + 5,
+                "x": x + 5,
                 "y": (sampleHeight + bb.height)/2
               });
-            })          
+            })
         }
-        lastX = x;
       }
       svg.selectAll(".crosshair, .crosshairValue")
          .attr("visibility", visibility);

@@ -616,7 +616,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         })
 
-        var lastX = 0;
         function updateCrosshair(event, x){
           svg.selectAll(".crosshair, .crosshairPos")
              .attr("visibility", x > axis.getWidth() ? "hidden" : "visible");
@@ -632,7 +631,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               var self = d3.select(this),
               bb = self.node().getBBox();
               self.attr({
-                "x": x > lastX ? x - bb.width - 5 : x + 5,
+                "x": x + 5,
                 "y": (heatMapExtendedHeight + bb.height)/2
               });
             })
