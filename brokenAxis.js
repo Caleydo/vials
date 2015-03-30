@@ -40,6 +40,13 @@ define(['exports','d3'],function(exports,d3){
       return that.scale_genePosToScreenPos(x);
     }
 
+    this.screenPosToArrayPos = function(x){
+      return Math.floor(that.scale_arrayPosToScreenPos.invert(x));
+    }
+
+    this.screenPosToGenePos = function(x){
+      return Math.floor(that.scale_genePosToScreenPos.invert(x));
+    }
 
     this.setArrayWidth= function(arrayWidth){
       that.scale_arrayPosToScreenPos.domain([0,arrayWidth])
