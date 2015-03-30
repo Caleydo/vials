@@ -30,7 +30,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   }
 
 
-  var margin = {top: 25, right: 10, bottom: 20, left: 0},
+  var margin = {top: 35, right: 10, bottom: 20, left: 0},
     width = 900 - margin.left - margin.right,
     height = 450 - margin.top - margin.bottom;
 
@@ -144,9 +144,25 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         console.log(minMaxValues);
         var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, axisOffset+scatterWidth])
 
-        var menuOffset = -24;
+        var menuOffset = -34;
         var menuHeight = 18;
 
+
+        var menuDivideLine = gIso.selectAll(".menuDivideLine").data([1]);
+        menuDivideLine.exit().remove();
+
+        // --- adding Element to class menuDivideLine
+        var menuDivideLineEnter = menuDivideLine.enter().append("line").attr({
+            "class":"menuDivideLine"
+        })
+
+        // --- changing nodes for menuDivideLine
+        menuDivideLine.attr({
+          x1:0,
+          x2:width,
+          y1:(menuOffset+menuHeight+8),
+          y2:(menuOffset+menuHeight+8)
+        })
 
 
 
@@ -258,7 +274,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
 
-      console.log("mergedRanges", mergedRanges);
+      //console.log("mergedRanges", mergedRanges);
       var mRangeSorter = gExonRanges.selectAll(".rangeMenu").data(mergedRanges);
       mRangeSorter.exit().remove();
 

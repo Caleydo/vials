@@ -10,6 +10,8 @@ $wes-green: #A9D8C8;
 $wes-violet: #433447;
 $wes-red: #D16B54;
 
+$wes-blue: #0093dd;
+
 //by convention create a namespace for your own plugin
 .gv {
   //  textarea{
@@ -172,6 +174,10 @@ path.selectionParco{
 
 }
 
+.menuDivideLine{
+  stroke:$wes-gray;
+  stroke-width: 1px;
+}
 
 //.dotMenu{
 //  .dotmenuRect{
@@ -220,6 +226,41 @@ input.btn-mini {
   width:auto;
   //line-height: 6px;
 }
+
+// BILAL
+
+
+.RNASite[type=donor]{
+  fill: $wes-blue;
+  fill-opacity: 1;
+  stroke: $wes-blue;}
+
+.RNASite[type=receptor]  {
+  fill: $wes-red;
+  fill-opacity: 1;
+  stroke: $wes-red;}
+
+.RNASiteConnector[type=donor] {
+  stroke: $wes-blue;
+  fill: none}
+
+.RNASiteConnector[type=receptor] {
+  stroke: $wes-red;
+  fill: none}
+
+.edgeAnchor {
+  fill: $wes-red;
+  fill-opacity: 1;
+  stroke: none}
+
+.edgeConnector[type=donor] {
+  stroke: $wes-blue
+}
+
+.edgeConnector[type=receptor] {
+  stroke: $wes-red
+}
+
 
 // ===> here for html <===
 #visReads{
