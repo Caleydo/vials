@@ -81,7 +81,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var RNAArea;
   var yScaleContJxn;
   var xJxnBoxScale = d3.scale.linear();
-  var showAllDots = false;
+  var showAllDots = true;
   var showDotGroups = false;
   var jitterDots = true;
   var groups = [];
@@ -108,12 +108,50 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     width = axis.getWidth();
 
-    var viewOptionsDiv = $parent.append("div").style({
-      "left": "20px"
-    });
+      var viewOptionsDiv1 = $parent.append("div").attr({
+        "class": "form-group col-sm-10"
+      })
+
+
+      var btnJitterDots = document.createElement("button");
+      btnJitterDots.setAttribute("class", "btn btn-sm btn-default");
+      btnJitterDots.setAttribute("id", "btnJitterDots");
+      btnJitterDots.appendChild(document.createTextNode("Jitter Dots"));
+      viewOptionsDiv1.node().appendChild(btnJitterDots);
+      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
+      var btnShowAllDots = document.createElement("button");
+      btnShowAllDots.setAttribute("class", "btn btn-sm btn-default");
+      btnShowAllDots.setAttribute("id", "btnShowAllDots");
+      btnShowAllDots.appendChild(document.createTextNode("Show All Dots"));
+      viewOptionsDiv1.node().appendChild(btnShowAllDots);
+      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
+      d3.select("#btnJitterDots").classed("buttonSelected", jitterDots);
+      d3.select("#btnShowAllDots").classed("buttonSelected", showAllDots);
+
+      d3.select("#btnJitterDots").on({
+        click: function () {
+          var el = d3.select(this);
+          jitterDots = !el.classed("buttonSelected");
+          el.classed("buttonSelected", jitterDots);
+          updateDotJitter();
+        }
+      })
+
+      d3.select("#btnShowAllDots").on({
+        click: function () {
+          var el = d3.select(this);
+          showAllDots  = !el.classed("buttonSelected");
+          el.classed("buttonSelected", showAllDots );
+          updateDotVisibility();
+        }
+      })
+
+/*      var viewOptionsDiv = $parent.append("div").style({
+        "left": "20px",
+      });
 
       $('<input />', { type: 'checkbox', id: 'cbshowGroups', value: "showGroups" }).appendTo(viewOptionsDiv);
-      $('<label />', { 'for': 'cb', text: "Show groups" }).appendTo(viewOptionsDiv);
+      $('<label />', { 'for': 'cb', text: "Show groups &nbsp" }).appendTo(viewOptionsDiv);
       $('#cbshowGroups').change(function() {
         showDotGroups = $(this).is(":checked")
         if (expandedIsoform != null) {
@@ -121,19 +159,19 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }
       });
 
-      $('<input />', { type: 'checkbox', id: 'cbDotVisibility', value: "DotVisibility" }).appendTo(viewOptionsDiv);
-      $('<label />', { 'for': 'cb', text: "Show all dots" }).appendTo(viewOptionsDiv);
+      $('<input />', { type: 'checkbox', id: 'cbDotVisibility', value: "DotVisibility", checked: "true"}).appendTo(viewOptionsDiv);
+      $('<label />', { 'for': 'cb', text: "Show all dots " }).appendTo(viewOptionsDiv);
       $('#cbDotVisibility').change(function() {
         showAllDots = $(this).is(":checked")
         updateDotVisibility();
       });
 
-      $('<input />', { type: 'checkbox', id: 'cbJitterDots', value: "jitterDots" }).appendTo(viewOptionsDiv);
+      $('<input />', { type: 'checkbox', id: 'cbJitterDots', value: "jitterDots", checked: "true"}).appendTo(viewOptionsDiv);
       $('<label />', { 'for': 'cb', text: "Jitter dots" }).appendTo(viewOptionsDiv);
       $('#cbJitterDots').change(function() {
         jitterDots = $(this).is(":checked")
         updateDotJitter();
-      });
+      }); */
 
       event.on("isoFormSelect", function(ev,data){
       var index  = data.index;
@@ -663,7 +701,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       function drawJxns() {
 
       var lastFlagX = buckets[buckets.length - 1].xEnd;
-        groupWidth =  (lastFlagX + 2.7 * weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
+        groupWidth =  (lastFlagX +  weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
 
 
         var grayStripesGroup = jxnArea.append("g");
@@ -881,6 +919,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               },
               "fill":defaultDotColor
           })
+          updateDotJitter();
+          updateDotVisibility();
           jxnCircleEnter.on('mouseover', function (d) {
             // == fire sample select event
             event.fire("sampleHighlight", d.sample, true);
