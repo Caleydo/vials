@@ -703,7 +703,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       // TODO: zipping inside the dataFuncs object
       var zipped = zipData(group.data);
       summaryEnter.append("svg:path").attr({
-        "fill": "red",
+        //"fill": "red",
         "class": "stdDev",
       })
       summary.selectAll(".stdDev").attr("d", dataFuncs[dataType].stdDev(zipped));
