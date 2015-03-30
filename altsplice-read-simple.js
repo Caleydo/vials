@@ -199,7 +199,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       "class":"crosshair",
       "x1":0,
       "y1":0,
-      "x2":50,
+      "x2":0,
       "y2":height
     }).style({
       "stroke-width":"1",
