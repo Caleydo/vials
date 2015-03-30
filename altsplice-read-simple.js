@@ -896,6 +896,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function updateData(){
+      axisUpdate();
+
       var
         curGene = gui.current.getSelectedGene(),
         startPos = gui.current.getStartPos(),
@@ -903,8 +905,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         updatedProject = gui.current.getSelectedProject();
 
       that.data.getGeneData(updatedProject, curGene).then(function(sampleData) {
-        that.axis.setArrayWidth(sampleData.measures.reads[0].weights.length);
-
         dataType = sampleData.measures.data_type;
         sampleInfo = sampleData.samples;
 
@@ -941,8 +941,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         drawGroups();
 
         curProject = updatedProject;
-
-        axisUpdate();
       })
     }
 
