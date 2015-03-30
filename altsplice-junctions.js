@@ -772,7 +772,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       function drawJxns() {
 
       var lastFlagX = buckets[buckets.length - 1].xEnd;
-        groupWidth =  (lastFlagX +  weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
+        groupWidth =  (lastFlagX -  weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
 
 
         var grayStripesGroup = jxnArea.append("g");
@@ -807,8 +807,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var donorLoc = sortedWeights[jxnGroup.start].start;
           var donorInd = getBucketIndAt(donorLoc);
           jxnArea.append("polygon").attr({
-            x1: startX +1,
-            x2: startX + wrapperWidth -1,
+            x1: startX,
+            x2: startX + wrapperWidth,
             x3: buckets[donorInd].anchor,
             "loc": donorLoc,
             "adjacentSingletonReceptorBucket": function() {
