@@ -520,6 +520,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         x:width + 5,
         y:heatMapHeight-4
       }).text(" ] exon overlap")
+      heatmapGroup.append("text").attr("class", "crosshairPos")
 
     function drawHeatmap(){
         var exonHeat = heatmapGroup.selectAll(".exonHeat").data(Object.keys(allExons).map(function(key){return allExons[key];}));
@@ -572,17 +573,27 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         })
 
+        var lastX = 0;
         function updateCrosshair(event, x){
+          svg.selectAll(".crosshair, .crosshairPos")
+             .attr("visibility", x > axis.getWidth() ? "hidden" : "visible");
+
           crosshair.attr({
             "x1":x,
             "x2":x
-          }).style({
-            opacity:function(){
-              return x>axis.getWidth()?0:1
-            }
           })
 
-
+          d3.selectAll(".crosshairPos")
+            .text(function(d) {return axis.screenPosToGenePos(x)})
+            .each(function() {
+              var self = d3.select(this),
+              bb = self.node().getBBox();
+              self.attr({
+                "x": x > lastX ? x - bb.width - 5 : x + 5,
+                "y": (heatMapExtendedHeight + bb.height)/2
+              });
+            })
+          lastX = x;
         }
 
         event.on("crosshair", updateCrosshair);

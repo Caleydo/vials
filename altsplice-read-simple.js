@@ -214,16 +214,34 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     })
 
+    var lastX = 0;
     function updateCrosshair(event, x){
-      crosshair.attr({
-        "x1":x,
-        "x2":x
-      }).style({
-        opacity:function(){
-          return x>that.axis.getWidth()?0:1
+      var visibility;
+      if (x > that.axis.getWidth()) {
+        visibility = "hidden";
+      }
+      else {
+        visibility = "visible";
+        crosshair.attr({
+          "x1":x,
+          "x2":x
+        })
+        if (dataType == "BodyMap") {
+          svg.selectAll(".crosshairValue")
+            .text(function(d) {return d.weights[that.axis.screenPosToArrayPos(x)].toFixed(3)})
+            .each(function() {
+              var self = d3.select(this),
+              bb = self.node().getBBox();
+              self.attr({
+                "x": x > lastX ? x - bb.width - 5 : x + 5,
+                "y": (sampleHeight + bb.height)/2
+              });
+            })          
         }
-      })
-
+        lastX = x;
+      }
+      svg.selectAll(".crosshair, .crosshairValue")
+         .attr("visibility", visibility);
     }
 
     event.on("crosshair", updateCrosshair);
@@ -501,6 +519,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       abundanceEnter.append("path").attr({
             "class":"abundanceGraph"
       })
+
+      abundanceEnter.append("text").attr("class", "crosshairValue");
 
       var sampleName = function(d) {return d.sample};
       drawLabelGroup(abundanceEnter, sampleName, sampleName, ["sample"])
@@ -921,8 +941,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         drawGroups();
 
         curProject = updatedProject;
-      })
 
+        axisUpdate();
+      })
     }
 
 
