@@ -751,7 +751,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
           d3.select(this).style({
             fill: gui.current.getColorForSelection(JSON.stringify(groupID)),
-            "fill-opacity": 1,
+            "fill-opacity":.4,
             stroke: 1
           })
 
