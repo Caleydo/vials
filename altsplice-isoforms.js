@@ -30,7 +30,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   }
 
 
-  var margin = {top: 25, right: 10, bottom: 20, left: 0},
+  var margin = {top: 35, right: 10, bottom: 20, left: 0},
     width = 900 - margin.left - margin.right,
     height = 450 - margin.top - margin.bottom;
 
@@ -103,7 +103,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "x2":x
       }).style({
         opacity:function(){
-          return x>that.axis.getWidth()?0:1
+         return 1 //return x>that.axis.getWidth()?0:1
         }
       })
 
@@ -144,9 +144,25 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         console.log(minMaxValues);
         var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, axisOffset+scatterWidth])
 
-        var menuOffset = -24;
+        var menuOffset = -34;
         var menuHeight = 18;
 
+
+        var menuDivideLine = gIso.selectAll(".menuDivideLine").data([1]);
+        menuDivideLine.exit().remove();
+
+        // --- adding Element to class menuDivideLine
+        var menuDivideLineEnter = menuDivideLine.enter().append("line").attr({
+            "class":"menuDivideLine"
+        })
+
+        // --- changing nodes for menuDivideLine
+        menuDivideLine.attr({
+          x1:0,
+          x2:width,
+          y1:(menuOffset+menuHeight+8),
+          y2:(menuOffset+menuHeight+8)
+        })
 
 
 
@@ -258,7 +274,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
 
-      console.log("mergedRanges", mergedRanges);
+      //console.log("mergedRanges", mergedRanges);
       var mRangeSorter = gExonRanges.selectAll(".rangeMenu").data(mergedRanges);
       mRangeSorter.exit().remove();
 
@@ -583,8 +599,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     // event handling for highlights
     function highlightSample(event, sample, highlight){
-      var highlightSel = svg.selectAll(".isoforms .sample"+ cleanSelectors(sample));
+      var highlightSel = svg.selectAll(".isoform .sample"+ cleanSelectors(sample));
       highlightSel.classed("highlighted", highlight).moveToFront();
+
+      // highlight group dots
+      svg.selectAll(".groupSplitView .sample"+ cleanSelectors(sample)).classed("highlighted", highlight);
+
 
       if (highlight){
         var lineCoord = [];
@@ -592,6 +612,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var trans = d3.transform(d3.select(this.parentNode.parentNode).attr("transform")).translate
           var me = d3.select(this)
           //console.log(trans);
+          console.log("me", me.attr("cx"),me);
           lineCoord.push({
             "x":+me.attr("cx")+trans[0],
             "y":+me.attr("cy")+trans[1]

@@ -214,7 +214,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     })
 
-    var lastX = 0;
     function updateCrosshair(event, x){
       var visibility;
       if (x > that.axis.getWidth()) {
@@ -227,18 +226,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "x2":x
         })
         if (dataType == "BodyMap") {
-          svg.selectAll(".crosshairValue")
+          svg.selectAll(".abundance .crosshairValue")
             .text(function(d) {return d.weights[that.axis.screenPosToArrayPos(x)].toFixed(3)})
             .each(function() {
               var self = d3.select(this),
               bb = self.node().getBBox();
               self.attr({
-                "x": x > lastX ? x - bb.width - 5 : x + 5,
+                "x": x + 15,
                 "y": (sampleHeight + bb.height)/2
               });
-            })          
+            })
         }
-        lastX = x;
       }
       svg.selectAll(".crosshair, .crosshairValue")
          .attr("visibility", visibility);
@@ -703,7 +701,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       // TODO: zipping inside the dataFuncs object
       var zipped = zipData(group.data);
       summaryEnter.append("svg:path").attr({
-        "fill": "red",
+        //"fill": "red",
         "class": "stdDev",
       })
       summary.selectAll(".stdDev").attr("d", dataFuncs[dataType].stdDev(zipped));
@@ -796,7 +794,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         drawLinesGroup(group);
       })
 
-      repositionGroups();
+      expandGroups();
     }
 
     function axisUpdate(){
@@ -885,7 +883,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       var newGroup = {
         "groupID": {"samples": combinedData.samples, "meta": meta},
-        "collapse": false,
+        "collapse": true,
         "selected": false,
         "samples": combinedData.samples,
         "data": combinedData.data
@@ -896,6 +894,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function updateData(){
+      axisUpdate();
+
       var
         curGene = gui.current.getSelectedGene(),
         startPos = gui.current.getStartPos(),
@@ -903,8 +903,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         updatedProject = gui.current.getSelectedProject();
 
       that.data.getGeneData(updatedProject, curGene).then(function(sampleData) {
-        that.axis.setArrayWidth(sampleData.measures.reads[0].weights.length);
-
         dataType = sampleData.measures.data_type;
         sampleInfo = sampleData.samples;
 
@@ -941,8 +939,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         drawGroups();
 
         curProject = updatedProject;
-
-        axisUpdate();
       })
     }
 
