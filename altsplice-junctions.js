@@ -82,6 +82,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var yScaleContJxn;
   var xJxnBoxScale = d3.scale.linear();
   var showAllDots = true;
+  var showSubboxplots = false;
   var showSelectedIsoform = "compact"
 
   var jitterDots = true;
@@ -152,7 +153,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           click: function () {
             showSelectedIsoform = "compact"
             if (expandedIsoform != null) {
-              collapseIsoform(expandedIsoform);
+              collapseIsoform(expandedIsoform, function() {
+                showSubboxplots = false;
+                updateDotVisibility();
+              });
             }
           }
         })
@@ -181,7 +185,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                   "stroke": "black"
                 })
               }
-              createGroups(selectedIsoform);
+              createGroups(selectedIsoform.index);
             }
           }
         })
@@ -203,6 +207,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         .on({
           click: function () {
             showSelectedIsoform = "scatter"
+            showSubboxplots = false;
+            updateDotVisibility();
             if (selectedIsoform != null) {
               if (expandedIsoform == null)
                 expandIsoform(selectedIsoform);
@@ -266,7 +272,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         setTimeout(function() {
           expandIsoform(isoform)
           if (showSelectedIsoform == "groups") {
-            createGroups(isoform);
+            createGroups(isoform.index);
           }
           else {
             d3.selectAll(".edgeGroup").filter(function() {
@@ -376,7 +382,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 //        event.fire("groupingChanged",  [ ["heart", "adipose"], ["thyroid", ...], ...] )
 
       if ((expandedIsoform != null) && showSelectedIsoform == "groups") {
-        createGroups(expandedIsoform);
+        createGroups(expandedIsoform.index);
       }
     });
 
@@ -854,7 +860,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       function drawJxns() {
 
       var lastFlagX = buckets[buckets.length - 1].xEnd;
-        groupWidth =  (lastFlagX -  weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
+        groupWidth =  (80 + lastFlagX -  weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
 
 
         var grayStripesGroup = jxnArea.append("g");
@@ -943,7 +949,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "endLoc": group.endLoc,
             "fill": "white",
             "stroke": "black",
-            "height": jxnWrapperHeight,
+            "height": jxnWrapperHeight - 6,
             "transform": " translate(" + groupWidth / 2 + ", 0)",
             "width": 0
           }).style({
@@ -990,8 +996,29 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                 event.fire("jxnHighlight", {"startLoc": d.startLoc, "endLoc": d.endLoc, "highlight": false});
               }
             })
+            .on("dblclick", function(d) {
+              var availableWidth = width - weightAxisCaptionWidth - jxnWrapperPadding;
+              expandedWidth = availableWidth / (edgeCount + 3);
+              d3.selectAll(".edgeGroup").attr({
+                "transform": function() {
+                  return this.getAttribute("transform") + " translate(" + (-expandedWidth / 2 - 5)+ ", 0)"
+                }
+              })
+              d3.selectAll(".edgeAnchor").attr({
+                "transform": function() {
+                  return this.getAttribute("transform") + " translate(" + (expandedWidth/ 2)+ ", 0)"
+                }
+              })
+              d3.selectAll(".boxplot").style({
+                "opacity": 0
+              })
+              createGroups(-1)
+            })
 
-          groupNode.append("g").attr({
+
+
+
+            groupNode.append("g").attr({
             "class": "subboxplotsContainer",
             "transform": "translate(" + groupWidth / 2 + ", 0)"
           })
@@ -1199,7 +1226,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     function updateDotVisibility() {
       d3.selectAll(".jxnCircle").style({
         "visibility": function(d, i) {
-          return showAllDots  || (this.getAttribute("outlier") == "true") ? "visible" : "hidden";
+          if (showAllDots)
+            return "visible";
+          var outlier = showSubboxplots ?
+            this.getAttribute("group-outlier") :
+            this.getAttribute("outlier")
+            return outlier == "true" ? "visible" : "hidden";
           // this.getAttribute("outlier") ? "visible" : "hidden";
         }
       })
@@ -1340,12 +1372,24 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         for (var i = 0; i < buckets.length; ++i) {
           var axisLoc = axis.genePosToScreenPos(buckets[i].loc);
           if (buckets[i].type == "donor") {
-            buckets[i].xStart = buckets[i].xStartDesired = axisLoc - triangleLength;
-            buckets[i].xEnd = buckets[i].xEndDesired = axisLoc;
+            if (positiveStrand) {
+              buckets[i].xStart = buckets[i].xStartDesired = axisLoc - triangleLength;
+              buckets[i].xEnd = buckets[i].xEndDesired = axisLoc;
+            }
+            else {
+              buckets[i].xStart = buckets[i].xStartDesired = axisLoc;
+              buckets[i].xEnd = buckets[i].xEndDesired = axisLoc + triangleLength;
+            }
           }
           else {
-            buckets[i].xStart = buckets[i].xStartDesired = axisLoc;
-            buckets[i].xEnd = buckets[i].xEndDesired = axisLoc + triangleLength;
+            if (positiveStrand) {
+              buckets[i].xStart = buckets[i].xStartDesired = axisLoc;
+              buckets[i].xEnd = buckets[i].xEndDesired = axisLoc + triangleLength;
+            }
+            else {
+              buckets[i].xStart = buckets[i].xStartDesired = axisLoc - triangleLength;
+              buckets[i].xEnd = buckets[i].xEndDesired = axisLoc;
+            }
           }
         }
 
@@ -1475,9 +1519,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "cx": function(d, i) {
             return xShift
           },
+          "group-outlier": function(jxnData){
+            return jxnData.weight < boxplotInfo.whiskerDown || jxnData.weight > boxplotInfo.whiskerTop
+          }
         })
         }
       }
+      updateDotVisibility();
     }
 
     function createBoxPlot(container, boxplotClass, whiskerDown, whiskerTop, Q) {
@@ -1674,13 +1722,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       expandedIsoform = isoform;
     }
 
-    function createGroups(activeIsoform) {
+    function createGroups(activeIsoformIndex) {
 
       if (groups.length >= sampleLength)
         return ;
 
+      showSubboxplots = true;
+
       d3.selectAll(".edgeGroup").each(function (d) {
-        if (this.getAttribute("ActiveIsoform") == activeIsoform.index) {
+        if (this.getAttribute("ActiveIsoform") == activeIsoformIndex) {
           removeSubboxplots(d3.select(this));
           createSubBoxPlots(this, d);
 /*          if (showDotGroups && (groups.length > 0)) {
@@ -1723,6 +1773,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   }
 
     function deSelectIsoforms() {
+      showSubboxplots = false;
+      updateDotVisibility();
       d3.selectAll(".edgeConnector").style({
         "visibility": function() {
           return this.getAttribute("type") == "donor" ? "hidden" : "visible"
