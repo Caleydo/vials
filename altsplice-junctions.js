@@ -122,12 +122,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
 
-      var viewOptionsDiv1 = $parent.append("div").attr({
-        "left": "20px"
+      var viewOptionsDiv1 = $parent.append("div").attr("class","isoOptions").style({
+        "left": "20px",
+        "position":"relative"
       })
 
       var viewOptionsLabel = document.createElement('label')
       viewOptionsLabel.appendChild(document.createTextNode(" On isoform select: "));
+      d3.select(viewOptionsLabel).html("&nbsp; On isoform-select: &nbsp;")
       viewOptionsDiv1.node().appendChild(viewOptionsLabel);
       viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
       viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
@@ -140,6 +142,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var rbCompactViewLabel = document.createElement('label')
       rbCompactViewLabel.htmlFor = "rbCompactView";
       rbCompactViewLabel.appendChild(document.createTextNode("compact view "));
+      d3.select(rbCompactViewLabel).html("&nbsp; compact view &nbsp;")
       viewOptionsDiv1.node().appendChild(rbCompactView);
       viewOptionsDiv1.node().appendChild(rbCompactViewLabel);
       viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
@@ -161,6 +164,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var rbSubgroupsLabel = document.createElement('label')
       rbSubgroupsLabel.htmlFor = "rbSubgroups";
       rbSubgroupsLabel.appendChild(document.createTextNode("group view"));
+      d3.select(rbSubgroupsLabel).html("&nbsp; group view &nbsp;")
+
       viewOptionsDiv1.node().appendChild(rbSubgroups);
       viewOptionsDiv1.node().appendChild(rbSubgroupsLabel);
       viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
@@ -188,6 +193,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var rbScatterplotLabel = document.createElement('label')
       rbScatterplotLabel.htmlFor = "chkAutoExpandIsoform";
       rbScatterplotLabel.appendChild(document.createTextNode("show correlation"));
+      d3.select(rbScatterplotLabel).html("&nbsp; show correlation &nbsp;")
+
       viewOptionsDiv1.node().appendChild(rbScatterplot);
       viewOptionsDiv1.node().appendChild(rbScatterplotLabel);
       viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
