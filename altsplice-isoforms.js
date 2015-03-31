@@ -200,7 +200,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         * reactive background
         * */
         isoformEnter.append("rect").attr({
-          width:width+margin.right-2,
+          width:width,
           height:exonHeight,
           class:"background"
         }).on({
@@ -225,7 +225,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
         isoform.select(".background").attr({
-          width:width+margin.right-2
+          width:axisOffset+scatterWidth//width+margin.right-2
         })
 
 
