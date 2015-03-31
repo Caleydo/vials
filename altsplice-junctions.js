@@ -32,7 +32,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     return new GenomeVis(data, parent);
   }
 
-  var margin = {top: 40, right: 10, bottom: 20, left: 200};
+  var margin = {top: 40, right: 10, bottom: 20, left: 150};
   var width; // = 1050 - margin.left - margin.right,
   var groupWidth;
   var expandedWidth;
@@ -239,6 +239,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             }); */
 
       event.on("isoFormSelect", function(ev,isoform){
+        clickedElement = null;
         if (expandedIsoform != null && expandedIsoform != isoform) {
           collapseIsoform(expandedIsoform, function() {
             selectIsoform(isoform);
