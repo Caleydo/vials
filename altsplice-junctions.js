@@ -32,7 +32,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     return new GenomeVis(data, parent);
   }
 
-  var margin = {top: 40, right: 10, bottom: 20, left: 150};
+  var margin = {top: 40, right: 10, bottom: 20, left: 200};
   var width; // = 1050 - margin.left - margin.right,
   var groupWidth;
   var expandedWidth;
@@ -82,7 +82,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var yScaleContJxn;
   var xJxnBoxScale = d3.scale.linear();
   var showAllDots = true;
-  var showDotGroups = false;
+  var showSelectedIsoform = "compact"
+
   var jitterDots = true;
   var groups = [];
 
@@ -121,75 +122,96 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
 
-      var viewOptionsDiv = $parent.append("div").style({
-        "left": "20px",
-      });
-
       var viewOptionsDiv1 = $parent.append("div").attr({
         "left": "20px"
       })
 
-
-      var chkAutoExpandIsoform = document.createElement("input");
-      chkAutoExpandIsoform.type = 'checkbox';
-      chkAutoExpandIsoform.id = 'chkAutoExpandIsoform';
-      var chkAutoExpandLabel = document.createElement('label')
-      chkAutoExpandLabel.htmlFor = "chkAutoExpandIsoform";
-      chkAutoExpandLabel.appendChild(document.createTextNode("Auto. expand selected isoform: "));
-      viewOptionsDiv1.node().appendChild(chkAutoExpandIsoform);
-      viewOptionsDiv1.node().appendChild(chkAutoExpandLabel);
+      var viewOptionsLabel = document.createElement('label')
+      viewOptionsLabel.appendChild(document.createTextNode(" On isoform select: "));
+      viewOptionsDiv1.node().appendChild(viewOptionsLabel);
       viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
-      viewOptionsDiv1.select("#chkAutoExpandIsoform")
+      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
+
+      var rbCompactView = document.createElement("input");
+      rbCompactView.type = 'radio';
+      rbCompactView.id = 'rbCompactView';
+      rbCompactView.name='rgOnIsoformSelect';
+      rbCompactView.checked = true;
+      var rbCompactViewLabel = document.createElement('label')
+      rbCompactViewLabel.htmlFor = "rbCompactView";
+      rbCompactViewLabel.appendChild(document.createTextNode("compact view "));
+      viewOptionsDiv1.node().appendChild(rbCompactView);
+      viewOptionsDiv1.node().appendChild(rbCompactViewLabel);
+      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
+      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
+      viewOptionsDiv1.select("#rbCompactView")
         .on({
           click: function () {
-            var el = d3.select(this);
-            showAllDots  = !el.classed("buttonSelected");
-            el.classed("buttonSelected", showAllDots );
-            updateDotVisibility();
-          }
-        })
-
-      var rbScatterplot = document.createElement("input");
-      rbScatterplot.type = 'radio';
-      rbScatterplot.id = 'rbScatterplot';
-      rbScatterplot.name='rgExpandedIsoform';
-      var rbScatterplotLabel = document.createElement('label')
-      rbScatterplotLabel.htmlFor = "chkAutoExpandIsoform";
-      rbScatterplotLabel.appendChild(document.createTextNode("scatterplots"));
-      viewOptionsDiv1.node().appendChild(rbScatterplot);
-      viewOptionsDiv1.node().appendChild(rbScatterplotLabel);
-      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
-      viewOptionsDiv1.select("#rbScatterplot")
-        .on({
-          click: function () {
-            var el = d3.select(this);
-            showAllDots  = !el.classed("buttonSelected");
-            el.classed("buttonSelected", showAllDots );
-            updateDotVisibility();
+            showSelectedIsoform = "compact"
+            if (expandedIsoform != null) {
+              collapseIsoform(expandedIsoform);
+            }
           }
         })
 
       var rbSubgroups = document.createElement("input");
       rbSubgroups.type = 'radio';
-      rbSubgroups.name='rgExpandedIsoform';
-      rbSubgroups.id = 'chkAutoExpandIsoform';
+      rbSubgroups.name='rgOnIsoformSelect';
+      rbSubgroups.id = 'rbSubgroups';
       var rbSubgroupsLabel = document.createElement('label')
       rbSubgroupsLabel.htmlFor = "rbSubgroups";
-      rbSubgroupsLabel.appendChild(document.createTextNode("sub-groups"));
+      rbSubgroupsLabel.appendChild(document.createTextNode("group view"));
       viewOptionsDiv1.node().appendChild(rbSubgroups);
       viewOptionsDiv1.node().appendChild(rbSubgroupsLabel);
       viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
       viewOptionsDiv1.select("#rbSubgroups")
         .on({
           click: function () {
-            var el = d3.select(this);
-            showAllDots  = !el.classed("buttonSelected");
-            el.classed("buttonSelected", showAllDots );
-            updateDotVisibility();
+            showSelectedIsoform = "groups"
+            if (selectedIsoform != null) {
+              if (expandedIsoform == null)
+                expandIsoform(selectedIsoform);
+              else {
+                d3.selectAll(".jxnContainer").style({
+                  "stroke": "black"
+                })
+              }
+              createGroups(selectedIsoform);
+            }
           }
         })
 
-      /*      var viewOptionsDiv = $parent.append("div").style({
+      var rbScatterplot = document.createElement("input");
+      rbScatterplot.type = 'radio';
+      rbScatterplot.id = 'rbScatterplot';
+      rbScatterplot.name='rgOnIsoformSelect';
+      var rbScatterplotLabel = document.createElement('label')
+      rbScatterplotLabel.htmlFor = "chkAutoExpandIsoform";
+      rbScatterplotLabel.appendChild(document.createTextNode("show correlation"));
+      viewOptionsDiv1.node().appendChild(rbScatterplot);
+      viewOptionsDiv1.node().appendChild(rbScatterplotLabel);
+      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
+      viewOptionsDiv1.node().appendChild(document.createTextNode(" "));
+      viewOptionsDiv1.select("#rbScatterplot")
+        .on({
+          click: function () {
+            showSelectedIsoform = "scatter"
+            if (selectedIsoform != null) {
+              if (expandedIsoform == null)
+                expandIsoform(selectedIsoform);
+
+              d3.selectAll(".edgeGroup").filter(function() {
+                removeSubboxplots(d3.select(this))
+                return this.getAttribute("ActiveIsoform") == selectedIsoform.index;
+              }).each(function(d, i) {
+                if (i == 0)
+                  sortDots(selectedIsoform.index, d)
+              })
+
+            }
+          }
+        })
+              /*      var viewOptionsDiv = $parent.append("div").style({
               "left": "20px",
             });
 
@@ -216,19 +238,40 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               updateDotJitter();
             }); */
 
-      event.on("isoFormSelect", function(ev,data){
-      var index  = data.index;
+      event.on("isoFormSelect", function(ev,isoform){
+        if (expandedIsoform != null && expandedIsoform != isoform) {
+          collapseIsoform(expandedIsoform, function() {
+            selectIsoform(isoform);
+            updateExpansion(isoform)
+          })
+        }
+        else {
+          selectIsoform(isoform)
+          updateExpansion(isoform)
+        }
 
-      if (expandedIsoform != null && expandedIsoform != data) {
-        collapseIsoform(expandedIsoform, function() {
-          selectIsoform(data);
-        })
-      }
-      else
-        selectIsoform(data)
 
     });
 
+    function updateExpansion(isoform) {
+      if (showSelectedIsoform != "compact" && isoform.index >= 0) {
+        setTimeout(function() {
+          expandIsoform(isoform)
+          if (showSelectedIsoform == "groups") {
+            createGroups(isoform);
+          }
+          else {
+            d3.selectAll(".edgeGroup").filter(function() {
+              return this.getAttribute("ActiveIsoform") == isoform.index;
+            }).each(function(d, i) {
+              if (i == 0)
+                sortDots(isoform.index, d)
+            })
+          }
+        },200)
+      }
+
+    }
 
     event.on("sampleSelect", function(e,sampleID, isSelected){
 
@@ -319,11 +362,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             groups.splice(ind, 1);
         }
         for (var i = 0; i < newGroups.length; i++) {
-          groups.push(newGroups[i]);
+          if (newGroups[i].samples.length > 1)
+            groups.push(newGroups[i]);
         }
 //        event.fire("groupingChanged",  [ ["heart", "adipose"], ["thyroid", ...], ...] )
 
-      if ((expandedIsoform != null) && showDotGroups) {
+      if ((expandedIsoform != null) && showSelectedIsoform == "groups") {
         createGroups(expandedIsoform);
       }
     });
@@ -469,7 +513,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
 
-    var exploreArea = svg.append("g").attr("transform", "translate(0, 20)").attr("id","exploreArea");
+    var exploreArea = svg.append("g").attr("transform", "translate(0, 5)").attr("id","exploreArea");
     jxnArea = exploreArea.append("g").attr("id", "jxnArea");
 
 
@@ -534,11 +578,59 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         drawRNA(RNAArea);
 
         drawJxns();
+
+        // drawGroupingOptions();
+
         drawHeatmap();
 
       })
       //// should trigger a cache hit
       //that.data.getSamples(chromID,startPos,baseWidth);
+    }
+
+    function drawGroupingOptions() {
+      var ctrlPanel = svg.append("g").attr({
+        "transform": "translate(" + axis.getWidth() + ", 0)"
+      })
+
+      ctrlPanel.append("rect").attr({
+        "width": 10,
+        "height": 10,
+        "stroke": "black",
+        "fill": "white",
+        "transform": "translate(0, 2)"
+      })
+      ctrlPanel.append("text").attr({
+        class:"bka",
+        x: 15,
+        y:20
+      }).text("Auto. expand selected isoform:")
+
+      ctrlPanel.append("circle").attr({
+        "radius": 5,
+        "stroke": "black",
+        "fill": "white",
+        "transform": "translate(25, 27)"
+      })
+      heatmapGroup.append("text").attr({
+        class:"bka",
+        x: 50,
+        y:25
+      }).text("Auto. expand selected isoform:")
+
+      ctrlPanel.append("rect").attr({
+        "radius": 10,
+        "stroke": "black",
+        "fill": "white",
+        "transform": "translate(25, 54)"
+      })
+      heatmapGroup.append("text").attr({
+        class:"bka",
+        x: 50,
+        y:52
+      }).text("Auto. expand selected isoform:")
+
+
     }
 
       /*================
@@ -754,7 +846,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       function drawJxns() {
 
       var lastFlagX = buckets[buckets.length - 1].xEnd;
-        groupWidth =  (lastFlagX +  weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
+        groupWidth =  (lastFlagX -  weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
 
 
         var grayStripesGroup = jxnArea.append("g");
@@ -789,8 +881,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var donorLoc = sortedWeights[jxnGroup.start].start;
           var donorInd = getBucketIndAt(donorLoc);
           jxnArea.append("polygon").attr({
-            x1: startX +1,
-            x2: startX + wrapperWidth -1,
+            x1: startX,
+            x2: startX + wrapperWidth,
             x3: buckets[donorInd].anchor,
             "loc": donorLoc,
             "adjacentSingletonReceptorBucket": function() {
@@ -850,7 +942,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "opacity": 0,
             "visibility": "hidden"
           }).on("dblclick", function() {
-            sortDots(this.parentNode);
+            if (showSelectedIsoform == "scatter") {
+              var node = this.parentNode;
+              var ind = node.getAttribute("ActiveIsoform")
+              d3.select(node).each(function(d, i) {
+                if (i == 0)
+                  sortDots(ind, d)
+              })
+            }
           })
 
           groupNode.append("rect").attr({
@@ -870,16 +969,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               //TODO: hen -- fix this use multiple parameters
               clickedElement = this;
               event.fire("jxnHighlight", {"startLoc":d.startLoc, "endLoc":d.endLoc,"highlight": true});
-            }
-          }).on("dblclick", function() {
-            if (selectedIsoform.index == this.parentNode.getAttribute("ActiveIsoform")) {
-              if (selectedIsoform == expandedIsoform) {
-                collapseIsoform(selectedIsoform);
-              }
-              else {
-                expandIsoform(selectedIsoform);
-                // sortDots(this.parentNode);
-              }
             }
           }).on('mouseover', function(d) {
               if (clickedElement == null) {
@@ -1220,16 +1309,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           clickedElement = this;
           event.fire("LocHighlight", {"loc":d.loc,"highlight": true});
         }
-      }).on("dblclick", function() {
-        if (selectedIsoform.index == this.parentNode.getAttribute("ActiveIsoform")) {
-          if (selectedIsoform == expandedIsoform) {
-            collapseIsoform(selectedIsoform);
-          }
-          else {
-            expandIsoform(selectedIsoform);
-            // sortDots(this.parentNode);
-          }
-        }
       });
 
       RNASites.enter().append("polyline").attr({
@@ -1347,7 +1426,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 //        groupIndices[gr] = 0;
       }
 
-
+      groupData[groups.length] = [];
 
       for (var ind = edgeGroup.start; ind <= edgeGroup.end; ind++) {
         var sample = sortedWeights[ind].sample;
@@ -1355,13 +1434,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var gr = sampleToGroup[sample];
         if (gr >= 0)
           groupData[gr].push(weight);
+        else
+          groupData[groups.length].push(weight);
       }
 
-      for (var gr = 0; gr < groups.length; gr++) {
+      var groupsNum = groupData[groups.length].length > 0 ? groups.length + 1 : groups.length;
+
+      for (var gr = 0; gr < groupData.length; gr++) {
+        if (groupData[gr].length > 0) {
 
         var boxPlotData = groupData[gr].sort(d3.ascending);
         var boxplotInfo = computeBoxPlot(boxPlotData);
-        var xShift = jxnBBoxWidth / 2 + effectiveWidth * (gr + 1) / (groups.length + 1);
+        var xShift = jxnBBoxWidth / 2 + effectiveWidth * (gr + 1) / (groupsNum + 1);
         var boxplot = createBoxPlot(subplotsContainer, "subboxplot",
           boxplotInfo.whiskerDown, boxplotInfo.whiskerTop, boxplotInfo.Q).attr({
           "transform": " translate(" + xShift + ", 0)"
@@ -1375,13 +1459,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "opacity": 1
           });
         parentNode.selectAll(".jxnCircle").filter(function (d) {
-          return groups[gr].samples.indexOf(d.sample) >= 0
+          var sampleGroup = sampleToGroup[d.sample];
+          if (typeof sampleGroup == 'undefined')
+            sampleGroup = groups.length;
+          return sampleGroup == gr
         }).transition().duration(400).attr({
           "cx": function(d, i) {
             return xShift
           },
         })
-
+        }
       }
     }
 
@@ -1505,7 +1592,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       parentNode.selectAll(".jxnContainer").transition().duration(400).style({
         "opacity": 0,
-      }).each("end", callback);
+        "stoke": "black",
+    }).each("end", callback);
 
       removeSubboxplots(parentNode)
 
@@ -1538,7 +1626,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var include = this.getAttribute("ActiveIsoform") == isoform.index;
         if (!include)
           d3.select(this).style({
-            "visibility" : "hidden"
+            "opacity": 0
             })
         return include;
       })
@@ -1576,29 +1664,35 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
       expandedIsoform = isoform;
-      createGroups(isoform);
     }
 
     function createGroups(activeIsoform) {
+
+      if (groups.length >= sampleLength)
+        return ;
+
       d3.selectAll(".edgeGroup").each(function (d) {
         if (this.getAttribute("ActiveIsoform") == activeIsoform.index) {
           removeSubboxplots(d3.select(this));
-          if (showDotGroups && (groups.length > 0)) {
-            createSubBoxPlots(this, d);
+          createSubBoxPlots(this, d);
+/*          if (showDotGroups && (groups.length > 0)) {
           }
           else {
             sortDots(this)
           }
+          */
         }
       })
     }
 
     function collapseIsoform(isoform, callback) {
     var selection = d3.selectAll(".edgeGroup").style({
-          "visibility" : "visible"
+          "opacity" : "0.1"
     }).filter(function (d, i) {
       return this.getAttribute("ActiveIsoform") == isoform.index;
-    })
+    }).style({
+        "opacity" : "1"
+      })
     var size = 0;
     selection.each(function() { size++; });
     selection.each(function (d, i) {
@@ -1710,18 +1804,25 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       selectedIsoform = data;
     }
 
-    function sortDots(parentNode) {
+    function updateIsoformVis(isoform) {
+      if (showSelectedIsoform == "compact") {
+      }
+      else if (showSelectedIsoform == "groups") {
 
-      var isoformInd = parentNode.getAttribute("ActiveIsoform");
+      }
+      else {
+      }
+    }
+
+    function sortDots(isoformInd, jxn) {
+
 
       var indices = new Array(sampleLength);
-      d3.select(parentNode).each(function(d, i) {
-        var arrayLen = d.end - d.start + 1;
-        var shift = sampleLength - arrayLen;
-        for (var ind = d.start; ind <= d.end; ind++) {
-          indices[sortedWeights[ind].sample] = shift + (ind - d.start);
-        }
-      })
+      var arrayLen = jxn.end - jxn.start + 1;
+      var shift = sampleLength - arrayLen;
+      for (var ind = jxn.start; ind <= jxn.end; ind++) {
+        indices[sortedWeights[ind].sample] = shift + (ind - jxn.start);
+      }
 
 
 /*      var indices = [];
@@ -1735,8 +1836,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       d3.selectAll(".edgeGroup").filter(function() {
         return this.getAttribute("ActiveIsoform") == isoformInd;
-      }).each(function() {
+      }).each(function(d) {
+
         var thisNode = d3.select(this);
+
+        var containerColor = (d == jxn) ? "orange" : "black";
+        thisNode.select(".jxnContainer").style({
+          "stroke": containerColor,
+        })
 
 
         thisNode.selectAll(".jxnCircle").transition().duration(400).attr({
