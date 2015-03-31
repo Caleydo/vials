@@ -41,7 +41,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var triangleLength = 8;
   var defaultDotColor = "rgba(90,90,90,0.3)";
   var dehighlightedDotColor = "rgba(120,120,120,0.05)";
-  var highlightedDotColor = "red";
+  var highlightedDotColor = "#D16B54";
   var weightAxisCaptionWidth = 35;
   var exonWeightsAreaHeight;
   var jxnWrapperPadding = 6;
@@ -122,7 +122,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
 
-      var viewOptionsDiv1 = $parent.append("div").attr("class","isoOptions").style({
+      var viewOptionsDiv1 = $parent.append("div")
+        .attr("class","isoOptions hidden-print")
+        //.attr("class","isoOptions")
+        .style({
         "left": "20px",
         "position":"relative"
       })
