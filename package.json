@@ -16,6 +16,16 @@
       },
       {
         "type": "vis",
+        "id": "altsplice-isoforms",
+        "name": "Alternative Splicing - IsoForms",
+        "size": [840,300],
+        "filter": "genomeDataLink",
+        "folder" : "caleydo-altsplice",
+        "module" : "caleydo-altsplice/altsplice-isoforms"
+
+      },
+      {
+        "type": "vis",
         "id": "altsplice-junctions",
         "name": "Alternative Splicing - Junctions",
         "size": [840,2000],
@@ -32,6 +42,15 @@
         "filter": "genomeDataLink",
         "folder" : "caleydo-altsplice",
         "module" : "caleydo-altsplice/altsplice-reads"
+      },
+      {
+        "type": "vis",
+        "id": "altsplice-reads-simple",
+        "name": "Alternative Splicing - Abundance",
+        "size": [840,2000],
+        "filter": "genomeDataLink",
+        "folder" : "caleydo-altsplice",
+        "module" : "caleydo-altsplice/altsplice-read-simple"
       }
     ],
     "requirejs-config": {

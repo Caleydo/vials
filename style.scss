@@ -3,6 +3,15 @@
  * Created by Hendrik Strobelt 10/10/14
  */
 
+// Wes Anderson Color Palette from http://wesandersonpalettes.tumblr.com/ - Fantastic Mr. Fox
+$wes-gray: #B9B09F;
+$wes-yellow: #E8C95D;
+$wes-green: #A9D8C8;
+$wes-violet: #433447;
+$wes-red: #D16B54;
+
+$wes-blue: #0093dd;
+
 //by convention create a namespace for your own plugin
 .gv {
   //  textarea{
@@ -31,4 +40,245 @@
     opacity: .5;
   }
 
+}
+
+.isoform {
+  .exon{
+    fill-opacity: .8;
+    pointer-events: none;
+    fill:$wes-violet;
+  }
+  .background{
+
+    fill:white;
+    fill-opacity:.001;
+
+  }
+  .selected{
+    stroke:$wes-yellow;
+  }
+  .fixed{
+    fill:$wes-yellow;
+    fill-opacity:.5;
+  }
+
+  .sampleDot
+  {
+    fill:$wes-gray;
+    fill-opacity: .5;
+  }
+  .sampleDot.highlighted{
+    fill:$wes-red;
+    fill-opacity: 1;
+  }
+  .sampleDot.selected{
+    fill-opacity: 1;
+    stroke:none;
+  }
+
+  .highlightBG{
+    pointer-events: none;
+  }
+
+.showGroups{
+  font-size:12pt;
+}
+  .showGroups.selected{
+    background-color: #000066;
+  }
+
+
+}
+.groupSplitView{
+  .background{
+    fill: none;
+    stroke:$wes-gray;
+  }
+  .tickleftCircle{
+    fill:$wes-gray;
+    opacity: .3;
+    pointer-events: none;
+  }
+  .sampleDot.highlighted{
+    fill:$wes-red;
+    fill-opacity: 1;
+  }
+  .sampleDot.selected{
+    fill-opacity: 1;
+    stroke:2;
+  }
+}
+
+
+path.selectionParco{
+  fill:none;
+  stroke:$wes-red;
+  stroke-width: 2px;
+  stroke-opacity: .5;
+}
+
+.buttonSelected{
+  background-color: $wes-green !important;
+}
+
+.abundances{
+
+  .abundanceGraph{
+    fill-opacity: .8;
+    pointer-events: none;
+    stroke:$wes-gray;
+    stroke-width: 1px;
+    fill:$wes-gray;
+  }
+  .abundanceGraph.highlighted{
+    //fill-opacity: .8;
+    //pointer-events: none;
+    stroke:$wes-red;
+    fill:$wes-red;
+  }
+
+  .background{
+
+    fill:white;
+
+  }
+  .selected{
+    stroke:$wes-yellow;
+  }
+  .fixed{
+    fill:$wes-yellow;
+    fill-opacity: .5;
+  }
+
+
+}
+
+
+.rangeRect{
+  fill:$wes-gray;
+  fill-opacity: .3;
+}
+
+.isoMenu{
+  fill:$wes-gray;
+  fill-opacity: .3;
+  stroke: $wes-gray;
+  //stroke-width: 1;
+
+}
+.isoMenu.selected{
+  fill:$wes-gray;
+  fill-opacity: 1;
+  stroke: $wes-violet;
+  stroke-width: 1;
+
+}
+
+.menuDivideLine{
+  stroke:$wes-gray;
+  stroke-width: 1px;
+}
+
+//.dotMenu{
+//  .dotmenuRect{
+//    fill: $wes
+//  }
+//}
+
+
+
+//===> jxn view <===
+#jxnArea{
+  .jxnWrapperBox{
+      fill:$wes-gray;
+      fill-opacity: .5;
+  }
+
+  .JXNAreaConnector{
+    fill:$wes-gray;
+    fill-opacity: .5;
+  }
+}
+
+.exonHeatMap{
+  .exonHeat{
+      fill:$wes-violet;
+      fill-opacity:.1;
+
+  }
+
+  .background{
+    fill:white;
+//    fill-opacity: .3;
+  }
+
+}
+
+
+// UI fixes:
+
+select.btn-mini {
+  height: auto;
+  line-height: 25px;
+}
+input.btn-mini {
+  height: auto;
+  width:auto;
+  //line-height: 6px;
+}
+
+// BILAL
+
+
+.RNASite[type=donor]{
+  fill: $wes-blue;
+  fill-opacity: 1;
+  stroke: $wes-blue;}
+
+.RNASite[type=receptor]  {
+  fill: $wes-red;
+  fill-opacity: 1;
+  stroke: $wes-red;}
+
+.RNASiteConnector[type=donor] {
+  stroke: $wes-blue;
+  fill: none}
+
+.RNASiteConnector[type=receptor] {
+  stroke: $wes-red;
+  fill: none}
+
+.edgeAnchor {
+  fill: $wes-red;
+  fill-opacity: 1;
+  stroke: none}
+
+.edgeConnector[type=donor] {
+  stroke: $wes-blue
+}
+
+.edgeConnector[type=receptor] {
+  stroke: $wes-red
+}
+
+path.stdDev{
+  fill: #48443D;
+  stroke:none;
+  //fill-opacity: .6;
+  //stroke:$wes-gray;
+  //stroke-width: 1px;
+}
+
+.isoOptions{
+  color:$wes-violet;
+  opacity: .8;
+}
+
+
+// ===> here for html <===
+#visReads{
+//  max-height:300px;
+//  overflow-y: auto;
+//  overflow-x: visible;
+//  overflow-x: hidden;
 }
