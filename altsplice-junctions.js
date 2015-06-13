@@ -527,7 +527,40 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
 
-    var exploreArea = svg.append("g").attr("transform", "translate(0, 5)").attr("id","exploreArea");
+    var labelFontSize = 24;
+    var svgLabel = svg.append("g");
+    var svgLabelBg = svgLabel.append("rect").attr({
+      "class": "viewLabelBg",
+      "fill": "#888",
+      "width": height + margin.top,
+      "rx": 10,
+      "ry": 10
+    });
+    var svgLabelText = svgLabel.append("text").text("junctions").attr({
+      "class": "viewLabelText",
+      "fill": "white",
+      "style": "font-size:" + labelFontSize,
+    });
+    bb = svgLabelText.node().getBBox();
+    svgLabelBg.attr({
+      "height": bb.height
+    })
+    function drawViewLabel(height) {
+      svgLabelBg.attr({
+        "width": height + margin.top
+      });
+      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-5) + ")")
+      svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
+                                 "rotate(-90)");
+    }
+    drawViewLabel(height);
+
+    var svgMain = svg.append("g").attr({
+      "class": "isoMain",
+      "transform": "translate(" + (bb.height+25) + ",0)"
+    });
+
+    var exploreArea = svgMain.append("g").attr("transform", "translate(0, 5)").attr("id","exploreArea");
     jxnArea = exploreArea.append("g").attr("id", "jxnArea");
 
 

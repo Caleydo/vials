@@ -62,23 +62,56 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
 
-    var gExonRanges = svg.append("g").attr({
+    var labelFontSize = 24;
+    var svgLabel = svg.append("g");
+    var svgLabelBg = svgLabel.append("rect").attr({
+      "class": "viewLabelBg",
+      "fill": "#888",
+      "width": height + margin.top,
+      "rx": 10,
+      "ry": 10
+    });
+    var svgLabelText = svgLabel.append("text").text("isoforms").attr({
+      "class": "viewLabelText",
+      "fill": "white",
+      "style": "font-size:" + labelFontSize,
+    });
+    bb = svgLabelText.node().getBBox();
+    svgLabelBg.attr({
+      "height": bb.height
+    })
+    function drawViewLabel(height) {
+      svgLabelBg.attr({
+        "width": height + margin.top
+      });
+      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-5) + ")")
+      svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
+                                 "rotate(-90)");
+    }
+    drawViewLabel(height);
+
+    var svgMain = svg.append("g").attr({
+      "class": "isoMain",
+      "transform": "translate(" + (bb.height+25) + ",0)"
+    });
+
+    var gExonRanges = svgMain.append("g").attr({
       class:"exonRanges",
       "transform":"translate("+margin.left+","+margin.top+")"
     })
 
-    var gIso = svg.append("g").attr({
+    var gIso = svgMain.append("g").attr({
       class:"isoforms",
       "transform":"translate("+margin.left+","+margin.top+")"
     })
 
-    var gHighlight = svg.append("g").attr({
+    var gHighlight = svgMain.append("g").attr({
       class:"highlights",
       "transform":"translate("+margin.left+","+margin.top+")"
     })
 
     // create crosshair
-    var crosshair = svg.append("line").attr({
+    var crosshair = svgMain.append("line").attr({
       "class":"crosshair",
       "x1":0,
       "y1":0,
@@ -137,9 +170,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         svg.attr("height", height+margin.top+margin.bottom)
           .attr("width", width + margin.left + margin.right);
 
-        crosshair.attr({
-          "y2":height+margin.top+margin.bottom
-        })
+        drawViewLabel(height);
 
         console.log(minMaxValues);
         var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, axisOffset+scatterWidth])
