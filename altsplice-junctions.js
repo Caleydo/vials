@@ -42,7 +42,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var defaultDotColor = "rgba(90,90,90,0.3)";
   var dehighlightedDotColor = "rgba(120,120,120,0.05)";
   var highlightedDotColor = "red";
-  var weightAxisCaptionWidth = 35;
+  var weightAxisCaptionWidth = 50;
   var exonWeightsAreaHeight;
   var jxnWrapperPadding = 6;
   var sitePadding = 2;
@@ -797,17 +797,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var yAxisJxn = d3.svg.axis()
         .orient("left")
         .scale(yScaleContJxn);
+      var fontSize = 12;
       var edgeAxisGroup = jxnArea.append("g")
         .attr("class", "axis")
         .call(yAxisJxn)
         .attr("transform", "translate(" + weightAxisCaptionWidth + " 0)");
       edgeAxisGroup.append("text")      // text label for the x axis
-        .attr("x", -20)
+        .attr("x", fontSize-weightAxisCaptionWidth)
         .attr("y", exonWeightsAreaHeight / 2)
         .attr("font-size", 12)
         .style("text-anchor", "middle")
-        .text("Junction Reads")
-        .attr("transform", "rotate(-90, " + (-weightAxisCaptionWidth - 10) + " " + exonWeightsAreaHeight / 2 + ")");
+        .text("# of junction reads")
+        .attr("transform", "rotate(-90, " + (fontSize-weightAxisCaptionWidth) +  " " + exonWeightsAreaHeight / 2 + ")");
     }
 
     function computeJxnGroups() {
