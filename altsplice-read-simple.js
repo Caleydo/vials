@@ -829,7 +829,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
 
     function axisUpdate(){
-
       //that.lineFunction.x(function(d,i){return that.axis.arrayPosToScreenPos(i)});
 
       gIso.selectAll(".abundanceGraph").attr({

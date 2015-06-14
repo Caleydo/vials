@@ -298,9 +298,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       ;
 
       mRanges.attr({
-          "x":function(d,i){return that.axis.genePosToScreenPos(d.start)},
+          "x":function(d,i){return that.axis.genePosToScreenPos(that.axis.ascending ? d.start : d.end)},
           "y":function(d,i){return 0},
-          "width":function(d,i){return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)},
+          "width":function(d,i){return Math.abs(that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start))},
           "height":function(d,i){return height-scaleYSpace} // TODO: make this cleaner
       })
 
@@ -334,10 +334,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       ;
 
       mRangeSorter.attr({
-        "x":function(d,i){return that.axis.genePosToScreenPos(d.start)},
+        "x":function(d,i){return that.axis.genePosToScreenPos(that.axis.ascending ? d.start : d.end)},
         "y":function(d,i){
           return menuOffset},
-        "width":function(d,i){return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)},
+        "width":function(d,i){return Math.abs(that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start))},
         "height":function(d,i){return menuHeight}
       })
 
@@ -355,7 +355,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         // --- adding Element to class exons
         var exonEnter = exon.enter().append("rect").attr({
-            "class":"exon",
+            "class": "exon",
             height:exonHeight
             //y:exonHeight
         })
@@ -363,9 +363,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         // --- changing nodes for exons
         exon.attr({
           width: function(d,i){
-            return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)
+            return Math.abs(that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start))
           },
-          x:function(d){return that.axis.genePosToScreenPos(d.start);}
+          x:function(d){return that.axis.genePosToScreenPos(that.axis.ascending ? d.start : d.end);}
         })
 
 
@@ -498,7 +498,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
       function showGroupSplits(data,index,parent, show){
-        console.log(data,index, parent);
+        // console.log(data,index, parent);
 
         var allDots = d3.select(parent).selectAll(".isoform .sampleDot")
 
@@ -514,7 +514,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           }
         })
 
-        console.log(colors);
+        // console.log(colors);
 
         if (show){
 
@@ -527,7 +527,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           //    "r":5
           //})
 
-          console.log("index:",index);
+          // console.log("index:",index);
           splitG.attr({
             "transform":"translate("+(scaleXScatter.range()[1]+25)+","+groupScale(index)+")"
           })
@@ -560,7 +560,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
-            console.log(allDots);
+            // console.log(allDots);
             allDots.each(function(d,i){
 
               //console.log(d, d3.select(this).style("fill"));
@@ -643,7 +643,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var trans = d3.transform(d3.select(this.parentNode.parentNode).attr("transform")).translate
           var me = d3.select(this)
           //console.log(trans);
-          console.log("me", me.attr("cx"),me);
+          // console.log("me", me.attr("cx"),me);
           lineCoord.push({
             "x":+me.attr("cx")+trans[0],
             "y":+me.attr("cy")+trans[1]
@@ -872,20 +872,20 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       // --- changing nodes for exons
       exon.transition().attr({
         width: function(d,i){
-          return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)
+          return Math.abs(that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start))
         },
-        x:function(d){return that.axis.genePosToScreenPos(d.start);}
+        x:function(d){return that.axis.genePosToScreenPos(that.axis.ascending ? d.start : d.end);}
       })
 
 
       gExonRanges.selectAll(".rangeRect").transition().attr({
-        "x":function(d,i){return that.axis.genePosToScreenPos(d.start)},
-        "width":function(d,i){return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)}
+        "x":function(d,i){return that.axis.genePosToScreenPos(that.axis.ascending ? d.start : d.end)},
+        "width":function(d,i){return Math.abs(that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start))}
       })
 
       gExonRanges.selectAll(".rangeMenu").transition().attr({
-        "x":function(d,i){return that.axis.genePosToScreenPos(d.start)},
-        "width":function(d,i){return that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start)}
+        "x":function(d,i){return that.axis.genePosToScreenPos(that.axis.ascending ? d.start : d.end)},
+        "width":function(d,i){return Math.abs(that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start))}
       })
 
       // ==> move end design -->
