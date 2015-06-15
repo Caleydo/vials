@@ -231,14 +231,14 @@ input.btn-mini {
 
 
 .RNASite[type=donor]{
-  fill: $wes-blue;
+  fill: $wes-gray;
   fill-opacity: 1;
-  stroke: $wes-blue;}
+  stroke: $wes-gray;}
 
 .RNASite[type=receptor]  {
-  fill: $wes-red;
+  fill: $white;
   fill-opacity: 1;
-  stroke: $wes-red;}
+  stroke: wes-gray;}
 
 .RNASiteConnector[type=donor] {
   stroke: $wes-blue;

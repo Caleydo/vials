@@ -41,12 +41,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var triangleLength = 8;
   var defaultDotColor = "rgba(90,90,90,0.3)";
   var dehighlightedDotColor = "rgba(120,120,120,0.05)";
-  var highlightedDotColor = "#D16B54";
-  var weightAxisCaptionWidth = 35;
+  var highlightedDotColor = "red";
+  var weightAxisCaptionWidth = 50;
   var exonWeightsAreaHeight;
   var jxnWrapperPadding = 6;
   var sitePadding = 2;
-  var jxnWrapperHeight = 170;
+  var jxnWrapperHeight = 170; 
   var miniExonHeight = 12;
   var jxnCircleRadius = 3;
   var jxnBBoxWidth = jxnCircleRadius * 4;
@@ -107,6 +107,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     var that = this;
     axis = that.data.genomeAxis;
+    globalAxis = axis;
 
     width = axis.getWidth();
 
@@ -390,7 +391,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     });
 
       event.on("axisChange", function(ev,data){
-
         computeFlagPositions()
 
 
@@ -438,8 +438,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         // == update heatmap ==
         heatmapGroup.selectAll(".exonHeat").transition().attr({
-          x:function(d){return axis.genePosToScreenPos(d.start);},
-          width:function(d){return axis.genePosToScreenPos(d.end)-axis.genePosToScreenPos(d.start);}
+          x:function(d){return axis.genePosToScreenPos(axis.ascending ? d.start : d.end);},
+          width:function(d){return Math.abs(axis.genePosToScreenPos(d.end)-axis.genePosToScreenPos(d.start));}
         })
 
       })
@@ -530,7 +530,40 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
 
-    var exploreArea = svg.append("g").attr("transform", "translate(0, 5)").attr("id","exploreArea");
+    var labelFontSize = 24;
+    var svgLabel = svg.append("g");
+    var svgLabelBg = svgLabel.append("rect").attr({
+      "class": "viewLabelBg",
+      "fill": "#888",
+      "width": height + margin.top,
+      "rx": 10,
+      "ry": 10
+    });
+    var svgLabelText = svgLabel.append("text").text("junctions").attr({
+      "class": "viewLabelText",
+      "fill": "white",
+      "style": "font-size:" + labelFontSize,
+    });
+    bb = svgLabelText.node().getBBox();
+    svgLabelBg.attr({
+      "height": bb.height
+    })
+    function drawViewLabel(height) {
+      svgLabelBg.attr({
+        "width": height + margin.top
+      });
+      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-5) + ")")
+      svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
+                                 "rotate(-90)");
+    }
+    drawViewLabel(height);
+
+    var svgMain = svg.append("g").attr({
+      "class": "isoMain",
+      "transform": "translate(" + (bb.height+25) + ",0)"
+    });
+
+    var exploreArea = svgMain.append("g").attr("transform", "translate(0, 5)").attr("id","exploreArea");
     jxnArea = exploreArea.append("g").attr("id", "jxnArea");
 
 
@@ -674,6 +707,46 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       }).text(" ] exon overlap")
       heatmapGroup.append("text").attr("class", "crosshairPos")
 
+      heatmapGroup.append("svg:marker").attr({      
+        "id": "scaleArrow",
+        "viewBox": "0 0 10 10",
+        "refX": 0,
+        "refY": 5,
+        "markerUnits": "strokeWidth",
+        "markerWidth": 2,
+        "markerHeight": 2,
+        "orient": "auto",
+      }).append("svg:path").attr("d", "M 0 0 L 10 5 L 0 10 z");
+
+      heatmapGroup.append("line").attr({
+        "x1": axis.ascending ? 250 : 350,
+        "x2": axis.ascending ? 350 : 250,
+        "y1": 40,
+        "y2": 40,
+        "class": "scaleReverseToggle",
+        "stroke": "black",
+        "stroke-width": 10,
+        "marker-end": "url(\#scaleArrow)",
+      })
+      heatmapGroup.append("text").attr({
+        "transform": "translate(380, 45)"
+      }).text("click arrow to reverse direction")
+      heatmapGroup.append("rect").attr({
+        "opacity": 0,
+        "width": 150,
+        "height": 30,
+        "x": 230,
+        "y": 25
+      }).on("click", function() {
+        axis.reverse();
+        d3.select(".scaleReverseToggle").transition().attr({
+          "x1": axis.ascending ? 250 : 350,
+          "x2": axis.ascending ? 350 : 250,
+        })
+        event.fire("axisChange");
+      })
+
+
     function drawHeatmap(){
         var exonHeat = heatmapGroup.selectAll(".exonHeat").data(Object.keys(allExons).map(function(key){return allExons[key];}));
         exonHeat.exit().remove();
@@ -741,7 +814,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               bb = self.node().getBBox();
               self.attr({
                 "x": x + 10,
-                "y": (heatMapExtendedHeight + bb.height)/2
+                "y": heatMapExtendedHeight - bb.height/2
               });
             })
           lastX = x;
@@ -767,17 +840,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var yAxisJxn = d3.svg.axis()
         .orient("left")
         .scale(yScaleContJxn);
+      var fontSize = 12;
       var edgeAxisGroup = jxnArea.append("g")
         .attr("class", "axis")
         .call(yAxisJxn)
         .attr("transform", "translate(" + weightAxisCaptionWidth + " 0)");
       edgeAxisGroup.append("text")      // text label for the x axis
-        .attr("x", -20)
+        .attr("x", fontSize-weightAxisCaptionWidth)
         .attr("y", exonWeightsAreaHeight / 2)
         .attr("font-size", 12)
         .style("text-anchor", "middle")
-        .text("Junction Reads")
-        .attr("transform", "rotate(-90, " + (-weightAxisCaptionWidth - 10) + " " + exonWeightsAreaHeight / 2 + ")");
+        .text("# of junction reads")
+        .attr("transform", "rotate(-90, " + (fontSize-weightAxisCaptionWidth) +  " " + exonWeightsAreaHeight / 2 + ")");
     }
 
     function computeJxnGroups() {
@@ -870,8 +944,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var linesGroup = jxnArea.append("g");
 
         var startX = weightAxisCaptionWidth + jxnWrapperPadding;
-        for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
-
+        for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) { 
           var jxnGroup = jxnGroups[jxnGpInd];
           var wrapperWidth = groupWidth * jxnGroup.groups.length;
           grayStripesGroup.append("rect").attr({
