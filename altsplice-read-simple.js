@@ -227,7 +227,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
     // create crosshair
-    var crosshair = svg.append("line").attr({
+    var crosshair = svgMain.append("line").attr({
       "class":"crosshair",
       "x1":0,
       "y1":0,
