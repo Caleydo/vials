@@ -233,19 +233,21 @@ input.btn-mini {
 .RNASite[type=donor]{
   fill: $wes-gray;
   fill-opacity: 1;
-  stroke: $wes-gray;}
+  stroke: $wes-violet;}
 
 .RNASite[type=receptor]  {
-  fill: $white;
+  fill: white;
   fill-opacity: 1;
-  stroke: wes-gray;}
+  stroke: $wes-violet;}
 
 .RNASiteConnector[type=donor] {
-  stroke: $wes-blue;
+  //stroke: $wes-blue;
+  stroke: $wes-violet;
   fill: none}
 
 .RNASiteConnector[type=receptor] {
-  stroke: $wes-red;
+  //stroke: $wes-red;
+  stroke: $wes-violet;
   fill: none}
 
 .edgeAnchor {
@@ -274,6 +276,27 @@ path.stdDev{
   opacity: .8;
 }
 
+
+
+.strandIndicator{
+  //color:$wes-red;
+  fill:$wes-violet;
+  opacity: .8;
+  line{
+    stroke:$wes-violet;
+    opacity: .8;
+  }
+
+}
+
+.viewLabelBg{
+  fill:$wes-gray;
+  opacity: .5;
+}
+.viewLabelText{
+  fill:$wes-violet;
+  font-size: 18px;
+}
 
 // ===> here for html <===
 #visReads{

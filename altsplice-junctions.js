@@ -46,7 +46,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var exonWeightsAreaHeight;
   var jxnWrapperPadding = 6;
   var sitePadding = 2;
-  var jxnWrapperHeight = 170; 
+  var jxnWrapperHeight = 170;
   var miniExonHeight = 12;
   var jxnCircleRadius = 3;
   var jxnBBoxWidth = jxnCircleRadius * 4;
@@ -530,29 +530,31 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
 
-    var labelFontSize = 24;
+
+      //TODO: externalize into a function maybe a html version ?
+     /*
+     *
+     * Label for View starts here..
+     * */
     var svgLabel = svg.append("g");
     var svgLabelBg = svgLabel.append("rect").attr({
       "class": "viewLabelBg",
-      "fill": "#888",
       "width": height + margin.top,
       "rx": 10,
       "ry": 10
     });
     var svgLabelText = svgLabel.append("text").text("junctions").attr({
       "class": "viewLabelText",
-      "fill": "white",
-      "style": "font-size:" + labelFontSize,
     });
     bb = svgLabelText.node().getBBox();
     svgLabelBg.attr({
-      "height": bb.height
+      "height": bb.height+4
     })
     function drawViewLabel(height) {
       svgLabelBg.attr({
         "width": height + margin.top
       });
-      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-5) + ")")
+      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-3) + ")")
       svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
                                  "rotate(-90)");
     }
@@ -707,7 +709,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       }).text(" ] exon overlap")
       heatmapGroup.append("text").attr("class", "crosshairPos")
 
-      heatmapGroup.append("svg:marker").attr({      
+
+      // TODO: make it more like #70
+      // TODO: detach from heatmap group
+      /*
+      * strand Indicator starts here
+      * */
+      var indicatorGroup = heatmapGroup.append("g").attr({
+        class:"strandIndicator"
+      })
+
+      indicatorGroup.append("svg:marker").attr({
         "id": "scaleArrow",
         "viewBox": "0 0 10 10",
         "refX": 0,
@@ -718,20 +730,20 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "orient": "auto",
       }).append("svg:path").attr("d", "M 0 0 L 10 5 L 0 10 z");
 
-      heatmapGroup.append("line").attr({
+      indicatorGroup.append("line").attr({
         "x1": axis.ascending ? 250 : 350,
         "x2": axis.ascending ? 350 : 250,
         "y1": 40,
         "y2": 40,
         "class": "scaleReverseToggle",
-        "stroke": "black",
+        //"stroke": "black",
         "stroke-width": 10,
         "marker-end": "url(\#scaleArrow)",
       })
-      heatmapGroup.append("text").attr({
+      indicatorGroup.append("text").attr({
         "transform": "translate(380, 45)"
       }).text("click arrow to reverse direction")
-      heatmapGroup.append("rect").attr({
+      indicatorGroup.append("rect").attr({
         "opacity": 0,
         "width": 150,
         "height": 30,
@@ -944,7 +956,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var linesGroup = jxnArea.append("g");
 
         var startX = weightAxisCaptionWidth + jxnWrapperPadding;
-        for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) { 
+        for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
           var jxnGroup = jxnGroups[jxnGpInd];
           var wrapperWidth = groupWidth * jxnGroup.groups.length;
           grayStripesGroup.append("rect").attr({

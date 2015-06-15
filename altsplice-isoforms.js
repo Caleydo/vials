@@ -62,31 +62,33 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
 
-    var labelFontSize = 24;
+
+    //TODO: externalize into a function maybe a html version ?
+    /*
+     *
+     * Label for View starts here..
+     * */
     var svgLabel = svg.append("g");
     var svgLabelBg = svgLabel.append("rect").attr({
       "class": "viewLabelBg",
-      "fill": "#888",
       "width": height + margin.top,
       "rx": 10,
       "ry": 10
     });
     var svgLabelText = svgLabel.append("text").text("isoforms").attr({
       "class": "viewLabelText",
-      "fill": "white",
-      "style": "font-size:" + labelFontSize,
     });
     bb = svgLabelText.node().getBBox();
     svgLabelBg.attr({
-      "height": bb.height
+      "height": bb.height+4
     })
     function drawViewLabel(height) {
       svgLabelBg.attr({
         "width": height + margin.top
       });
-      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-5) + ")")
+      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-3) + ")")
       svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
-                                 "rotate(-90)");
+        "rotate(-90)");
     }
     drawViewLabel(height);
 
@@ -722,9 +724,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           highlightG.node().appendChild(this);
 
           // make BG white to cover other dots
-          highlightG.select(".highlightBG").style({
-            opacity:.5
-          })
+          // disabled on reviewers request -- #71
+          //highlightG.select(".highlightBG").style({
+          //  opacity:.5
+          //})
 
 
         })
