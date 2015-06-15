@@ -32,7 +32,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     return new GenomeVis(data, parent);
   }
 
-  var margin = {top: 40, right: 10, bottom: 20, left: 150};
+  var margin = {top: 40, right: 150, bottom: 20, left: 150};
   var width; // = 1050 - margin.left - margin.right,
   var groupWidth;
   var expandedWidth;
@@ -51,7 +51,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var jxnCircleRadius = 3;
   var jxnBBoxWidth = jxnCircleRadius * 4;
 
-  var RNAHeight = 80;
+  var RNAHeight = 50;
   var RNAMargin = 50;
   var isoformEdgePadding = 9;
 
@@ -391,6 +391,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     });
 
       event.on("axisChange", function(ev,data){
+        drawGenomeAxis();
         computeFlagPositions()
 
 
@@ -441,7 +442,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           x:function(d){return axis.genePosToScreenPos(axis.ascending ? d.start : d.end);},
           width:function(d){return Math.abs(axis.genePosToScreenPos(d.end)-axis.genePosToScreenPos(d.start));}
         })
-
+        indicatorGroup.select(".strandIndicatorBg").attr({
+          "width": axis.width,
+        })
       })
 
       event.on("LocHighlight", function(ev, data){
@@ -716,9 +719,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       * strand Indicator starts here
       * */
       var indicatorGroup = heatmapGroup.append("g").attr({
-        class:"strandIndicator"
+        class:"strandIndicator",
+        "transform": "translate(0,40)"
       })
-
+      var indicatorBg = indicatorGroup.append("rect").attr({
+        "class": "strandIndicatorBg",
+        "width": axis.width,
+        "height": 20,
+      })
       indicatorGroup.append("svg:marker").attr({
         "id": "scaleArrow",
         "viewBox": "0 0 10 10",
@@ -727,36 +735,93 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "markerUnits": "strokeWidth",
         "markerWidth": 2,
         "markerHeight": 2,
-        "orient": "auto",
+        "orient": "auto-start-reverse",
       }).append("svg:path").attr("d", "M 0 0 L 10 5 L 0 10 z");
 
-      indicatorGroup.append("line").attr({
-        "x1": axis.ascending ? 250 : 350,
-        "x2": axis.ascending ? 350 : 250,
-        "y1": 40,
-        "y2": 40,
-        "class": "scaleReverseToggle",
-        //"stroke": "black",
-        "stroke-width": 10,
-        "marker-end": "url(\#scaleArrow)",
+      function drawGenomeAxis() {
+        var divWidth = axis.width/5;
+
+        var genomeAxisTicks = indicatorGroup.selectAll(".genomeAxisTick").data(d3.range(divWidth, axis.width, divWidth));
+        genomeAxisTicks.exit().remove();
+        var genomeAxisTicksEnter = genomeAxisTicks.enter().append("g").attr({
+          "class": "genomeAxisTick",
+        });
+        genomeAxisTicksEnter.append("line").attr({
+          "y1": -10,
+          "y2": 0,
+        })
+        genomeAxisTicksEnter.append("line").attr({
+          "y1": 20,
+          "y2": 30,
+        })
+        genomeAxisTicks.transition().attr("transform", function(d) {return "translate(" + d + ",0)"})
+
+        var directionIndicators = indicatorGroup.selectAll(".directionIndicator").data(d3.range(divWidth/2, axis.width, divWidth));
+        directionIndicators.exit().remove();
+        directionIndicators.enter().append("line").attr({
+          "class": "directionIndicator",
+          "x1": function(d) {return d-10},
+          "x2": function(d) {return d+10},
+          "y1": 10,
+          "y2": 10,
+          //"stroke": "black",
+          "stroke-width": 5,
+          "marker-end": axis.ascending ? "url(\#scaleArrow)" : "",
+          "marker-start": axis.ascending ? "" : "url(\#scaleArrow)",
+        })
+        directionIndicators.transition().attr({
+          "x1": function(d) {return d + (axis.ascending ? -10 : 10)},
+          "x2": function(d) {return d + (axis.ascending ? 10 : -10)},
+        })
+
+        var genomeAxisDef = d3.svg.axis()
+          .scale(axis.scale_genePosToScreenPos)
+          .orient("bottom")
+          .tickValues(d3.range(divWidth, axis.width, divWidth).map(function(d) {
+            return axis.screenPosToGenePos(d);
+          }))
+          .tickSize(0)
+          .tickPadding(15);
+        var genomeAxis = indicatorGroup.selectAll(".genomeAxis").data([genomeAxisDef]);
+        genomeAxis.exit().remove();
+        genomeAxis.enter().append("g").attr({
+            "class":"axis genomeAxis",
+            "transform": "translate(0, -10)"
+        });
+        genomeAxis.call(genomeAxisDef);
+      }
+      drawGenomeAxis();
+
+      var directionToggleGroup = indicatorGroup.append("g").attr({
+        "class": "directionToggleGroup",
+        "transform": "translate(" + (axis.width+10) + ",0)"
       })
-      indicatorGroup.append("text").attr({
-        "transform": "translate(380, 45)"
-      }).text("click arrow to reverse direction")
-      indicatorGroup.append("rect").attr({
-        "opacity": 0,
-        "width": 150,
-        "height": 30,
-        "x": 230,
-        "y": 25
+      directionToggleGroup.append("line").attr({
+        "x1": 20,
+        "x2": 50,
+        "y1": 10,
+        "y2": 10,
+        //"stroke": "black",
+        "stroke-width": 5,
+        "marker-end": "url(\#scaleArrow)",
+        "marker-start": "url(\#scaleArrow)",
+      })
+      var directionToggleText = directionToggleGroup.append("text").attr({
+      }).text("reverse");
+      directionToggleText.attr("transform", "translate(65," + (directionToggleText.node().getBBox().height-2) + ")");
+      directionToggleGroup.append("rect").attr({
+        "class": "directionToggle",
+        "width": 125,
+        "height": 20,
+        "rx": 10,
+        "ry": 10
       }).on("click", function() {
         axis.reverse();
-        d3.select(".scaleReverseToggle").transition().attr({
-          "x1": axis.ascending ? 250 : 350,
-          "x2": axis.ascending ? 350 : 250,
+        d3.select(".directionIndicator").transition().attr({
         })
         event.fire("axisChange");
       })
+
 
 
     function drawHeatmap(){
@@ -780,12 +845,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         heatmapGroup.selectAll(".background").attr({
           width: width
         })
+        indicatorGroup.select(".strandIndicatorBg").attr({
+          "width": axis.width,
+        })
+        indicatorGroup.select(".directionToggleGroup").attr({
+          "transform": "translate(" + (axis.width + 10) + ",0)"
+        });
 
-      heatmapGroup.selectAll(".heatmapLabel").attr({
-        x: width +5
-      })
-
-
+        heatmapGroup.selectAll(".heatmapLabel").attr({
+          x: width +5
+        })
+        drawGenomeAxis();
     }
 
 

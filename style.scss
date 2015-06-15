@@ -214,6 +214,27 @@ path.selectionParco{
 
 }
 
+.strandIndicator {
+  .genomeAxisTicks {
+    stroke: black;
+    stroke-width: 2px
+  }
+}
+
+.axis.genomeAxis {
+  path {
+    stroke: none
+  }
+  .tick text {
+      font-size: 14px
+  }
+}
+
+.directionToggle {
+  fill: none;
+  pointer-events: visible;
+  stroke: $wes-gray
+}
 
 // UI fixes:
 
@@ -285,6 +306,10 @@ path.stdDev{
   line{
     stroke:$wes-violet;
     opacity: .8;
+  }
+  .strandIndicatorBg {
+    fill:$wes-violet;
+    fill-opacity:.1;
   }
 
 }
