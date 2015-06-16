@@ -17,9 +17,12 @@ define(['exports','d3'],function(exports,d3){
 
     this.brokenDomain = [0,100];
     this.brokenRange = [0,100];
+    this.brokenRangeAsc = [0,100];
+    this.brokenRangeDesc = [100,0];
 
     this.avrgExonLength = 30;
 
+    this.ascending = true;
     this.shrinkIntronsState = false;
 
     var that = this;
@@ -59,8 +62,6 @@ define(['exports','d3'],function(exports,d3){
       that.scale_arrayPosToGenePos.range([start,end])
       that.geneStart = start;
       that.geneEnd = end;
-
-
     }
 
     this.shrinkIntrons = function(shrink){
@@ -76,20 +77,38 @@ define(['exports','d3'],function(exports,d3){
       }else{
 
         // unbreak
-        this.scale_arrayPosToScreenPos.domain([0, that.arrayWidth]).range([0,that.width]);
-        this.scale_genePosToScreenPos.domain([that.geneStart, that.geneEnd]).range([0, that.width]);
-        this.scale_arrayPosToGenePos.domain([0, that.arrayWidth]).range([that.geneStart, that.geneEnd]);
+        that.scale_arrayPosToScreenPos.domain([0, that.arrayWidth]).range([0,that.width]);
+        that.scale_genePosToScreenPos.domain([that.geneStart, that.geneEnd]).range([0, that.width]);
+        that.scale_arrayPosToGenePos.domain([0, that.arrayWidth]).range([that.geneStart, that.geneEnd]);
+        if (!that.ascending) {
+          reverseRange(that.scale_arrayPosToScreenPos);
+          reverseRange(that.scale_genePosToScreenPos);
+        }
       }
-
-
-
     }
 
     this.getWidth= function () {
       return that.width;
     }
 
-
+    this.reverse = function() {
+      that.ascending = !that.ascending;
+      that.brokenRange = that.ascending ? that.brokenRangeAsc : that.brokenRangeDesc;
+      reverseRange(that.scale_arrayPosToScreenPos);
+      reverseRange(that.scale_genePosToScreenPos);
+    }
+    function reverseRange(scale) {
+      // reverse ranges in place
+      var revRange;
+      if (that.shrinkIntronsState) {
+        revRange = that.brokenRange;
+      }
+      else {
+        revRange = scale.range().slice(0)
+        revRange.reverse();
+      }
+      scale.range(revRange);
+    }
 
     this.calculateBreakPointsByGenePos= function(ranges){
       if (ranges.length<1) return;
@@ -150,11 +169,11 @@ define(['exports','d3'],function(exports,d3){
 
       that.width = xPosAcc;
       that.brokenDomain = d3_domain;
-      that.brokenRange = d3_range;
-
+      that.brokenRangeAsc = d3_range;
+      that.brokenRangeDesc = d3_range.map(function(d) {return that.width - d});
+      that.brokenRange = that.ascending ? that.brokenRangeAsc : that.brokenRangeDesc;
 
       that.shrinkIntrons(that.shrinkIntronsState);
-
     }
 
 

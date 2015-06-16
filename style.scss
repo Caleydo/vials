@@ -214,6 +214,27 @@ path.selectionParco{
 
 }
 
+.strandIndicator {
+  .genomeAxisTicks {
+    stroke: black;
+    stroke-width: 2px
+  }
+}
+
+.axis.genomeAxis {
+  path {
+    stroke: none
+  }
+  .tick text {
+      font-size: 14px
+  }
+}
+
+.directionToggle {
+  fill: none;
+  pointer-events: visible;
+  stroke: $wes-gray
+}
 
 // UI fixes:
 
@@ -231,21 +252,23 @@ input.btn-mini {
 
 
 .RNASite[type=donor]{
-  fill: $wes-blue;
+  fill: $wes-gray;
   fill-opacity: 1;
-  stroke: $wes-blue;}
+  stroke: $wes-violet;}
 
 .RNASite[type=receptor]  {
-  fill: $wes-red;
+  fill: white;
   fill-opacity: 1;
-  stroke: $wes-red;}
+  stroke: $wes-violet;}
 
 .RNASiteConnector[type=donor] {
-  stroke: $wes-blue;
+  //stroke: $wes-blue;
+  stroke: $wes-violet;
   fill: none}
 
 .RNASiteConnector[type=receptor] {
-  stroke: $wes-red;
+  //stroke: $wes-red;
+  stroke: $wes-violet;
   fill: none}
 
 .edgeAnchor {
@@ -274,6 +297,31 @@ path.stdDev{
   opacity: .8;
 }
 
+
+
+.strandIndicator{
+  //color:$wes-red;
+  fill:$wes-violet;
+  opacity: .8;
+  line{
+    stroke:$wes-violet;
+    opacity: .8;
+  }
+  .strandIndicatorBg {
+    fill:$wes-violet;
+    fill-opacity:.1;
+  }
+
+}
+
+.viewLabelBg{
+  fill:$wes-gray;
+  opacity: .5;
+}
+.viewLabelText{
+  fill:$wes-violet;
+  font-size: 18px;
+}
 
 // ===> here for html <===
 #visReads{

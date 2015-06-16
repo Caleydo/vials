@@ -32,7 +32,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     return new GenomeVis(data, parent);
   }
 
-  var margin = {top: 40, right: 10, bottom: 20, left: 150};
+  var margin = {top: 40, right: 150, bottom: 20, left: 150};
   var width; // = 1050 - margin.left - margin.right,
   var groupWidth;
   var expandedWidth;
@@ -42,7 +42,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var defaultDotColor = "rgba(90,90,90,0.3)";
   var dehighlightedDotColor = "rgba(120,120,120,0.05)";
   var highlightedDotColor = "red";
-  var weightAxisCaptionWidth = 35;
+  var weightAxisCaptionWidth = 50;
   var exonWeightsAreaHeight;
   var jxnWrapperPadding = 6;
   var sitePadding = 2;
@@ -51,7 +51,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var jxnCircleRadius = 3;
   var jxnBBoxWidth = jxnCircleRadius * 4;
 
-  var RNAHeight = 80;
+  var RNAHeight = 50;
   var RNAMargin = 50;
   var isoformEdgePadding = 9;
 
@@ -107,6 +107,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     var that = this;
     axis = that.data.genomeAxis;
+    globalAxis = axis;
 
     width = axis.getWidth();
 
@@ -123,7 +124,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
 
-      var viewOptionsDiv1 = $parent.append("div").attr("class","isoOptions").style({
+      var viewOptionsDiv1 = $parent.append("div")
+        .attr("class","isoOptions hidden-print")
+        //.attr("class","isoOptions")
+        .style({
         "left": "20px",
         "position":"relative"
       })
@@ -387,7 +391,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     });
 
       event.on("axisChange", function(ev,data){
-
+        drawGenomeAxis();
         computeFlagPositions()
 
 
@@ -435,10 +439,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         // == update heatmap ==
         heatmapGroup.selectAll(".exonHeat").transition().attr({
-          x:function(d){return axis.genePosToScreenPos(d.start);},
-          width:function(d){return axis.genePosToScreenPos(d.end)-axis.genePosToScreenPos(d.start);}
+          x:function(d){return axis.genePosToScreenPos(axis.ascending ? d.start : d.end);},
+          width:function(d){return Math.abs(axis.genePosToScreenPos(d.end)-axis.genePosToScreenPos(d.start));}
         })
-
+        indicatorGroup.select(".strandIndicatorBg").attr({
+          "width": axis.width,
+        })
       })
 
       event.on("LocHighlight", function(ev, data){
@@ -527,7 +533,43 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
 
-    var exploreArea = svg.append("g").attr("transform", "translate(0, 5)").attr("id","exploreArea");
+
+      //TODO: externalize into a function maybe a html version ?
+     /*
+     *
+     * Label for View starts here..
+     * */
+    var svgLabel = svg.append("g");
+    var svgLabelBg = svgLabel.append("rect").attr({
+      "class": "viewLabelBg",
+      "width": height + margin.top,
+      "rx": 10,
+      "ry": 10
+    });
+    var svgLabelText = svgLabel.append("text").text("junctions").attr({
+      "class": "viewLabelText",
+    });
+    bb = svgLabelText.node().getBBox();
+    svgLabelBg.attr({
+      "height": bb.height+4
+    })
+    function drawViewLabel(height) {
+      svgLabelBg.attr({
+        "width": height + margin.top
+      });
+      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-3) + ")")
+      svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
+                                 "rotate(-90)");
+    }
+    drawViewLabel(height);
+
+    var viewLabelMargin = 40;
+    var svgMain = svg.append("g").attr({
+      "class": "jxnMain",
+      "transform": "translate(" + viewLabelMargin + ",0)"
+    });
+
+    var exploreArea = svgMain.append("g").attr("transform", "translate(0, 5)").attr("id","exploreArea");
     jxnArea = exploreArea.append("g").attr("id", "jxnArea");
 
 
@@ -671,6 +713,118 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       }).text(" ] exon overlap")
       heatmapGroup.append("text").attr("class", "crosshairPos")
 
+
+      // TODO: make it more like #70
+      // TODO: detach from heatmap group
+      /*
+      * strand Indicator starts here
+      * */
+      var indicatorGroup = heatmapGroup.append("g").attr({
+        class:"strandIndicator",
+        "transform": "translate(0,40)"
+      })
+      var indicatorBg = indicatorGroup.append("rect").attr({
+        "class": "strandIndicatorBg",
+        "width": axis.width,
+        "height": 20,
+      })
+      indicatorGroup.append("svg:marker").attr({
+        "id": "scaleArrow",
+        "viewBox": "0 0 10 10",
+        "refX": 0,
+        "refY": 5,
+        "markerUnits": "strokeWidth",
+        "markerWidth": 2,
+        "markerHeight": 2,
+        "orient": "auto-start-reverse",
+      }).append("svg:path").attr("d", "M 0 0 L 10 5 L 0 10 z");
+
+      function drawGenomeAxis() {
+        var divWidth = axis.width/5;
+
+        var genomeAxisTicks = indicatorGroup.selectAll(".genomeAxisTick").data(d3.range(divWidth, axis.width, divWidth));
+        genomeAxisTicks.exit().remove();
+        var genomeAxisTicksEnter = genomeAxisTicks.enter().append("g").attr({
+          "class": "genomeAxisTick",
+        });
+        genomeAxisTicksEnter.append("line").attr({
+          "y1": -10,
+          "y2": 0,
+        })
+        genomeAxisTicksEnter.append("line").attr({
+          "y1": 20,
+          "y2": 30,
+        })
+        genomeAxisTicks.transition().attr("transform", function(d) {return "translate(" + d + ",0)"})
+
+        var directionIndicators = indicatorGroup.selectAll(".directionIndicator").data(d3.range(divWidth/2, axis.width, divWidth));
+        directionIndicators.exit().remove();
+        directionIndicators.enter().append("line").attr({
+          "class": "directionIndicator",
+          "x1": function(d) {return d-10},
+          "x2": function(d) {return d+10},
+          "y1": 10,
+          "y2": 10,
+          //"stroke": "black",
+          "stroke-width": 5,
+          "marker-end": axis.ascending ? "url(\#scaleArrow)" : "",
+          "marker-start": axis.ascending ? "" : "url(\#scaleArrow)",
+        })
+        directionIndicators.transition().attr({
+          "x1": function(d) {return d + (axis.ascending ? -10 : 10)},
+          "x2": function(d) {return d + (axis.ascending ? 10 : -10)},
+        })
+
+        var genomeAxisDef = d3.svg.axis()
+          .scale(axis.scale_genePosToScreenPos)
+          .orient("bottom")
+          .tickValues(d3.range(divWidth, axis.width, divWidth).map(function(d) {
+            return axis.screenPosToGenePos(d);
+          }))
+          .tickSize(0)
+          .tickPadding(15);
+        var genomeAxis = indicatorGroup.selectAll(".genomeAxis").data([genomeAxisDef]);
+        genomeAxis.exit().remove();
+        genomeAxis.enter().append("g").attr({
+            "class":"axis genomeAxis",
+            "transform": "translate(0, -10)"
+        });
+        genomeAxis.call(genomeAxisDef);
+      }
+      drawGenomeAxis();
+
+      var directionToggleGroup = indicatorGroup.append("g").attr({
+        "class": "directionToggleGroup",
+        "transform": "translate(" + (axis.width+10) + ",0)"
+      })
+      directionToggleGroup.append("line").attr({
+        "x1": 20,
+        "x2": 50,
+        "y1": 10,
+        "y2": 10,
+        //"stroke": "black",
+        "stroke-width": 5,
+        "marker-end": "url(\#scaleArrow)",
+        "marker-start": "url(\#scaleArrow)",
+      })
+      var directionToggleText = directionToggleGroup.append("text").attr({
+      }).text("reverse");
+      directionToggleText.attr("transform", "translate(65," + (directionToggleText.node().getBBox().height-2) + ")");
+      directionToggleGroup.append("rect").attr({
+        "class": "directionToggle",
+        "width": 125,
+        "height": 20,
+        "rx": 10,
+        "ry": 10
+      }).on("click", function() {
+        axis.reverse();
+        d3.select(".directionIndicator").transition().attr({
+        })
+        event.fire("axisChange");
+      })
+
+
+
     function drawHeatmap(){
         var exonHeat = heatmapGroup.selectAll(".exonHeat").data(Object.keys(allExons).map(function(key){return allExons[key];}));
         exonHeat.exit().remove();
@@ -692,12 +846,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         heatmapGroup.selectAll(".background").attr({
           width: width
         })
+        indicatorGroup.select(".strandIndicatorBg").attr({
+          "width": axis.width,
+        })
+        indicatorGroup.select(".directionToggleGroup").attr({
+          "transform": "translate(" + (axis.width + 10) + ",0)"
+        });
 
-      heatmapGroup.selectAll(".heatmapLabel").attr({
-        x: width +5
-      })
-
-
+        heatmapGroup.selectAll(".heatmapLabel").attr({
+          x: width +5
+        })
+        drawGenomeAxis();
     }
 
 
@@ -718,7 +877,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var currentX = 0;
         heatmapGroup.on("mousemove", function () {
           currentX = d3.mouse(this)[0];
-          event.fire("crosshair", currentX);
+          event.fire("crosshair", currentX - viewLabelMargin);
 
         })
 
@@ -738,7 +897,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               bb = self.node().getBBox();
               self.attr({
                 "x": x + 10,
-                "y": (heatMapExtendedHeight + bb.height)/2
+                "y": heatMapExtendedHeight - bb.height/2
               });
             })
           lastX = x;
@@ -764,17 +923,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var yAxisJxn = d3.svg.axis()
         .orient("left")
         .scale(yScaleContJxn);
+      var fontSize = 12;
       var edgeAxisGroup = jxnArea.append("g")
         .attr("class", "axis")
         .call(yAxisJxn)
         .attr("transform", "translate(" + weightAxisCaptionWidth + " 0)");
       edgeAxisGroup.append("text")      // text label for the x axis
-        .attr("x", -20)
+        .attr("x", fontSize-weightAxisCaptionWidth)
         .attr("y", exonWeightsAreaHeight / 2)
         .attr("font-size", 12)
         .style("text-anchor", "middle")
-        .text("Junction Reads")
-        .attr("transform", "rotate(-90, " + (-weightAxisCaptionWidth - 10) + " " + exonWeightsAreaHeight / 2 + ")");
+        .text("# of junction reads")
+        .attr("transform", "rotate(-90, " + (fontSize-weightAxisCaptionWidth) +  " " + exonWeightsAreaHeight / 2 + ")");
     }
 
     function computeJxnGroups() {
@@ -868,7 +1028,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         var startX = weightAxisCaptionWidth + jxnWrapperPadding;
         for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
-
           var jxnGroup = jxnGroups[jxnGpInd];
           var wrapperWidth = groupWidth * jxnGroup.groups.length;
           grayStripesGroup.append("rect").attr({
