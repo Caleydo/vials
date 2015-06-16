@@ -92,9 +92,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
     drawViewLabel(height);
 
+    var viewLabelMargin = 40;
     var svgMain = svg.append("g").attr({
       "class": "isoMain",
-      "transform": "translate(" + (bb.height+25) + ",0)"
+      "transform": "translate(" + viewLabelMargin + ",0)"
     });
 
     var gExonRanges = svgMain.append("g").attr({
@@ -128,7 +129,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     var currentX = 0;
     svg.on("mousemove", function () {
       currentX = d3.mouse(this)[0];
-      event.fire("crosshair", currentX);
+      event.fire("crosshair", currentX - viewLabelMargin);
 
     })
 

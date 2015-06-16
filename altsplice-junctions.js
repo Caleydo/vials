@@ -563,9 +563,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     }
     drawViewLabel(height);
 
+    var viewLabelMargin = 40;
     var svgMain = svg.append("g").attr({
-      "class": "isoMain",
-      "transform": "translate(" + (bb.height+25) + ",0)"
+      "class": "jxnMain",
+      "transform": "translate(" + viewLabelMargin + ",0)"
     });
 
     var exploreArea = svgMain.append("g").attr("transform", "translate(0, 5)").attr("id","exploreArea");
@@ -876,7 +877,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var currentX = 0;
         heatmapGroup.on("mousemove", function () {
           currentX = d3.mouse(this)[0];
-          event.fire("crosshair", currentX);
+          event.fire("crosshair", currentX - viewLabelMargin);
 
         })
 
