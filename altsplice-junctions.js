@@ -392,10 +392,94 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       event.on("axisChange", function(ev,data){
         drawGenomeAxis();
+
+        var startX = weightAxisCaptionWidth + jxnWrapperPadding;
+
+
+        var translateAmount = 2 * startX + groupWidth * edgeCount + jxnWrapperPadding * (jxnGroups.length - 1)
+
+       d3.selectAll(".grayStripesGroup").transition()
+          .duration(300).attr(
+
+         {
+           "transform": axis.ascending ? "" : " translate(" + translateAmount  + ", 0) scale(-1, 1)"
+         })
+
         computeFlagPositions()
 
+        var connectors = d3.selectAll(".JXNAreaConnector");
+        connectors.attr({
+          "x1": function() {
+            return translateAmount - parseInt(this.getAttribute("x1"))  - parseInt(this.getAttribute("wrapperWidth"));
+          },
+          "x2": function() {
+            return parseInt(this.getAttribute("x1")) + parseInt(this.getAttribute("wrapperWidth"));
+          },
+          "x3": function() {
+            var loc = this.getAttribute("loc");
+            return getBucketAt(loc).anchor
+          }
+        })
+        connectors.transition()
+          .duration(300).attr({
+            "points": function() {
+              return getConnectorPoints(this)
+            }
+          })
 
-          d3.selectAll(".RNASite").transition()
+
+
+        d3.selectAll(".edgeConnector").transition()
+          .duration(300).attr({
+            "x1": function() {
+              return translateAmount - parseInt(this.getAttribute("x1"));
+            },
+            "x2": function() {
+              var type = this.getAttribute("type");
+              var loc = type == "donor" ?
+                this.getAttribute("startLoc") :  this.getAttribute("endLoc");
+              var endInd = getBucketIndAt(loc)
+              return buckets[endInd].anchor;
+            }
+          })
+
+        if (!axis.ascending)
+        startX = translateAmount - startX;
+      d3.selectAll(".jxnWrapper").each(function(d, i) {
+          d3.select(this).selectAll(".edgeGroup").transition().duration(300).attr({
+            "transform": function(d, i) {
+              return axis.ascending ?
+              "translate(" + (startX + groupWidth * i) + ", 0)" :
+              "translate(" + (startX - groupWidth * (i + 1)) + ", 0)"
+            },
+          })
+        var shift = groupWidth * jxnGroups[i].groups.length + jxnWrapperPadding;
+        startX = axis.ascending ? startX + shift : startX - shift;
+      });
+
+        for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
+
+          var jxnGroup = jxnGroups[jxnGpInd];
+
+          var jxnGroupWrapper = jxnArea.append("g").attr({
+            "class": ""
+          });
+
+          var edgeGroups = jxnGroupWrapper.selectAll(".edgeGroup").data(jxnGroup.groups).enter().append("g").attr({
+            "class": "edgeGroup",
+            "ActiveIsoform": -1,
+            "startLoc": function(g) {return g.startLoc},
+            "endLoc": function(g) {return g.endLoc},
+            "transform": function(d, i) {
+              return "translate(" + (startX + groupWidth * i) + ", 0)"
+            },
+            "startX": function(d, i) {return startX + groupWidth * i}
+          });
+
+          startX += groupWidth * jxnGroups[jxnGpInd].groups.length + jxnWrapperPadding;
+        }
+
+        d3.selectAll(".RNASite").transition()
           .duration(300).attr({
             "transform": function(d, i) {return "translate(" + d.xStart + ",0)"}
           })
@@ -411,31 +495,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             }
           })
 
-
-        d3.selectAll(".edgeConnector").transition()
-          .duration(300).attr({
-            "x2": function() {
-              var type = this.getAttribute("type");
-              var loc = type == "donor" ?
-                this.getAttribute("startLoc") :  this.getAttribute("endLoc");
-              var endInd = getBucketIndAt(loc)
-              return buckets[endInd].anchor;
-            }
-          })
-
-        var connectors = d3.selectAll(".JXNAreaConnector");
-        connectors.attr({
-          "x3": function() {
-            var loc = this.getAttribute("loc");
-            return getBucketAt(loc).anchor
-          }
-        })
-        connectors.transition()
-          .duration(300).attr({
-            "points": function() {
-              return getConnectorPoints(this)
-            }
-          })
 
         // == update heatmap ==
         heatmapGroup.selectAll(".exonHeat").transition().attr({
@@ -996,15 +1055,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           ]
         }
         else {
-
-          return positiveStrand ? [
+          return ((positiveStrand && axis.ascending) || (!positiveStrand && !axis.ascending))  ? [
             connector.getAttribute("x1"), jxnWrapperHeight,
             connector.getAttribute("x2"), jxnWrapperHeight,
             buckets[bucketInd].anchor, getDonorY(),
             connector.getAttribute("x3"), getDonorY(),
           ] :
-            [
-              connector.getAttribute("x1"), jxnWrapperHeight,
+            [ connector.getAttribute("x1"), jxnWrapperHeight,
               connector.getAttribute("x2"), jxnWrapperHeight,
               connector.getAttribute("x3"), getDonorY(),
               buckets[bucketInd].anchor, getDonorY(),
@@ -1021,11 +1078,14 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       var lastFlagX = buckets[buckets.length - 1].xEnd;
         groupWidth =  (80 + lastFlagX -  weightAxisCaptionWidth - jxnWrapperPadding * jxnGroups.length) / edgeCount;
 
+        var startX = weightAxisCaptionWidth + jxnWrapperPadding;
 
-        var grayStripesGroup = jxnArea.append("g");
+
+        var grayStripesGroup = jxnArea.append("g").attr({
+          "class": "grayStripesGroup"
+        });
         var linesGroup = jxnArea.append("g");
 
-        var startX = weightAxisCaptionWidth + jxnWrapperPadding;
         for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
           var jxnGroup = jxnGroups[jxnGpInd];
           var wrapperWidth = groupWidth * jxnGroup.groups.length;
@@ -1053,6 +1113,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           var donorLoc = sortedWeights[jxnGroup.start].start;
           var donorInd = getBucketIndAt(donorLoc);
           jxnArea.append("polygon").attr({
+            wrapperWidth: wrapperWidth,
             x1: startX,
             x2: startX + wrapperWidth,
             x3: buckets[donorInd].anchor,
@@ -1091,8 +1152,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "transform": function(d, i) {
             return "translate(" + (startX + groupWidth * i) + ", 0)"
           },
-          "startX": function(d, i) {return startX + groupWidth * i},
+          "startX": function(d, i) {return startX + groupWidth * i}
         });
+
 
 
         edgeGroups.each(function(group, groupInd) {
@@ -1521,9 +1583,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           ]
         }
       })
-
   }
-
 
       function computeFlagPositions() {
         // compute desired positions
@@ -1551,30 +1611,40 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           }
         }
 
-        for (var i = 1; i < buckets.length; ++i) {
-          buckets[i].firstGroupBucket = i;
+
+        bucketsCopy = buckets.slice();
+
+        if (!axis.ascending)
+          bucketsCopy.reverse();
+
+        // important to initialize this, as we start from i = 1
+        bucketsCopy[0].firstGroupBucket = 0;
+
+        for (var i = 1; i < bucketsCopy.length; ++i) {
+          bucketsCopy[i].firstGroupBucket = i;
           var ind = i;
           var shift = -1;
-          while (shift < 0 && ind > 0 && (buckets[ind].xStart < buckets[ind - 1].xEnd + sitePadding)) {
-            var firstInd = buckets[ind - 1].firstGroupBucket;
-            var overlap = buckets[ind - 1].xEnd + sitePadding - buckets[ind].xStart;
+          while (shift < 0 && ind > 0 && (bucketsCopy[ind].xStart < bucketsCopy[ind - 1].xEnd + sitePadding)) {
+            var firstInd = bucketsCopy[ind - 1].firstGroupBucket;
+            var overlap = bucketsCopy[ind - 1].xEnd + sitePadding - bucketsCopy[ind].xStart;
             for (var j = ind; j <= i; ++j) {
-              buckets[j].xStart += overlap
-              buckets[j].xEnd += overlap
-              buckets[j].firstGroupBucket = firstInd
+              bucketsCopy[j].xStart += overlap
+              bucketsCopy[j].xEnd += overlap
+              bucketsCopy[j].firstGroupBucket = firstInd
             }
-            var leftGap = buckets[firstInd].xStartDesired - buckets[firstInd].xStart;
-            var rightGap = buckets[i].xStart - buckets[i].xStartDesired;
+            var leftGap = bucketsCopy[firstInd].xStartDesired - bucketsCopy[firstInd].xStart;
+            var rightGap = bucketsCopy[i].xStart - bucketsCopy[i].xStartDesired;
             shift = (leftGap - rightGap) / 2;
-            shift = Math.min(shift, axis.getWidth() - buckets[i].xStart)
-            shift = Math.max(shift,  -buckets[firstInd].xStart)
+            shift = Math.min(shift, axis.getWidth() - bucketsCopy[i].xStart)
+            shift = Math.max(shift,  -bucketsCopy[firstInd].xStart)
             for (var j = firstInd; j <= i; ++j) {
-              buckets[j].xStart += shift
-              buckets[j].xEnd += shift
+              bucketsCopy[j].xStart += shift
+              bucketsCopy[j].xEnd += shift
             }
             ind = firstInd;
           }
         }
+
         for (var i = 0; i < buckets.length; ++i) {
           var b = buckets[i];
           b.anchor = b.type == (positiveStrand ? "donor" : "receptor") ? b.xEnd : b.xStart;
