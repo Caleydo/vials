@@ -234,6 +234,11 @@ path.selectionParco{
   fill: none;
   pointer-events: visible;
   stroke: $wes-gray
+
+
+}
+.directionToggle.selected{
+  fill: $wes-green
 }
 
 // UI fixes:
