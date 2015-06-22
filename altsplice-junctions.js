@@ -818,7 +818,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
         var arrowDirection = (axis.ascending == positiveStrand); // XNOR
-        console.log("arrowDir", arrowDirection);
         var directionIndicators = indicatorGroup.selectAll(".directionIndicator").data(d3.range(divWidth/2, axis.width, divWidth));
         directionIndicators.exit().remove();
         directionIndicators.enter().append("line").attr({
@@ -942,7 +941,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var currentX = 0;
         heatmapGroup.on("mousemove", function () {
           currentX = d3.mouse(this)[0];
-          event.fire("crosshair", currentX - viewLabelMargin);
+          //console.log("mouse", currentX);
+          event.fire("crosshair", currentX);
 
         })
 
