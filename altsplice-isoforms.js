@@ -220,11 +220,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }).on({
           "mouseover":function(){
             //console.log("min", d3.event.target
-              d3.select(this).select(".background").classed("selected", true);
+              d3.select(this).select(".background rect").classed("selected", true);
             },
           "mouseout":function(){
             //console.log("mout", d3.event.target)
-            d3.select(this).select(".background").classed("selected", false);
+            d3.select(this).select(".background rect").classed("selected", false);
           }
         })
 
@@ -233,10 +233,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         /*
         * reactive background
         * */
-        isoformEnter.append("rect").attr({
+        var bg = isoformEnter.append("g").attr("class","background");
+        bg.append("rect").attr({
           width:width,
-          height:exonHeight,
-          class:"background"
+          height:exonHeight
         }).on({
           //"mouseover": function(){d3.select(this).classed("selected", true);},
           //"mouseout": function(){d3.select(this).classed("selected", false);},
@@ -258,9 +258,70 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
 
-        isoform.select(".background").attr({
+        isoform.select(".background rect").attr({
           width:axisOffset+scatterWidth//width+margin.right-2
         })
+
+      /*
+       * ========================
+       * Draw boxplots
+       * =========================
+       * */
+
+      var boxPlotGroup = bg.append("g").attr("class","boxPlot");
+      boxPlotGroup.selectAll(".vticks").data(function (d) {
+        return [
+          d.boxPlot.whiskerDown,
+          d.boxPlot.Q[1],
+          d.boxPlot.Q[2],
+          d.boxPlot.Q[3],
+          d.boxPlot.whiskerTop]
+      }).enter().append("line").attr({
+        class:"vticks",
+        x1:function(d){return scaleXScatter(d);},
+        x2:scaleXScatter,
+        y1:1,
+        y2:exonHeight-2
+      })
+
+      boxPlotGroup.selectAll(".hticks").data(function (d) {
+        return [
+          [1, d.boxPlot.Q[1], d.boxPlot.Q[3]],
+          [exonHeight-2, d.boxPlot.Q[1], d.boxPlot.Q[3]]
+        ];
+      }).enter().append("line").attr({
+        class:"hticks",
+        x1:function(d){return scaleXScatter(d[1]);},
+        x2:function(d){return scaleXScatter(d[2]);},
+        y1:function(d){return d[0];},
+        y2:function(d){return d[0];}
+      })
+
+      boxPlotGroup.selectAll(".wticks").data(function (d) {
+        return [
+          [d.boxPlot.whiskerDown, d.boxPlot.Q[1]],
+          [d.boxPlot.Q[3], d.boxPlot.whiskerTop]
+        ];
+      }).enter().append("line").attr({
+        class:"wticks",
+        x1:function(d){return scaleXScatter(d[0]);},
+        x2:function(d){return scaleXScatter(d[1]);},
+        y1:exonHeight/2,
+        y2:exonHeight/2
+      })
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         isoformEnter.append("g").attr("class","foreground");
@@ -462,7 +523,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         // --- changing nodes for sampleDot
         sampleDot.attr({
             cx: function(d){return  scaleXScatter(d.weight)},
-            cy: function(){return exonHeight/4+Math.random()*exonHeight/2}
+            cy: function(){return exonHeight/4+Math.random()*exonHeight/2} // TODO: remove scatter
         })
 
 
@@ -1011,7 +1072,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               });
 
 
-            res.mean = d3.mean(res.weights.map(function(d){return d.weight;}))
+            var allWeights = res.weights.map(function(d){return d.weight;})
+            res.mean = d3.mean(allWeights)
+            res.boxPlot = computeBoxPlot(allWeights)
             usedIsoformsList.push(res)
           }else{
             console.log("isoform measured but no meta: ", isokey);
@@ -1036,6 +1099,32 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
 
     }
+
+
+    //*** HELPER (copied from junction view) *****
+    //TODO: better object orientation (no duplicates)
+
+    function computeBoxPlot(values) {
+      var sortedJxns = values.sort(d3.ascending);
+      var Q = new Array(5);
+      Q[0] = d3.min(sortedJxns);
+      Q[4] = d3.max(sortedJxns);
+      Q[1] = d3.quantile(sortedJxns, 0.25);
+      Q[2] = d3.quantile(sortedJxns, 0.5);
+      Q[3] = d3.quantile(sortedJxns, 0.75);
+      var iqr = 1.5 * (Q[3] - Q[1]);
+      var whiskerTop, whiskerDown;
+      {
+        var i = -1;
+        var j = sortedJxns.length;
+        while ((sortedJxns[++i] < Q[1] - iqr));
+        while (sortedJxns[--j] > Q[3] + iqr);
+        whiskerTop = j == sortedJxns.length - 1 ? sortedJxns[j] : Q[3] + iqr;
+        whiskerDown = i == 0 ? sortedJxns[i] : Q[1] - iqr;
+      }
+      return {"whiskerTop": whiskerTop, "whiskerDown": whiskerDown, "Q": Q};
+    }
+
 
 
 

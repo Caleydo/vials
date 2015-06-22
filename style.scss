@@ -54,6 +54,18 @@ $wes-blue: #0093dd;
     fill-opacity:.001;
 
   }
+
+  .boxPlot{
+    stroke-width: 1px;
+    stroke:$wes-violet;
+
+    .wticks{
+      stroke-dasharray: 3, 3;
+    }
+
+  }
+
+
   .selected{
     stroke:$wes-yellow;
   }
