@@ -260,9 +260,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "x1":x,
           "x2":x
         })
-        if (dataType == "BodyMap") {
           svg.selectAll(".abundance .crosshairValue")
-            .text(function(d) {return d.weights[that.axis.screenPosToArrayPos(x)].toFixed(3)})
+            .text(function(d) {return dataFuncs[dataType].valueAtIndex(d, x)})
             .each(function() {
               var self = d3.select(this),
               bb = self.node().getBBox();
@@ -271,7 +270,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                 "y": (sampleHeight + bb.height)/2
               });
             })
-        }
+
       }
       svg.selectAll(".crosshair, .crosshairValue")
          .attr("visibility", visibility);
@@ -338,7 +337,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
     }
 
-    dataFuncs = {
+    var dataFuncs = {
       "BodyMap": {
         "mean": function(zipped) {
           var mean = d3.svg.line()
@@ -381,7 +380,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             sampleSelectorMap[read.sample] = i;
           })
           return d3.extent(minmaxCand)
+        },
+        "valueAtIndex": function(sampleData, pos){
+          return sampleData.weights[that.axis.screenPosToArrayPos(pos)].toFixed(3)
         }
+
       },
       "TCGA": {
         "mean": function(zipped) {
@@ -472,6 +475,26 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             sampleSelectorMap[read.sample] = i;
           })
           return d3.extent(minmaxCand)
+        },
+        "valueAtIndex": function(sampleData, pos){
+          //TODO: optimize here -- it's just brute force
+            var genePos = that.axis.screenPosToGenePos(pos)
+
+            var value = 0;
+            var maxLen = sampleData.weights.length;
+            var i = 0;
+
+          while (value == 0 && i<maxLen ){
+            if (sampleData.weights[i].start < genePos){
+              if (sampleData.weights[i].end > genePos ){
+                value = sampleData.weights[i].weight;
+              }
+            }
+
+            i++;
+          }
+
+          return value.toFixed(2);
         }
       }
     }
