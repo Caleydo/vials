@@ -69,17 +69,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     var svgLabelText = svgLabel.append("text").text("reads").attr({
       "class": "viewLabelText",
     });
-    bb = svgLabelText.node().getBBox();
+    var bbTextLabel = svgLabelText.node().getBBox();
     svgLabelBg.attr({
-      "height": bb.height+4
+      "height": bbTextLabel.height+4
     })
     function drawViewLabel(height) {
       svgLabelBg.attr({
         "width": height + margin.top
       });
       svgLabelText.attr("transform", "translate(" +
-        (height+margin.top-3-bb.width)//(height+margin.top-bb.width)/2
-        + "," + (bb.height-3) + ")")
+        (height-bbTextLabel.width-20)//(height+margin.top-bb.width)/2
+        + "," + (bbTextLabel.height-3) + ")")
       svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
         "rotate(-90)");
     }
@@ -949,7 +949,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var noSamples = sampleData.measures.reads.length;
 
         var axisOffset =  that.axis.getWidth() + 10;
-        width = axisOffset + scatterWidth;
+        width = axisOffset + scatterWidth+bbTextLabel.height;
         height = (sampleHeight+3)*noSamples;
         svg.attr("height", height+margin.top+margin.bottom)
           .attr("width", width + margin.left + margin.right);

@@ -87,17 +87,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     var svgLabelText = svgLabel.append("text").text("isoforms").attr({
       "class": "viewLabelText",
     });
-    bb = svgLabelText.node().getBBox();
+    var bbMainLabel = svgLabelText.node().getBBox();
     svgLabelBg.attr({
-      "height": bb.height+4
+      "height": bbMainLabel.height+4
     })
     function drawViewLabel(height) {
       svgLabelBg.attr({
         "width": height + margin.top
       });
       svgLabelText.attr("transform", "translate(" +
-       (height+margin.top-bb.width)/2
-        + "," + (bb.height-3) + ")")
+       (height+margin.top-bbMainLabel.width)/2
+        + "," + (bbMainLabel.height-3) + ")")
       svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
         "rotate(-90)");
     }
@@ -176,10 +176,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var axisOffset =  that.axis.getWidth() + 10;
         var noIsoforms = isoformList.length;
         var scaleYSpace = 25;
+        var menuOffset = -34;
+        var menuHeight = 18;
 
 
-
-        width = axisOffset+ 2* scatterWidth+extraLabel;
+        width = axisOffset+ 2* scatterWidth+extraLabel ;
         height = groupScale(noIsoforms)+scaleYSpace;
         svg.attr("height", height+margin.top+margin.bottom)
           .attr("width", width + margin.left + margin.right);
@@ -189,8 +190,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         console.log(minMaxValues);
         var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, axisOffset+scatterWidth])
 
-        var menuOffset = -34;
-        var menuHeight = 18;
+
 
 
         var menuDivideLine = gIso.selectAll(".menuDivideLine").data([1]);
@@ -950,10 +950,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           // add to highlight
           highlightG.node().appendChild(this);
 
-          // make BG white to cover other dots
-          highlightG.select(".highlightBG").style({
-            opacity: .5
-          })
+          //// make BG white to cover other dots
+          //highlightG.select(".highlightBG").style({
+          //  opacity: .5
+          //})
 
 
         })
