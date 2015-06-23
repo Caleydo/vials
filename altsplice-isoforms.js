@@ -168,7 +168,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     var exonHeight = 15;
     var groupScale = function(x){ return x*(exonHeight+3)};
 
-    function drawIsoforms(isoformList, minMaxValues){
+    function drawIsoforms(isoformList, minMaxValues, metaInfo){
         console.log("list", isoformList);
 
         var scatterWidth = 200;
@@ -574,33 +574,61 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
+      // -----------------
+      // axis & unit labels for sample dots
+      // -----------------
 
+      var drawSampleDotsAxis = function(){
+        var dotAxisDef = d3.svg.axis()
+          .scale(scaleXScatter)
+          .orient("bottom");
 
-      var dotAxisDef = d3.svg.axis()
-        .scale(scaleXScatter)
-        .orient("bottom");
+        var dotAxis = gIso.selectAll(".dotAxis").data([scaleXScatter]);
+        dotAxis.exit().remove();
 
-      var dotAxis = gIso.selectAll(".dotAxis").data([scaleXScatter]);
-      dotAxis.exit().remove();
-
-      // --- adding Element to class dotAxis
-      var dotAxisEnter = dotAxis.enter().append("g").attr({
+        // --- adding Element to class dotAxis
+        var dotAxisEnter = dotAxis.enter().append("g").attr({
           "class":"axis dotAxis"
-      })
-
-      // --- changing nodes for dotAxis
-      dotAxis
-        .call(dotAxisDef)
-        .attr({
-          "transform":"translate("+0+","+groupScale(noIsoforms)+")"
         })
-      dotAxis.selectAll("text")
-        .style("text-anchor", "end")
-        .attr("dx", "-.8em")
-        .attr("dy", ".15em")
-        .attr("transform", function(d) {
-          return "rotate(-65)"
-        });
+
+        // --- changing nodes for dotAxis
+        dotAxis
+          .call(dotAxisDef)
+          .attr({
+            "transform":"translate("+0+","+groupScale(noIsoforms)+")"
+          })
+        dotAxis.selectAll("text")
+          .style("text-anchor", "end")
+          .attr("dx", "-.8em")
+          .attr("dy", ".15em")
+          .attr("transform", function(d) {
+            return "rotate(-65)"
+          });
+
+
+
+        // -----------------
+        // labels for isoform abundance unit
+        // -----------------
+
+        var dotUnitLabel = gIso.selectAll(".dotUnitLabel").data([metaInfo["isoform_unit"]]);
+        dotUnitLabel.exit().remove();
+
+        // --- adding Element to class dotUnitLabel
+        var dotUnitLabelEnter = dotUnitLabel.enter().append("text").attr({
+            "class":"dotUnitLabel axisLabel"
+        })
+
+        // --- changing nodes for dotUnitLabel
+        dotUnitLabel.attr({
+          x:scaleXScatter.range()[1],
+          y:(groupScale(noIsoforms) + 20) //todo: magic number
+        }).text(function(d){return d;})
+
+
+      }
+
+      drawSampleDotsAxis();
 
 
 
@@ -1141,7 +1169,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
 
-        drawIsoforms(usedIsoformsList, minMax);
+        drawIsoforms(usedIsoformsList, minMax, {"isoform_unit":sampleData.measures["isoform_unit"]});
 
       })
 
