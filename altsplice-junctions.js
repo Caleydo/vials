@@ -622,7 +622,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       svgLabelBg.attr({
         "width": height + margin.top
       });
-      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-3) + ")")
+      svgLabelText.attr("transform", "translate(" +
+        (height+margin.top-bb.width)/2
+        + "," + (bb.height-3) + ")")
       svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
                                  "rotate(-90)");
     }
@@ -1776,7 +1778,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       boxplot.append("line").attr({
         "class": "boxPlotLine",
         "stroke": "black",
-        "stroke-dasharray": "5,5",
+        "stroke-dasharray": "3,3",
         "x1": 0,
         "x2": 0,
         "y1": yScaleContJxn(whiskerDown),

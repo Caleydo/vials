@@ -95,7 +95,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       svgLabelBg.attr({
         "width": height + margin.top
       });
-      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-3) + ")")
+      svgLabelText.attr("transform", "translate(" +
+       (height+margin.top-bb.width)/2
+        + "," + (bb.height-3) + ")")
       svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
         "rotate(-90)");
     }
@@ -277,7 +279,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
        * =========================
        * */
 
-      var boxPlotGroup = bg.append("g").attr("class","boxPlot");
+      var boxPlotGroup = bg.append("g").attr("class","boxplot");
       boxPlotGroup.selectAll(".vticks").data(function (d) {
         return [
           d.boxPlot.whiskerDown,

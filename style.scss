@@ -40,6 +40,16 @@ $wes-blue: #0093dd;
     opacity: .5;
   }
 
+  .boxplot, .subboxplot{
+    stroke-width: 2px;
+    stroke:$wes-violet;
+
+    .wticks{
+      stroke-dasharray: 3, 3;
+    }
+
+  }
+
 }
 
 .isoform {
@@ -55,15 +65,7 @@ $wes-blue: #0093dd;
 
   }
 
-  .boxPlot{
-    stroke-width: 1px;
-    stroke:$wes-violet;
 
-    .wticks{
-      stroke-dasharray: 3, 3;
-    }
-
-  }
 
 
   .selected{
