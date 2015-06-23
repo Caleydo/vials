@@ -291,16 +291,16 @@ input.btn-mini {
   fill: none}
 
 .edgeAnchor {
-  fill: $wes-red;
+  fill: $wes-violet;
   fill-opacity: 1;
   stroke: none}
 
 .edgeConnector[type=donor] {
-  stroke: $wes-blue
+  stroke: $wes-violet
 }
 
 .edgeConnector[type=receptor] {
-  stroke: $wes-red
+  stroke: $wes-violet
 }
 
 path.stdDev{
