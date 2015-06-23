@@ -898,7 +898,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
     function drawHeatmap(){
-        var exonHeat = heatmapGroup.selectAll(".exonHeat").data(Object.keys(allExons).map(function(key){return allExons[key];}));
+
+        var collectExons = []
+        Object.keys(allIsoforms).forEach(function(key){
+          allIsoforms[key].exons.forEach(function (exon) {
+            collectExons.push(allExons[exon])
+          })
+
+        })
+
+        var exonHeat = heatmapGroup.selectAll(".exonHeat").data(collectExons);
         exonHeat.exit().remove();
 
         // --- adding Element to class exonHeat
