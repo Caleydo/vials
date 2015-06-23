@@ -557,7 +557,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       event.on("dotsJittering", function(e,dotsJittered){
           //console.log("dotsJittered", dotsJittered);
           that.dotsJittered = dotsJittered;
-          drawSampleDots();
+        var sampleDot = isoform.selectAll(".sampleDot")
+
+        sampleDot.transition().attr({
+          cy: function () {
+            if (that.dotsJittered) return exonHeight / 4 + Math.random() * exonHeight / 2;
+            else return exonHeight / 2;
+          } // TODO: remove scatter
+        })
+
       })
 
 
