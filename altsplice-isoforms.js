@@ -42,12 +42,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
+
   IsoFormVis.prototype.build = function($parent){
     var that = this;
     that.axis = that.data.genomeAxis;
+    that.dotsJittered = true;
+
+
+
     var head = $parent.append("div").attr({
       "class":"gv"
     })
+
+
+
+
 
     var mergedRanges = [];
 
@@ -494,37 +503,65 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
-
-        var sampleDot = isoform.select(".foreground").selectAll(".sampleDot").data( function(d,i){return d.weights} );
+      var drawSampleDots = function()
+      {
+        var sampleDot = isoform.select(".foreground").selectAll(".sampleDot").data(function (d, i) {
+          return d.weights
+        });
         sampleDot.exit().remove();
 
         // --- adding Element to class sampleDot
         var sampleDotEnter = sampleDot.enter().append("circle").attr({
-            "class":function(d){return "sampleDot sample"+ cleanSelectors(d.sample);},
-            r:3
+          "class": function (d) {
+            return "sampleDot sample" + cleanSelectors(d.sample);
+          },
+          r: 3
         }).on({
-          "mouseover":function(d){event.fire("sampleHighlight", d.sample, true)},
-          "mouseout":function(d){event.fire("sampleHighlight", d.sample, false)},
-          "click":function(d){
+          "mouseover": function (d) {
+            event.fire("sampleHighlight", d.sample, true)
+          },
+          "mouseout": function (d) {
+            event.fire("sampleHighlight", d.sample, false)
+          },
+          "click": function (d) {
 
-            if (d3.select(this).classed("selected")){
+            if (d3.select(this).classed("selected")) {
               //deselect
               event.fire("sampleSelect", d.sample, false)
-            }else{
+            } else {
               //select
               event.fire("sampleSelect", d.sample, true)
             }
 
 
           }
-        }).append("title").text(function(d){return d.sample;})
+        }).append("title").text(function (d) {
+          return d.sample;
+        })
 
 
         // --- changing nodes for sampleDot
         sampleDot.attr({
-            cx: function(d){return  scaleXScatter(d.weight)},
-            cy: function(){return exonHeight/4+Math.random()*exonHeight/2} // TODO: remove scatter
+          cx: function (d) {
+            return scaleXScatter(d.weight)
+          },
+          cy: function () {
+            if (that.dotsJittered) return exonHeight / 4 + Math.random() * exonHeight / 2;
+            else return exonHeight / 2;
+          } // TODO: remove scatter
         })
+      }
+
+      drawSampleDots();
+
+      event.on("dotsJittering", function(e,dotsJittered){
+          //console.log("dotsJittered", dotsJittered);
+          that.dotsJittered = dotsJittered;
+          drawSampleDots();
+      })
+
+
+
 
 
 
