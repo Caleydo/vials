@@ -822,6 +822,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
         genomeAxisTicks.transition().attr("transform", function(d) {return "translate(" + d + ",0)"})
 
+
+        var arrowDirection = (axis.ascending == positiveStrand); // XNOR
         var directionIndicators = indicatorGroup.selectAll(".directionIndicator").data(d3.range(divWidth/2, axis.width, divWidth));
         directionIndicators.exit().remove();
         directionIndicators.enter().append("line").attr({
@@ -832,12 +834,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "y2": 10,
           //"stroke": "black",
           "stroke-width": 5,
-          "marker-end": axis.ascending ? "url(\#scaleArrow)" : "",
-          "marker-start": axis.ascending ? "" : "url(\#scaleArrow)",
+          "marker-end": "url(\#scaleArrow)"
         })
         directionIndicators.transition().attr({
-          "x1": function(d) {return d + (axis.ascending ? -10 : 10)},
-          "x2": function(d) {return d + (axis.ascending ? 10 : -10)},
+          "x1": function(d) {return d + (arrowDirection ? -10 : 10)},
+          "x2": function(d) {return d + (arrowDirection ? 10 : -10)},
         })
 
         var genomeAxisDef = d3.svg.axis()
@@ -862,6 +863,20 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "class": "directionToggleGroup",
         "transform": "translate(" + (axis.width+10) + ",0)"
       })
+      directionToggleGroup.append("rect").attr({
+        "class": "directionToggle",
+        "width": 125,
+        "height": 20,
+        "rx": 10,
+        "ry": 10
+      }).on("click", function() {
+        axis.reverse();
+        d3.select(this).classed("selected",!axis.ascending);
+        //d3.select(".directionIndicator").transition().attr({
+        //})
+        event.fire("axisChange");
+      })
+
       directionToggleGroup.append("line").attr({
         "x1": 20,
         "x2": 50,
@@ -871,24 +886,12 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "stroke-width": 5,
         "marker-end": "url(\#scaleArrow)",
         "marker-start": "url(\#scaleArrow)",
-      })
+      }).style("pointer-events","none");
       var directionToggleText = directionToggleGroup.append("text").attr({
       }).text("reverse");
       directionToggleText.attr("transform", "translate(65," + (directionToggleText.node().getBBox().height-2) + ")");
-      directionToggleGroup.append("rect").attr({
-        "class": "directionToggle",
-        "width": 125,
-        "height": 20,
-        "rx": 10,
-        "ry": 10
-      }).on("click", function() {
-        axis.reverse();
-        d3.select(".directionIndicator").transition().attr({
-        })
-        reversingAxis = true;
-        event.fire("axisChange");
-        reversingAxis = false;
-      })
+      directionToggleText.style("pointer-events","none");
+
 
 
 
@@ -944,7 +947,8 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var currentX = 0;
         heatmapGroup.on("mousemove", function () {
           currentX = d3.mouse(this)[0];
-          event.fire("crosshair", currentX - viewLabelMargin);
+          //console.log("mouse", currentX);
+          event.fire("crosshair", currentX);
 
         })
 
