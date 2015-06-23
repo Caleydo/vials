@@ -74,6 +74,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
   var jxnGroups = [];
   var edgeCount;
   var axis;
+  var reversingAxis = false;
   var buckets;
 
 
@@ -189,7 +190,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                   "stroke": "black"
                 })
               }
-              createGroups(selectedIsoform.index);
+//              createGroups(selectedIsoform.index);
             }
           }
         })
@@ -395,7 +396,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         var startX = weightAxisCaptionWidth + jxnWrapperPadding;
 
-
         var translateAmount = 2 * startX + groupWidth * edgeCount + jxnWrapperPadding * (jxnGroups.length - 1)
 
        d3.selectAll(".grayStripesGroup").transition()
@@ -408,18 +408,22 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         computeFlagPositions()
 
         var connectors = d3.selectAll(".JXNAreaConnector");
-        connectors.attr({
-          "x1": function() {
-            return translateAmount - parseInt(this.getAttribute("x1"))  - parseInt(this.getAttribute("wrapperWidth"));
-          },
-          "x2": function() {
-            return parseInt(this.getAttribute("x1")) + parseInt(this.getAttribute("wrapperWidth"));
-          },
-          "x3": function() {
-            var loc = this.getAttribute("loc");
-            return getBucketAt(loc).anchor
-          }
-        })
+          connectors.attr({
+            "x1": function() {
+              return reversingAxis ?
+                translateAmount - parseInt(this.getAttribute("x1")) - parseInt(this.getAttribute("wrapperWidth"))
+                : this.getAttribute("x1");
+            },
+            "x2": function() {
+              return  reversingAxis ?
+                parseInt(this.getAttribute("x1")) + parseInt(this.getAttribute("wrapperWidth"))
+                : this.getAttribute("x2");
+            },
+            "x3": function() {
+              var loc = this.getAttribute("loc");
+              return getBucketAt(loc).anchor
+            }
+          })
         connectors.transition()
           .duration(300).attr({
             "points": function() {
@@ -432,7 +436,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         d3.selectAll(".edgeConnector").transition()
           .duration(300).attr({
             "x1": function() {
-              return translateAmount - parseInt(this.getAttribute("x1"));
+              return  reversingAxis ?
+                translateAmount - parseInt(this.getAttribute("x1"))
+                : this.getAttribute("x1");
             },
             "x2": function() {
               var type = this.getAttribute("type");
@@ -1949,7 +1955,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         d3.selectAll(".edgeConnector").filter(function () {
           return startLoc == this.getAttribute("startLoc") &&
           endLoc == this.getAttribute("endLoc");
-        }).transition().duration(200).attr({
+          }).transition().duration(200).attr({
           "x1":  startX + i * expandedSpace + groupWidth / 2
         });
 
