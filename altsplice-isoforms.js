@@ -1117,7 +1117,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               });
 
 
-            var allWeights = res.weights.map(function(d){return d.weight;})
+            var allWeights = res.weights.map(function(d){return +d.weight;})
             res.mean = d3.mean(allWeights)
             res.boxPlot = computeBoxPlot(allWeights)
             usedIsoformsList.push(res)
