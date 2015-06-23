@@ -4,7 +4,7 @@ Vials visualizes alternative splicing based on mRNAseq data. You can try out via
 
 Vials uses [Caleydo Web](https://github.com/Caleydo/caleydo-web/) as the underlying visualization framework. This repository contains the client-side Caleydo Web plugin. 
 
-# #Running Vials
+## Running Vials
 
 ### Pre-conditions: 
 #### Server-side:
