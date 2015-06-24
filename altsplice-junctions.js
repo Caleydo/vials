@@ -876,7 +876,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         d3.select(this).classed("selected",!axis.ascending);
         //d3.select(".directionIndicator").transition().attr({
         //})
+        reversingAxis = true;
         event.fire("axisChange");
+        reversingAxis = false;
       })
 
       directionToggleGroup.append("line").attr({
