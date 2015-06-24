@@ -50,6 +50,17 @@ $wes-blue: #0093dd;
 
   }
 
+
+  .crosshairValue{
+    color: $wes-violet;
+    text-shadow:
+    -1px -1px 0 #FFF,
+    1px -1px 0 #FFF,
+    -1px 1px 0 #FFF,
+    1px 1px 0 #FFF;
+  }
+
+
 }
 
 .isoform {
