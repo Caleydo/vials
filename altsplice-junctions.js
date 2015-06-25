@@ -192,6 +192,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               }
 //              createGroups(selectedIsoform.index);
             }
+            else {
+              createGroupsForAllJxns()
+            }
           }
         })
 
@@ -454,36 +457,16 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       d3.selectAll(".jxnWrapper").each(function(d, i) {
           d3.select(this).selectAll(".edgeGroup").transition().duration(300).attr({
             "transform": function(d, i) {
-              return axis.ascending ?
-              "translate(" + (startX + groupWidth * i) + ", 0)" :
-              "translate(" + (startX - groupWidth * (i + 1)) + ", 0)"
+              var xShift =
+                axis.ascending ? (startX + groupWidth * i) : (startX - groupWidth * (i + 1));
+              if (showSelectedIsoform == "groups" && selectedIsoform == null)
+                xShift -= expandedWidth / 2 + 5;
+              return "translate(" + xShift  + ", 0)";
             },
           })
         var shift = groupWidth * jxnGroups[i].groups.length + jxnWrapperPadding;
         startX = axis.ascending ? startX + shift : startX - shift;
       });
-
-        for (var jxnGpInd = 0; jxnGpInd < jxnGroups.length; jxnGpInd++) {
-
-          var jxnGroup = jxnGroups[jxnGpInd];
-
-          var jxnGroupWrapper = jxnArea.append("g").attr({
-            "class": ""
-          });
-
-          var edgeGroups = jxnGroupWrapper.selectAll(".edgeGroup").data(jxnGroup.groups).enter().append("g").attr({
-            "class": "edgeGroup",
-            "ActiveIsoform": -1,
-            "startLoc": function(g) {return g.startLoc},
-            "endLoc": function(g) {return g.endLoc},
-            "transform": function(d, i) {
-              return "translate(" + (startX + groupWidth * i) + ", 0)"
-            },
-            "startX": function(d, i) {return startX + groupWidth * i}
-          });
-
-          startX += groupWidth * jxnGroups[jxnGpInd].groups.length + jxnWrapperPadding;
-        }
 
         d3.selectAll(".RNASite").transition()
           .duration(300).attr({
@@ -1242,27 +1225,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                 event.fire("jxnHighlight", {"startLoc": d.startLoc, "endLoc": d.endLoc, "highlight": false});
               }
             })
-            .on("dblclick", function(d) {
-              var availableWidth = width - weightAxisCaptionWidth - jxnWrapperPadding;
-              expandedWidth = availableWidth / (edgeCount + 3);
-              d3.selectAll(".edgeGroup").attr({
-                "transform": function() {
-                  return this.getAttribute("transform") + " translate(" + (-expandedWidth / 2 - 5)+ ", 0)"
-                }
-              })
-              d3.selectAll(".edgeAnchor").attr({
-                "transform": function() {
-                  return this.getAttribute("transform") + " translate(" + (expandedWidth/ 2)+ ", 0)"
-                }
-              })
-              d3.selectAll(".boxplot").style({
-                "opacity": 0
-              })
-              createGroups(-1)
-            })
-
-
-
 
             groupNode.append("g").attr({
             "class": "subboxplotsContainer",
@@ -1974,6 +1936,34 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
       })
       expandedIsoform = isoform;
+    }
+
+    function createGroupsForAllJxns() {
+      // shift the anchors
+      var availableWidth = width - weightAxisCaptionWidth - jxnWrapperPadding;
+      expandedWidth = availableWidth / (edgeCount + 3);
+      d3.selectAll(".edgeGroup").attr({
+        "transform": function() {
+          return this.getAttribute("transform") + " translate(" + (-expandedWidth / 2 - 5) + ", 0)"
+        }
+      })
+
+      d3.selectAll(".edgeConnector").attr({
+        "x1": function() {
+          return parseInt(this.getAttribute("x1")) - (expandedWidth/ 2 - 10)
+        }
+      })
+
+      d3.selectAll(".edgeAnchor").attr({
+        "transform": function() {
+          return this.getAttribute("transform") + " translate(" + (expandedWidth/ 2 + 3)+ ", 0)"
+        }
+      })
+
+      d3.selectAll(".boxplot").style({
+        "opacity": 0
+      })
+      createGroups(-1)
     }
 
     function createGroups(activeIsoformIndex) {
