@@ -1948,11 +1948,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }
       })
 
-      d3.selectAll(".edgeConnector").attr({
-        "x1": function() {
-          return parseInt(this.getAttribute("x1")) - (expandedWidth/ 2 - 10)
-        }
-      })
 
       d3.selectAll(".edgeAnchor").attr({
         "transform": function() {
