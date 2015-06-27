@@ -1920,7 +1920,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       activeEdgeGroups.each(function(d, i) {
         d3.select(this).transition().duration(200).attr({
           "transform": function() {
-            return "translate(" + (startX + i * expandedSpace) + ", 0)"
+            return axis.ascending?
+            "translate(" + (startX + i * expandedSpace) + ", 0)" :
+            "translate(" + (startX + totalWidth - i * expandedSpace) + ", 0)"
           }
         }).each("end", function() {
           expandJxn(this);
@@ -1931,7 +1933,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           return startLoc == this.getAttribute("startLoc") &&
           endLoc == this.getAttribute("endLoc");
           }).transition().duration(200).attr({
-          "x1":  startX + i * expandedSpace + groupWidth / 2
+          "x1":   axis.ascending?
+          startX + i * expandedSpace + groupWidth / 2 :
+          startX + totalWidth - i * expandedSpace + groupWidth / 2
         });
 
       })
