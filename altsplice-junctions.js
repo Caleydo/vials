@@ -1922,7 +1922,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "transform": function() {
             return axis.ascending?
             "translate(" + (startX + i * expandedSpace) + ", 0)" :
-            "translate(" + (startX + totalWidth - i * expandedSpace) + ", 0)"
+            "translate(" + (startX + totalWidth - (i + 1) * expandedSpace) + ", 0)"
           }
         }).each("end", function() {
           expandJxn(this);
@@ -1935,7 +1935,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           }).transition().duration(200).attr({
           "x1":   axis.ascending?
           startX + i * expandedSpace + groupWidth / 2 :
-          startX + totalWidth - i * expandedSpace + groupWidth / 2
+          startX + totalWidth - (i + 1) * expandedSpace + groupWidth / 2
         });
 
       })
