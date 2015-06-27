@@ -321,6 +321,11 @@ path.stdDev{
   //stroke-width: 1px;
 }
 
+.summaryBaseline {
+  stroke: $wes-violet;
+  stroke-dasharray: 10, 5;
+}
+
 .isoOptions{
   color:$wes-violet;
   opacity: .8;

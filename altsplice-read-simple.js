@@ -757,6 +757,13 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "class": "summary",
         "transform": "translate(0, 0)"
       });
+      summaryEnter.append("line").attr({
+        "class": "summaryBaseline",
+        "x1": 0,
+        "x2": that.axis.width,
+        "y1": heightScale(0),
+        "y2": heightScale(0)
+      })
 
       var groupText = group.groupID.meta != "none" ? " " + group.groupID.meta : group.groupID.samples.map(function(s) {return " " + s});
       groupText = "Group" + groupText;
