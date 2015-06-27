@@ -950,7 +950,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
         function updateCrosshair(event, x){
           svg.selectAll(".crosshair, .crosshairPos")
-             .attr("visibility", x > axis.getWidth() ? "hidden" : "visible");
+             .attr("visibility", (x < 0 || x > axis.getWidth()) ? "hidden" : "visible");
 
           crosshair.attr({
             "x1":x,

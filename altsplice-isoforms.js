@@ -150,7 +150,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "x2":x
       }).style({
         opacity:function(){
-         return 1 //return x>that.axis.getWidth()?0:1
+         return (x < 0 || x > that.axis.getWidth()) ? 0 : 1
         }
       })
 

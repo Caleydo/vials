@@ -251,7 +251,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     function updateCrosshair(event, x){
       var visibility;
-      if (x > that.axis.getWidth()) {
+      if (x < 0 || x > that.axis.getWidth()) {
         visibility = "hidden";
       }
       else {
@@ -583,11 +583,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class":"abundanceGraph"
       })
 
-      abundanceEnter.append("text").attr("class", "crosshairValue bg");
-      abundanceEnter.append("text").attr("class", "crosshairValue");
-
       var sampleName = function(d) {return d.sample};
       drawLabelGroup(abundanceEnter, sampleName, sampleName, ["sample"])
+
+      abundanceEnter.append("text").attr("class", "crosshairValue bg");
+      abundanceEnter.append("text").attr("class", "crosshairValue");
 
       // update !!!
       abundance.select(".abundanceGraph").attr({
@@ -769,7 +769,6 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       groupText = "Group" + groupText;
       var titleText = "Group: \nMeta: " + group.groupID.meta + "\nSamples: "
                       + group.groupID.samples.map(function(s) {return "\n" + s});
-      drawLabelGroup(summaryEnter, groupText, titleText);
 
       // TODO: zipping inside the dataFuncs object
       var zipped = zipData(group.data);
@@ -777,6 +776,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         //"fill": "red",
         "class": "stdDev",
       })
+
+      drawLabelGroup(summaryEnter, groupText, titleText);
+
       summaryEnter.selectAll(".stdDev").attr("d", dataFuncs[dataType].stdDev(zipped));
       summaryEnter.append("text").data([group.data]).attr("class", "crosshairGroupValue bg");
       summaryEnter.append("text").data([group.data]).attr("class", "crosshairGroupValue");
