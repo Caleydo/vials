@@ -260,8 +260,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "x1":x,
           "x2":x
         })
-          svg.selectAll(".abundance .crosshairValue")
+          svg.selectAll(".crosshairValue")
             .text(function(d) {return dataFuncs[dataType].valueAtIndex(d, x)})
+          svg.selectAll(".crosshairGroupValue")
+            .text(function(groupData) {
+              return d3.mean(groupData.map(function(sampleData) {
+                return dataFuncs[dataType].valueAtIndex(sampleData, x)
+              })).toFixed(dataType == "BodyMap" ? 3 : 2);
+            });
+          svg.selectAll(".crosshairValue, .crosshairGroupValue")
             .each(function() {
               var self = d3.select(this),
               bb = self.node().getBBox();
@@ -272,7 +279,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             })
 
       }
-      svg.selectAll(".crosshair, .crosshairValue")
+      svg.selectAll(".crosshair, .crosshairValue, .crosshairGroupValue")
          .attr("visibility", visibility);
     }
 
@@ -576,6 +583,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class":"abundanceGraph"
       })
 
+      abundanceEnter.append("text").attr("class", "crosshairValue bg");
       abundanceEnter.append("text").attr("class", "crosshairValue");
 
       var sampleName = function(d) {return d.sample};
@@ -762,12 +770,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         //"fill": "red",
         "class": "stdDev",
       })
-      summary.selectAll(".stdDev").attr("d", dataFuncs[dataType].stdDev(zipped));
+      summaryEnter.selectAll(".stdDev").attr("d", dataFuncs[dataType].stdDev(zipped));
+      summaryEnter.append("text").data([group.data]).attr("class", "crosshairGroupValue bg");
+      summaryEnter.append("text").data([group.data]).attr("class", "crosshairGroupValue");
+      updateCrosshair(undefined, crosshair.attr("x1"));
     }
 
     function toggleOpacities(group) {
         var g = group.g;
-        g.selectAll(".abundanceGraph").transition().attr({
+        g.selectAll(".abundanceGraph, .crosshairValue").transition().attr({
           "opacity": group.collapse ? 0 : 1
         });
         g.selectAll(".labelGroup.sample").transition().attr("visibility", group.collapse ? "hidden" : "visible");
