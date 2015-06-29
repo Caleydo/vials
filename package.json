@@ -12,7 +12,7 @@
         "type": "datatype",
         "id": "caleydo-genome-data-link",
         "folder" : "caleydo-vials",
-        "module": "caleydo-vials/genomeDataLink"
+        "module": "caleydo-vials/caleydo-genome-data-link"
       },
       {
         "type": "vis",
@@ -21,7 +21,7 @@
         "size": [840,300],
         "filter": "caleydo-genome-data-link",
         "folder" : "caleydo-vials",
-        "module" : "caleydo-vials/altsplice-isoforms"
+        "module" : "caleydo-vials/vials-isoforms"
 
       },
       {
@@ -31,7 +31,7 @@
         "size": [840,2000],
         "filter": "caleydo-genome-data-link",
         "folder" : "caleydo-vials",
-        "module" : "caleydo-vials/altsplice-junctions"
+        "module" : "caleydo-vials/vials-junctions"
 
       },
       {
