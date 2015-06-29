@@ -4,7 +4,7 @@
 
 define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
 
-  function AltSpliceGUI(){
+  function VialsGUI(){
     var that = this;
 
     this.projectSelector = d3.select("#projectSelect");
@@ -246,9 +246,9 @@ define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
 
 
 
-  var globalGUI = new AltSpliceGUI();
+  var globalGUI = new VialsGUI();
 
-  exports.AltSpliceGUI = AltSpliceGUI;
+  exports.VialsGUI = VialsGUI;
   exports.current = globalGUI;
 
 

@@ -1,9 +1,9 @@
 'use strict';
 
 //noinspection Annotator
-define(['exports', '../caleydo/main', '../caleydo/datatype', 'd3', '../bower_components/js-lru/lru.js','brokenAxis'], function(exports, C, datatypes, d3, lru, brokenAxis) {
+define(['exports', '../caleydo/main', '../caleydo/datatype', 'd3', '../bower_components/js-lru/lru.js','caleydo-broken-axis'], function(exports, C, datatypes, d3, lru, brokenAxis) {
 
-    exports.GenomeDataLink = datatypes.defineDataType('GenomeDataLink', {
+    exports.GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link', {
       init: function (desc) {
         this.serveradress = desc.serveradress;
         this.sampleCache = new LRUCache(5); // create a cache of size 5
