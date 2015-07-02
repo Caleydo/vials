@@ -40,7 +40,6 @@ define(['exports', 'd3', 'vials-gui', '../caleydo/event'], function (exports, d3
   var dotRadius = 4;
   var triangleLength = 8;
   var defaultDotColor = "rgba(90,90,90,0.3)";
-  var dehighlightedDotColor = "rgba(120,120,120,0.2)";
   var highlightedDotColor = "red";
   var weightAxisCaptionWidth = 50;
   var exonWeightsAreaHeight;
@@ -216,6 +215,9 @@ define(['exports', 'd3', 'vials-gui', '../caleydo/event'], function (exports, d3
           click: function () {
             showSelectedIsoform = "scatter"
             showSubboxplots = false;
+            jitterDots = false;
+            updateDotJitter();
+            d3.select("#dotsJittering").classed("buttonSelected", false);
             updateDotVisibility();
             if (selectedIsoform != null) {
               if (expandedIsoform == null)
@@ -307,7 +309,7 @@ define(['exports', 'd3', 'vials-gui', '../caleydo/event'], function (exports, d3
                   this.parentNode.appendChild(this);
                   this.setAttribute("selected", 1);
                 }
-                return match ? sampleColor : dehighlightedDotColor;
+                return match ? sampleColor : defaultDotColor;
               });
           }
           else
@@ -1350,17 +1352,14 @@ define(['exports', 'd3', 'vials-gui', '../caleydo/event'], function (exports, d3
             var selected = (d.sample == hoveredSample);
             if (selected)
               this.parentNode.appendChild(this);
-          return selected ? highlightedDotColor : dehighlightedDotColor;
+          return selected ? highlightedDotColor : defaultDotColor;
         });
       }
       else
       {
-        var color = (svg.selectAll('.jxnCircle').filter(function(d) {
-          return this.getAttribute("selected") == 1;
-        }).empty()) ? defaultDotColor : dehighlightedDotColor;
         svg.selectAll('.jxnCircle').filter(function(d) {
           return this.getAttribute("selected") == "0"
-        }).style('fill', color);
+        }).style('fill', defaultDotColor);
       }
     })
 
@@ -1922,7 +1921,7 @@ define(['exports', 'd3', 'vials-gui', '../caleydo/event'], function (exports, d3
           "transform": function() {
             return axis.ascending?
             "translate(" + (startX + i * expandedSpace) + ", 0)" :
-            "translate(" + (startX + totalWidth - (i + 1) * expandedSpace) + ", 0)"
+            "translate(" + ((startX +  (numOfJunctions - i - 1) * expandedSpace) + ", 0)"
           }
         }).each("end", function() {
           expandJxn(this);
