@@ -40,7 +40,7 @@ define(['exports', 'd3', 'vials-gui', '../caleydo/event'], function (exports, d3
   var dotRadius = 4;
   var triangleLength = 8;
   var defaultDotColor = "rgba(90,90,90,0.3)";
-  var dehighlightedDotColor = "rgba(120,120,120,0.05)";
+  var dehighlightedDotColor = "rgba(120,120,120,0.2)";
   var highlightedDotColor = "red";
   var weightAxisCaptionWidth = 50;
   var exonWeightsAreaHeight;
