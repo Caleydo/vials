@@ -3,7 +3,7 @@
  */
 
 
-define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports, d3, gui, event) {
+define(['exports', 'd3', 'vials-gui', '../caleydo/event'], function (exports, d3, gui, event) {
   /**
    * a simple template class of a visualization. Up to now there is no additional logic required.
    * @param data
@@ -42,12 +42,21 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
+
   IsoFormVis.prototype.build = function($parent){
     var that = this;
     that.axis = that.data.genomeAxis;
+    that.dotsJittered = true;
+
+
+
     var head = $parent.append("div").attr({
       "class":"gv"
     })
+
+
+
+
 
     var mergedRanges = [];
 
@@ -78,15 +87,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     var svgLabelText = svgLabel.append("text").text("isoforms").attr({
       "class": "viewLabelText",
     });
-    bb = svgLabelText.node().getBBox();
+    var bbMainLabel = svgLabelText.node().getBBox();
     svgLabelBg.attr({
-      "height": bb.height+4
+      "height": bbMainLabel.height+4
     })
     function drawViewLabel(height) {
       svgLabelBg.attr({
         "width": height + margin.top
       });
-      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-3) + ")")
+      svgLabelText.attr("transform", "translate(" +
+       (height+margin.top-bbMainLabel.width)/2
+        + "," + (bbMainLabel.height-3) + ")")
       svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
         "rotate(-90)");
     }
@@ -139,7 +150,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "x2":x
       }).style({
         opacity:function(){
-         return 1 //return x>that.axis.getWidth()?0:1
+         return (x < 0 || x > that.axis.getWidth()) ? 0 : 1
         }
       })
 
@@ -157,7 +168,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     var exonHeight = 15;
     var groupScale = function(x){ return x*(exonHeight+3)};
 
-    function drawIsoforms(isoformList, minMaxValues){
+    function drawIsoforms(isoformList, minMaxValues, metaInfo){
         console.log("list", isoformList);
 
         var scatterWidth = 200;
@@ -165,10 +176,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var axisOffset =  that.axis.getWidth() + 10;
         var noIsoforms = isoformList.length;
         var scaleYSpace = 25;
+        var menuOffset = -34;
+        var menuHeight = 18;
 
 
-
-        width = axisOffset+ 2* scatterWidth+extraLabel;
+        width = axisOffset+ 2* scatterWidth+extraLabel ;
         height = groupScale(noIsoforms)+scaleYSpace;
         svg.attr("height", height+margin.top+margin.bottom)
           .attr("width", width + margin.left + margin.right);
@@ -178,8 +190,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         console.log(minMaxValues);
         var scaleXScatter = d3.scale.linear().domain([0,minMaxValues[1]]).range([axisOffset, axisOffset+scatterWidth])
 
-        var menuOffset = -34;
-        var menuHeight = 18;
+
 
 
         var menuDivideLine = gIso.selectAll(".menuDivideLine").data([1]);
@@ -220,11 +231,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         }).on({
           "mouseover":function(){
             //console.log("min", d3.event.target
-              d3.select(this).select(".background").classed("selected", true);
+              d3.select(this).select(".background rect").classed("selected", true);
             },
           "mouseout":function(){
             //console.log("mout", d3.event.target)
-            d3.select(this).select(".background").classed("selected", false);
+            d3.select(this).select(".background rect").classed("selected", false);
           }
         })
 
@@ -233,10 +244,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         /*
         * reactive background
         * */
-        isoformEnter.append("rect").attr({
+        var bg = isoformEnter.append("g").attr("class","background");
+        bg.append("rect").attr({
           width:width,
-          height:exonHeight,
-          class:"background"
+          height:exonHeight
         }).on({
           //"mouseover": function(){d3.select(this).classed("selected", true);},
           //"mouseout": function(){d3.select(this).classed("selected", false);},
@@ -258,9 +269,70 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
 
-        isoform.select(".background").attr({
+        isoform.select(".background rect").attr({
           width:axisOffset+scatterWidth//width+margin.right-2
         })
+
+      /*
+       * ========================
+       * Draw boxplots
+       * =========================
+       * */
+
+      var boxPlotGroup = bg.append("g").attr("class","boxplot");
+      boxPlotGroup.selectAll(".vticks").data(function (d) {
+        return [
+          d.boxPlot.whiskerDown,
+          d.boxPlot.Q[1],
+          d.boxPlot.Q[2],
+          d.boxPlot.Q[3],
+          d.boxPlot.whiskerTop]
+      }).enter().append("line").attr({
+        class:"vticks",
+        x1:function(d){return scaleXScatter(d);},
+        x2:scaleXScatter,
+        y1:1,
+        y2:exonHeight-2
+      })
+
+      boxPlotGroup.selectAll(".hticks").data(function (d) {
+        return [
+          [1, d.boxPlot.Q[1], d.boxPlot.Q[3]],
+          [exonHeight-2, d.boxPlot.Q[1], d.boxPlot.Q[3]]
+        ];
+      }).enter().append("line").attr({
+        class:"hticks",
+        x1:function(d){return scaleXScatter(d[1]);},
+        x2:function(d){return scaleXScatter(d[2]);},
+        y1:function(d){return d[0];},
+        y2:function(d){return d[0];}
+      })
+
+      boxPlotGroup.selectAll(".wticks").data(function (d) {
+        return [
+          [d.boxPlot.whiskerDown, d.boxPlot.Q[1]],
+          [d.boxPlot.Q[3], d.boxPlot.whiskerTop]
+        ];
+      }).enter().append("line").attr({
+        class:"wticks",
+        x1:function(d){return scaleXScatter(d[0]);},
+        x2:function(d){return scaleXScatter(d[1]);},
+        y1:exonHeight/2,
+        y2:exonHeight/2
+      })
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         isoformEnter.append("g").attr("class","foreground");
@@ -433,66 +505,130 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
 
 
-
-        var sampleDot = isoform.select(".foreground").selectAll(".sampleDot").data( function(d,i){return d.weights} );
+      var drawSampleDots = function()
+      {
+        var sampleDot = isoform.select(".foreground").selectAll(".sampleDot").data(function (d, i) {
+          return d.weights
+        });
         sampleDot.exit().remove();
 
         // --- adding Element to class sampleDot
         var sampleDotEnter = sampleDot.enter().append("circle").attr({
-            "class":function(d){return "sampleDot sample"+ cleanSelectors(d.sample);},
-            r:3
+          "class": function (d) {
+            return "sampleDot sample" + cleanSelectors(d.sample);
+          },
+          r: 3
         }).on({
-          "mouseover":function(d){event.fire("sampleHighlight", d.sample, true)},
-          "mouseout":function(d){event.fire("sampleHighlight", d.sample, false)},
-          "click":function(d){
+          "mouseover": function (d) {
+            event.fire("sampleHighlight", d.sample, true)
+          },
+          "mouseout": function (d) {
+            event.fire("sampleHighlight", d.sample, false)
+          },
+          "click": function (d) {
 
-            if (d3.select(this).classed("selected")){
+            if (d3.select(this).classed("selected")) {
               //deselect
               event.fire("sampleSelect", d.sample, false)
-            }else{
+            } else {
               //select
               event.fire("sampleSelect", d.sample, true)
             }
 
 
           }
-        }).append("title").text(function(d){return d.sample;})
+        }).append("title").text(function (d) {
+          return d.sample;
+        })
 
 
         // --- changing nodes for sampleDot
         sampleDot.attr({
-            cx: function(d){return  scaleXScatter(d.weight)},
-            cy: function(){return exonHeight/4+Math.random()*exonHeight/2}
+          cx: function (d) {
+            return scaleXScatter(d.weight)
+          },
+          cy: function () {
+            if (that.dotsJittered) return exonHeight / 4 + Math.random() * exonHeight / 2;
+            else return exonHeight / 2;
+          } // TODO: remove scatter
+        })
+      }
+
+      drawSampleDots();
+
+      event.on("dotsJittering", function(e,dotsJittered){
+          //console.log("dotsJittered", dotsJittered);
+          that.dotsJittered = dotsJittered;
+        var sampleDot = isoform.selectAll(".sampleDot")
+
+        sampleDot.transition().attr({
+          cy: function () {
+            if (that.dotsJittered) return exonHeight / 4 + Math.random() * exonHeight / 2;
+            else return exonHeight / 2;
+          } // TODO: remove scatter
         })
 
-
-
-
-      var dotAxisDef = d3.svg.axis()
-        .scale(scaleXScatter)
-        .orient("bottom");
-
-      var dotAxis = gIso.selectAll(".dotAxis").data([scaleXScatter]);
-      dotAxis.exit().remove();
-
-      // --- adding Element to class dotAxis
-      var dotAxisEnter = dotAxis.enter().append("g").attr({
-          "class":"axis dotAxis"
       })
 
-      // --- changing nodes for dotAxis
-      dotAxis
-        .call(dotAxisDef)
-        .attr({
-          "transform":"translate("+0+","+groupScale(noIsoforms)+")"
+
+
+
+
+      // -----------------
+      // axis & unit labels for sample dots
+      // -----------------
+
+      var drawSampleDotsAxis = function(){
+        var dotAxisDef = d3.svg.axis()
+          .scale(scaleXScatter)
+          .orient("bottom");
+
+        var dotAxis = gIso.selectAll(".dotAxis").data([scaleXScatter]);
+        dotAxis.exit().remove();
+
+        // --- adding Element to class dotAxis
+        var dotAxisEnter = dotAxis.enter().append("g").attr({
+          "class":"axis dotAxis"
         })
-      dotAxis.selectAll("text")
-        .style("text-anchor", "end")
-        .attr("dx", "-.8em")
-        .attr("dy", ".15em")
-        .attr("transform", function(d) {
-          return "rotate(-65)"
-        });
+
+        // --- changing nodes for dotAxis
+        dotAxis
+          .call(dotAxisDef)
+          .attr({
+            "transform":"translate("+0+","+groupScale(noIsoforms)+")"
+          })
+        dotAxis.selectAll("text")
+          .style("text-anchor", "end")
+          .attr("dx", "-.8em")
+          .attr("dy", ".15em")
+          .attr("transform", function(d) {
+            return "rotate(-65)"
+          });
+
+
+
+        // -----------------
+        // labels for isoform abundance unit
+        // -----------------
+
+        var dotUnitLabel = gIso.selectAll(".dotUnitLabel").data([metaInfo["isoform_unit"]]);
+        dotUnitLabel.exit().remove();
+
+        // --- adding Element to class dotUnitLabel
+        var dotUnitLabelEnter = dotUnitLabel.enter().append("text").attr({
+            "class":"dotUnitLabel axisLabel"
+        })
+
+        // --- changing nodes for dotUnitLabel
+        dotUnitLabel.attr({
+          x:scaleXScatter.range()[1],
+          y:(groupScale(noIsoforms) + 20) //todo: magic number
+        }).text(function(d){return d;})
+
+
+      }
+
+      drawSampleDotsAxis();
 
 
 
@@ -814,10 +950,10 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           // add to highlight
           highlightG.node().appendChild(this);
 
-          // make BG white to cover other dots
-          highlightG.select(".highlightBG").style({
-            opacity: .5
-          })
+          //// make BG white to cover other dots
+          //highlightG.select(".highlightBG").style({
+          //  opacity: .5
+          //})
 
 
         })
@@ -1011,7 +1147,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
               });
 
 
-            res.mean = d3.mean(res.weights.map(function(d){return d.weight;}))
+            var allWeights = res.weights.map(function(d){return +d.weight;})
+            res.mean = d3.mean(allWeights)
+            res.boxPlot = computeBoxPlot(allWeights)
             usedIsoformsList.push(res)
           }else{
             console.log("isoform measured but no meta: ", isokey);
@@ -1031,11 +1169,37 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         })
 
 
-        drawIsoforms(usedIsoformsList, minMax);
+        drawIsoforms(usedIsoformsList, minMax, {"isoform_unit":sampleData.measures["isoform_unit"]});
 
       })
 
     }
+
+
+    //*** HELPER (copied from junction view) *****
+    //TODO: better object orientation (no duplicates)
+
+    function computeBoxPlot(values) {
+      var sortedJxns = values.sort(d3.ascending);
+      var Q = new Array(5);
+      Q[0] = d3.min(sortedJxns);
+      Q[4] = d3.max(sortedJxns);
+      Q[1] = d3.quantile(sortedJxns, 0.25);
+      Q[2] = d3.quantile(sortedJxns, 0.5);
+      Q[3] = d3.quantile(sortedJxns, 0.75);
+      var iqr = 1.5 * (Q[3] - Q[1]);
+      var whiskerTop, whiskerDown;
+      {
+        var i = -1;
+        var j = sortedJxns.length;
+        while ((sortedJxns[++i] < Q[1] - iqr));
+        while (sortedJxns[--j] > Q[3] + iqr);
+        whiskerTop = j == sortedJxns.length - 1 ? sortedJxns[j] : Q[3] + iqr;
+        whiskerDown = i == 0 ? sortedJxns[i] : Q[1] - iqr;
+      }
+      return {"whiskerTop": whiskerTop, "whiskerDown": whiskerDown, "Q": Q};
+    }
+
 
 
 

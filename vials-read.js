@@ -3,7 +3,7 @@
  */
 
 
-define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports, d3, gui, event) {
+define(['exports', 'd3', 'vials-gui', '../caleydo/event'], function (exports, d3, gui, event) {
   /**
    * a simple template class of a visualization. Up to now there is no additional logic required.
    * @param data
@@ -69,15 +69,17 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
     var svgLabelText = svgLabel.append("text").text("reads").attr({
       "class": "viewLabelText",
     });
-    bb = svgLabelText.node().getBBox();
+    var bbTextLabel = svgLabelText.node().getBBox();
     svgLabelBg.attr({
-      "height": bb.height+4
+      "height": bbTextLabel.height+4
     })
     function drawViewLabel(height) {
       svgLabelBg.attr({
         "width": height + margin.top
       });
-      svgLabelText.attr("transform", "translate(" + (height+margin.top-bb.width)/2 + "," + (bb.height-3) + ")")
+      svgLabelText.attr("transform", "translate(" +
+        (height-bbTextLabel.width-20)//(height+margin.top-bb.width)/2
+        + "," + (bbTextLabel.height-3) + ")")
       svgLabel.attr("transform", "translate(0," + (height+margin.top) + ")" +
         "rotate(-90)");
     }
@@ -249,7 +251,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
 
     function updateCrosshair(event, x){
       var visibility;
-      if (x > that.axis.getWidth()) {
+      if (x < 0 || x > that.axis.getWidth()) {
         visibility = "hidden";
       }
       else {
@@ -258,9 +260,15 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
           "x1":x,
           "x2":x
         })
-        if (dataType == "BodyMap") {
-          svg.selectAll(".abundance .crosshairValue")
-            .text(function(d) {return d.weights[that.axis.screenPosToArrayPos(x)].toFixed(3)})
+          svg.selectAll(".crosshairValue")
+            .text(function(d) {return dataFuncs[dataType].valueAtIndex(d, x)})
+          svg.selectAll(".crosshairGroupValue")
+            .text(function(groupData) {
+              return d3.mean(groupData.map(function(sampleData) {
+                return dataFuncs[dataType].valueAtIndex(sampleData, x)
+              })).toFixed(dataType == "BodyMap" ? 3 : 2);
+            });
+          svg.selectAll(".crosshairValue, .crosshairGroupValue")
             .each(function() {
               var self = d3.select(this),
               bb = self.node().getBBox();
@@ -269,9 +277,9 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
                 "y": (sampleHeight + bb.height)/2
               });
             })
-        }
+
       }
-      svg.selectAll(".crosshair, .crosshairValue")
+      svg.selectAll(".crosshair, .crosshairValue, .crosshairGroupValue")
          .attr("visibility", visibility);
     }
 
@@ -336,7 +344,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
       })
     }
 
-    dataFuncs = {
+    var dataFuncs = {
       "BodyMap": {
         "mean": function(zipped) {
           var mean = d3.svg.line()
@@ -379,7 +387,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             sampleSelectorMap[read.sample] = i;
           })
           return d3.extent(minmaxCand)
+        },
+        "valueAtIndex": function(sampleData, pos){
+          return sampleData.weights[that.axis.screenPosToArrayPos(pos)].toFixed(3)
         }
+
       },
       "TCGA": {
         "mean": function(zipped) {
@@ -470,6 +482,26 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             sampleSelectorMap[read.sample] = i;
           })
           return d3.extent(minmaxCand)
+        },
+        "valueAtIndex": function(sampleData, pos){
+          //TODO: optimize here -- it's just brute force
+            var genePos = that.axis.screenPosToGenePos(pos)
+
+            var value = 0;
+            var maxLen = sampleData.weights.length;
+            var i = 0;
+
+          while (value == 0 && i<maxLen ){
+            if (sampleData.weights[i].start < genePos){
+              if (sampleData.weights[i].end > genePos ){
+                value = sampleData.weights[i].weight;
+              }
+            }
+
+            i++;
+          }
+
+          return value.toFixed(2);
         }
       }
     }
@@ -551,10 +583,11 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
             "class":"abundanceGraph"
       })
 
-      abundanceEnter.append("text").attr("class", "crosshairValue");
-
       var sampleName = function(d) {return d.sample};
       drawLabelGroup(abundanceEnter, sampleName, sampleName, ["sample"])
+
+      abundanceEnter.append("text").attr("class", "crosshairValue bg");
+      abundanceEnter.append("text").attr("class", "crosshairValue");
 
       // update !!!
       abundance.select(".abundanceGraph").attr({
@@ -724,12 +757,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         "class": "summary",
         "transform": "translate(0, 0)"
       });
+      summaryEnter.append("line").attr({
+        "class": "summaryBaseline",
+        "x1": 0,
+        "x2": that.axis.width,
+        "y1": heightScale(0),
+        "y2": heightScale(0)
+      })
 
       var groupText = group.groupID.meta != "none" ? " " + group.groupID.meta : group.groupID.samples.map(function(s) {return " " + s});
       groupText = "Group" + groupText;
       var titleText = "Group: \nMeta: " + group.groupID.meta + "\nSamples: "
                       + group.groupID.samples.map(function(s) {return "\n" + s});
-      drawLabelGroup(summaryEnter, groupText, titleText);
 
       // TODO: zipping inside the dataFuncs object
       var zipped = zipData(group.data);
@@ -737,12 +776,18 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         //"fill": "red",
         "class": "stdDev",
       })
-      summary.selectAll(".stdDev").attr("d", dataFuncs[dataType].stdDev(zipped));
+
+      drawLabelGroup(summaryEnter, groupText, titleText);
+
+      summaryEnter.selectAll(".stdDev").attr("d", dataFuncs[dataType].stdDev(zipped));
+      summaryEnter.append("text").data([group.data]).attr("class", "crosshairGroupValue bg");
+      summaryEnter.append("text").data([group.data]).attr("class", "crosshairGroupValue");
+      updateCrosshair(undefined, crosshair.attr("x1"));
     }
 
     function toggleOpacities(group) {
         var g = group.g;
-        g.selectAll(".abundanceGraph").transition().attr({
+        g.selectAll(".abundanceGraph, .crosshairValue").transition().attr({
           "opacity": group.collapse ? 0 : 1
         });
         g.selectAll(".labelGroup.sample").transition().attr("visibility", group.collapse ? "hidden" : "visible");
@@ -947,7 +992,7 @@ define(['exports', 'd3', 'altsplice-gui', '../caleydo/event'], function (exports
         var noSamples = sampleData.measures.reads.length;
 
         var axisOffset =  that.axis.getWidth() + 10;
-        width = axisOffset + scatterWidth;
+        width = axisOffset + scatterWidth+bbTextLabel.height;
         height = (sampleHeight+3)*noSamples;
         svg.attr("height", height+margin.top+margin.bottom)
           .attr("width", width + margin.left + margin.right);

@@ -9,7 +9,6 @@ $wes-yellow: #E8C95D;
 $wes-green: #A9D8C8;
 $wes-violet: #433447;
 $wes-red: #D16B54;
-
 $wes-blue: #0093dd;
 
 //by convention create a namespace for your own plugin
@@ -23,7 +22,7 @@ $wes-blue: #0093dd;
   //    min-height:200px;
   //    max-height:200px;
   //  }
-  .axis text {
+  .axis text, .axisLabel {
     font: 10px sans-serif;
   }
 
@@ -40,6 +39,26 @@ $wes-blue: #0093dd;
     opacity: .5;
   }
 
+  .boxplot, .subboxplot{
+    stroke-width: 1px;
+    stroke:$wes-violet;
+
+    .wticks{
+      stroke-dasharray: 3, 3;
+    }
+
+  }
+
+
+  .crosshairValue, .crosshairGroupValue {
+    fill: $wes-violet;
+    pointer-events: none;
+  }
+  .crosshairValue.bg, .crosshairGroupValue.bg {
+    fill: white;
+    stroke: white;
+    stroke-width: 5px;
+  }
 }
 
 .isoform {
@@ -54,6 +73,10 @@ $wes-blue: #0093dd;
     fill-opacity:.001;
 
   }
+
+
+
+
   .selected{
     stroke:$wes-yellow;
   }
@@ -234,6 +257,11 @@ path.selectionParco{
   fill: none;
   pointer-events: visible;
   stroke: $wes-gray
+
+
+}
+.directionToggle.selected{
+  fill: $wes-green
 }
 
 // UI fixes:
@@ -272,16 +300,16 @@ input.btn-mini {
   fill: none}
 
 .edgeAnchor {
-  fill: $wes-red;
+  fill: $wes-violet;
   fill-opacity: 1;
   stroke: none}
 
 .edgeConnector[type=donor] {
-  stroke: $wes-blue
+  stroke: $wes-violet
 }
 
 .edgeConnector[type=receptor] {
-  stroke: $wes-red
+  stroke: $wes-violet
 }
 
 path.stdDev{
@@ -290,6 +318,11 @@ path.stdDev{
   //fill-opacity: .6;
   //stroke:$wes-gray;
   //stroke-width: 1px;
+}
+
+.summaryBaseline {
+  stroke: $wes-violet;
+  stroke-dasharray: 10, 5;
 }
 
 .isoOptions{

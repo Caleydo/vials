@@ -1,5 +1,5 @@
 
-require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui', '../caleydo/event'], function (C,data, visPlugins, gui, event) {
+require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'vials-gui', '../caleydo/event'], function (C,data, visPlugins, gui, event) {
   'use strict';
   var vis;
 
@@ -11,8 +11,8 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui',
   };
 
   data.create({
-    type: 'genomeDataLink',
-    name: 'AltSplice',
+    type: 'caleydo-genome-data-link',
+    name: 'Vials',
     serveradress: '/api/genomebrowser'
   }).then(function (genomeDataLink) {
 
@@ -32,7 +32,7 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui',
 
     var vis1Loaded = C.promised(function(resolve,reject){
       if (!options.mode || options.mode==='bilal' ){
-        var junctionVis = visses.filter(function (vis) { return vis.id === 'altsplice-junctions'})[0];
+        var junctionVis = visses.filter(function (vis) { return vis.id === 'vials-junctions'})[0];
         junctionVis.load().then(function (plugin) {
           vis = plugin.factory(genomeDataLink, document.querySelector("#visJxns") );
           resolve();
@@ -45,7 +45,7 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui',
     var vis2Loaded = C.promised(function(resolve,reject){
     if (!options.mode || options.mode==='joseph') {
         var readVis = visses.filter(function (vis) {
-          return vis.id === 'altsplice-reads-simple'
+          return vis.id === 'vials-reads'
         })[0];
         readVis.load().then(function (plugin) {
           vis = plugin.factory(genomeDataLink, document.querySelector("#visReads"));
@@ -59,7 +59,7 @@ require(['../caleydo/main','../caleydo/data', '../caleydo/vis', 'altsplice-gui',
     var vis3Loaded = C.promised(function(resolve,reject){
       if (!options.mode || options.mode==='hen') {
         var readVis = visses.filter(function (vis) {
-          return vis.id === 'altsplice-isoforms'
+          return vis.id === 'vials-isoforms'
         })[0];
         readVis.load().then(function (plugin) {
           vis = plugin.factory(genomeDataLink, document.querySelector("#visIso"));
