@@ -2,7 +2,7 @@
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 2/25/15.
  */
 
-define(['exports','d3', '../caleydo/event'], function(exports, d3, event){
+define(['exports','d3', '../caleydo_web/event'], function(exports, d3, event){
 
   function VialsGUI(){
     var that = this;

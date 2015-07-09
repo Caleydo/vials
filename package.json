@@ -1,52 +1,65 @@
 {
-  "name" : "caleydo-vials",
+  "name": "vials",
   "version": "0.0.1",
   "dependencies": {
-    "d3": "~3.5.5",
-    "js-lru": "git@github.com:rsms/js-lru.git",
-    "bootstrap":"~3"
   },
-  "caleydo" : {
-    "plugins": [
-      {
-        "type": "datatype",
-        "id": "caleydo-genome-data-link",
-        "folder" : "caleydo-vials",
-        "module": "caleydo-vials/caleydo-genome-data-link"
-      },
-      {
-        "type": "vis",
-        "id": "vials-isoforms",
-        "name": "Alternative Splicing - IsoForms",
-        "size": [840,300],
-        "filter": "caleydo-genome-data-link",
-        "folder" : "caleydo-vials",
-        "module" : "caleydo-vials/vials-isoforms"
-
-      },
-      {
-        "type": "vis",
-        "id": "vials-junctions",
-        "name": "Alternative Splicing - Junctions",
-        "size": [840,2000],
-        "filter": "caleydo-genome-data-link",
-        "folder" : "caleydo-vials",
-        "module" : "caleydo-vials/vials-junctions"
-
-      },
-      {
-        "type": "vis",
-        "id": "vials-reads",
-        "name": "Alternative Splicing - Read Abundance",
-        "size": [840,2000],
-        "filter": "caleydo-genome-data-link",
-        "folder" : "caleydo-vials",
-        "module" : "caleydo-vials/vials-read"
+  "caleydo": {
+    "plugins": {
+      "web": [
+        {
+          "type": "datatype",
+          "id": "caleydo-genome-data-link",
+          "file": "caleydo-genome-data-link"
+        },
+        {
+          "type": "vis",
+          "id": "vials-isoforms",
+          "name": "Alternative Splicing - IsoForms",
+          "size": [
+            840,
+            300
+          ],
+          "filter": "caleydo-genome-data-link",
+          "file": "vials-isoforms"
+        },
+        {
+          "type": "vis",
+          "id": "vials-junctions",
+          "name": "Alternative Splicing - Junctions",
+          "size": [
+            840,
+            2000
+          ],
+          "filter": "caleydo-genome-data-link",
+          "file": "vials-junctions"
+        },
+        {
+          "type": "vis",
+          "id": "vials-reads",
+          "name": "Alternative Splicing - Read Abundance",
+          "size": [
+            840,
+            2000
+          ],
+          "filter": "caleydo-genome-data-link",
+          "file": "vials-read"
+        },
+        {
+          "type": "app",
+          "name": "Vials"
+        }
+      ]
+    },
+    "dependencies": {
+      "web": {
+        "d3": "~3.5.5",
+        "js-lru": "git@github.com:rsms/js-lru.git",
+        "bootstrap": "~3"
       }
-    ],
+    },
     "requirejs-config": {
       "paths": {
-        "js-lru" : "${baseUrl}/js-lru/lru"
+        "js-lru": "${baseUrl}/js-lru/lru"
       },
       "shim": {
         "js-lru": {
