@@ -53,7 +53,7 @@
     "dependencies": {
       "web": {
         "d3": "~3.5.5",
-        "js-lru": "git@github.com:rsms/js-lru.git",
+        "js-lru": "http://github.com/rsms/js-lru.git",
         "bootstrap": "~3"
       }
     },
