@@ -1,5 +1,5 @@
 
-define(['../caleydo_web/main','../caleydo_web/data', '../caleydo_web/vis', './vials-gui', '../caleydo_web/event'], function (C,data, visPlugins, gui, event) {
+define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', './vials-gui', '../caleydo_core/event'], function (C,data, visPlugins, gui, event) {
   'use strict';
   var vis;
 

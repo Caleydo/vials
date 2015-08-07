@@ -3,7 +3,7 @@
  */
 
 
-define(['exports', 'd3', './vials-gui', '../caleydo_web/event'], function (exports, d3, gui, event) {
+define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (exports, d3, gui, event) {
   /**
    * a simple template class of a visualization. Up to now there is no additional logic required.
    * @param data
