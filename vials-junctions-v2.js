@@ -5,7 +5,7 @@
  */
 
 
-define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], function (exports, d3, gui, event, helper) {
+define(['exports', 'd3', './vials-gui', '../caleydo_core/event','vials-helper'], function (exports, d3, gui, event, helper) {
   /**
    * a simple template class of a visualization. Up to now there is no additional logic required.
    * @param data
@@ -30,7 +30,8 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
 
   // GLOBAL VARIABLES & STATUS
   var margin = {top: 40, right: 150, bottom: 20, left: 150};
-  var height = 370 - margin.top - margin.bottom;
+  var fullHeight = 370;
+  var height = fullHeight - margin.top - margin.bottom;
 
   var abundancePlot={
     height:200,
@@ -120,6 +121,11 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
       "class":heatmapPlot.prefix+"_group"
     });
 
+    var crosshairGroup = svgMain.append("g").attr({
+      "transform":"translate("+0 + "," + heatmapPlot.y + ")",
+      "class":"crosshair_group"
+    });
+
     connectorPlot.g =  svgMain.append("g").attr({
       "transform":"translate("+0 + "," + connectorPlot.y + ")",
       "class":connectorPlot.prefix+"_group"
@@ -130,13 +136,65 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
         "transform":"translate("+0 + "," + connectorPlot[subGroup].y + ")",
         "class":connectorPlot[subGroup].prefix+"_group"
       });
-    })
+    });
+
+
+    function initView(){
+
+      // create crosshair
+      crosshairGroup.append("line").attr({
+        "class":"crosshair",
+        "x1":0,
+        "y1":0,
+        "x2":0,
+        "y2":fullHeight-heatmapPlot.y
+      }).style({
+        "stroke-width":"1",
+        "stroke":"black",
+        "pointer-events":"none"
+      });
+
+      crosshairGroup.append("text").attr("class", "crosshairPos")
+
+      var currentX = 0;
+      heatmapPlot.g.on("mousemove", function () {
+        currentX = d3.mouse(this)[0];
+        //console.log("mouse", currentX);
+        event.fire("crosshair", currentX);
+
+      })
+
+    }
 
 
 
     /*
     ================= DRAW METHODS =====================
      */
+
+
+
+    function updateCrosshair(event, x){
+      var visible = (x < 0 || x > axis.getWidth()) ? "hidden" : "visible";
+
+      crosshairGroup.selectAll(".crosshair").attr({
+        "x1":x,
+        "x2":x,
+        "visibility":visible
+      })
+
+      d3.selectAll(".crosshairPos")
+        .text(function(d) {return axis.screenPosToGenePos(x)})
+        .each(function() {
+          var self = d3.select(this),
+            bb = self.node().getBBox();
+          self.attr({
+            "x": x + 10,
+            "y": fullHeight-heatmapPlot.y - bb.height/2,
+            "visibility":visible
+          });
+        })
+    }
 
 
     // -- HEATMAP PLOT --
@@ -175,11 +233,19 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
         }
       })
 
+
+
+
+
+
     }
 
 
+
+
+
     /**
-     * update the flag drawing
+     * update flag drawing
      * hidden option is boolean for animation = false
      */
     function updateFlags() {
@@ -187,27 +253,22 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
       var animate = arguments[0] || false;
       var triangleLength = connectorPlot.triangles.height;
       var positiveStrand = allData.gene.strand === '+';
-      var RNAHeight = 50;
-
 
       var triangles = connectorPlot.triangles.g.selectAll(".triangle").data(triangleData);
       triangles.exit().remove();
 
       triangles.enter().append("polygon").attr({
-
         "transform":"translate("+0+","+0+")"
+      }).on({
+        "mouseover":function(d){
+          event.fire("crosshair", axis.genePosToScreenPos(d.loc));
+        }
       })
 
       triangles.attr({
         "class": function(d){return connectorPlot.triangles.prefix+" triangle "+ d.type;},
         "points": function (d, i) {
-          //return d.type ==  (positiveStrand ? "donor" : "receptor")  ?
-
-          var isLeftArrow =  d.type ==  (positiveStrand ? "donor" : "receptor");
-          //console.log(d.type, d.type ==  (positiveStrand ? "donor" : "receptor")  ? "<-":"->");
-
-
-          return isLeftArrow?
+          return isLeftArrow(d.type, positiveStrand)?
             [
               0, triangleLength/2,
               triangleLength, 0,
@@ -220,7 +281,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
         }
       })
 
-
       var trans = triangles;
       if (animate) trans = triangles.transition();
 
@@ -228,12 +288,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
         "transform": function(d, i) {return "translate(" + d.xStart + ",0)"}
       })
 
-
-
-
     }
-
-
 
     function updateConnectors(){
       var triangleLength = connectorPlot.triangles.height;
@@ -250,7 +305,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
 
       lowerConnector.attr({
         "points": function (d, i) {
-          // var x1 =  d.type == "donor" ? d.xEnd : d.xStart;
           return [
             d.anchor, 0,
             d.anchor, triangleLength/2,
@@ -261,11 +315,10 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
 
     }
 
-
-
     /*
      ================= LAYOUT METHODS =====================
      */
+
 
     function computeFlagPositions() {
 
@@ -274,13 +327,11 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
 
       var positiveStrand = allData.gene.strand === '+';
 
-
       // compute desired positions
       triangleData.forEach(function(triangle,i){
         var axisLoc = axis.genePosToScreenPos(triangle.loc);
-        var isLeftArrow = triangle.type == (positiveStrand ? "donor" : "receptor");
 
-        if (isLeftArrow){
+        if (isLeftArrow(triangle.type, positiveStrand)){
           triangle.xStart = triangle.xStartDesired = axisLoc - triangleLength;
           triangle.xEnd = triangle.xEndDesired = axisLoc;
         }else{ // right arrow:
@@ -323,17 +374,25 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
         }
       }
 
-      var isLeftArrow;
       triangleData.forEach(function(b){
-        isLeftArrow = b.type == (positiveStrand ? "donor" : "receptor")
-        b.anchor = isLeftArrow ? b.xEnd : b.xStart;
+        b.anchor = isLeftArrow(b.type, positiveStrand) ? b.xEnd : b.xStart;
       })
-
-      console.log(triangleData, bucketsCopy);
-
-
-
     }
+
+    /*
+     ================= HELPERMETHODS =====================
+     */
+
+    /**
+     * a centralized method to decide if a flag is pointing left based on conditions
+     * @param type - the site type (donor or receptor)
+     * @param positiveStrand - boolean if on a positive strand
+     * @returns {boolean}
+     */
+    function isLeftArrow(type, positiveStrand) {
+      return type == ((positiveStrand || (!positiveStrand && !axis.ascending) ) ? "donor" : "receptor");
+    }
+
 
 
     /*
@@ -417,6 +476,10 @@ define(['exports', 'd3', './vials-gui', '../caleydo_web/event','vials-helper'], 
 
 
     event.on("newDataLoaded", dataUpdate);
+    event.on("crosshair", updateCrosshair);
+
+
+    initView();
 
 
     return head.node();
