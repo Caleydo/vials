@@ -223,11 +223,10 @@ path.selectionParco{
   }
 }
 
-.exonHeatMap{
-  .exonHeat{
+.jxn_heat_group{
+  .exon{
       fill:$wes-violet;
       fill-opacity:.1;
-
   }
 
   .background{
@@ -276,28 +275,44 @@ input.btn-mini {
   //line-height: 6px;
 }
 
-// BILAL
+// ---- JUNCTION VIEW ----
 
+.jxn_con_lower.con{
+  stroke: $wes-violet;
+  fill: none
+}
 
-.RNASite[type=donor]{
+.jxn_con_triangle.donor{
   fill: $wes-gray;
   fill-opacity: 1;
-  stroke: $wes-violet;}
+  stroke: $wes-violet;
+}
 
-.RNASite[type=receptor]  {
+.jxn_con_triangle.receptor{
   fill: white;
   fill-opacity: 1;
-  stroke: $wes-violet;}
-
-.RNASiteConnector[type=donor] {
-  //stroke: $wes-blue;
   stroke: $wes-violet;
-  fill: none}
+}
 
-.RNASiteConnector[type=receptor] {
-  //stroke: $wes-red;
-  stroke: $wes-violet;
-  fill: none}
+//.RNASite[type=donor]{
+//  fill: $wes-gray;
+//  fill-opacity: 1;
+//  stroke: $wes-violet;}
+//
+//.RNASite[type=receptor]  {
+//  fill: white;
+//  fill-opacity: 1;
+//  stroke: $wes-violet;}
+//
+//.RNASiteConnector[type=donor] {
+//  //stroke: $wes-blue;
+//  stroke: $wes-violet;
+//  fill: none}
+//
+//.RNASiteConnector[type=receptor] {
+//  //stroke: $wes-red;
+//  stroke: $wes-violet;
+//  fill: none}
 
 .edgeAnchor {
   fill: $wes-violet;
