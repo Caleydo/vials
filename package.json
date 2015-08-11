@@ -57,7 +57,8 @@
       "web": {
         "d3": "~3.5.5",
         "js-lru": "http://github.com/rsms/js-lru.git",
-        "bootstrap": "~3"
+        "bootstrap": "~3",
+        "underscore":"~1.8"
       }
     },
     "requirejs-config": {

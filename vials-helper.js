@@ -47,6 +47,22 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
     }
 
 
+    VialsHelper.prototype.getPseudoRandom = function(){
+      var seed = 0x2F6E2B1;
+      return function() {
+        // Robert Jenkins’ 32 bit integer hash function
+        seed = ((seed + 0x7ED55D16) + (seed << 12))  & 0xFFFFFFFF;
+        seed = ((seed ^ 0xC761C23C) ^ (seed >>> 19)) & 0xFFFFFFFF;
+        seed = ((seed + 0x165667B1) + (seed << 5))   & 0xFFFFFFFF;
+        seed = ((seed + 0xD3A2646C) ^ (seed << 9))   & 0xFFFFFFFF;
+        seed = ((seed + 0xFD7046C5) + (seed << 3))   & 0xFFFFFFFF;
+        seed = ((seed ^ 0xB55A4F09) ^ (seed >>> 16)) & 0xFFFFFFFF;
+        return (seed & 0xFFFFFFF) / 0x10000000;
+      };
+    }
+
+
+
 
     return VialsHelper;
   }();
@@ -56,8 +72,40 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
   var global = new VialsHelper();
   exports.VialsHelper = VialsHelper;
   exports.drawSideLabel = global.drawSideLabel.bind(global)
-
+  exports.getPseudoRandom = global.getPseudoRandom.bind(global)
 
 
 
 })
+
+
+// THIS IS the copyright notice for the pseudorandom function:
+// https://gist.github.com/mathiasbynens/5670917
+//
+// Copyright 2012 the V8 project authors. All rights reserved.
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are
+// met:
+//
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the following
+//       disclaimer in the documentation and/or other materials provided
+//       with the distribution.
+//     * Neither the name of Google Inc. nor the names of its
+//       contributors may be used to endorse or promote products derived
+//       from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+

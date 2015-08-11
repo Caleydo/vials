@@ -210,31 +210,6 @@ path.selectionParco{
 
 
 
-//===> jxn view <===
-#jxnArea{
-  .jxnWrapperBox{
-      fill:$wes-gray;
-      fill-opacity: .5;
-  }
-
-  .JXNAreaConnector{
-    fill:$wes-gray;
-    fill-opacity: .5;
-  }
-}
-
-.jxn_heat_group{
-  .exon{
-      fill:$wes-violet;
-      fill-opacity:.1;
-  }
-
-  .background{
-    fill:white;
-//    fill-opacity: .3;
-  }
-
-}
 
 .strandIndicator {
   .genomeAxisTicks {
@@ -277,6 +252,27 @@ input.btn-mini {
 
 // ---- JUNCTION VIEW ----
 
+.jxn_heat_group{
+  .exon{
+    fill:$wes-violet;
+    fill-opacity:.1;
+  }
+
+  .background{
+    fill:white;
+    //    fill-opacity: .3;
+  }
+
+}
+
+.jxn_con_upper_group{
+  .areaCon{
+    fill: $wes-gray;
+    fill-opacity: .5;
+    stroke: none;
+  }
+}
+
 .jxn_con_lower.con{
   stroke: $wes-violet;
   fill: none
@@ -294,25 +290,15 @@ input.btn-mini {
   stroke: $wes-violet;
 }
 
-//.RNASite[type=donor]{
-//  fill: $wes-gray;
-//  fill-opacity: 1;
-//  stroke: $wes-violet;}
-//
-//.RNASite[type=receptor]  {
-//  fill: white;
-//  fill-opacity: 1;
-//  stroke: $wes-violet;}
-//
-//.RNASiteConnector[type=donor] {
-//  //stroke: $wes-blue;
-//  stroke: $wes-violet;
-//  fill: none}
-//
-//.RNASiteConnector[type=receptor] {
-//  //stroke: $wes-red;
-//  stroke: $wes-violet;
-//  fill: none}
+.jxn_weight_group{
+    .panelBG{
+      fill: $wes-gray;
+      fill-opacity: .5;
+      stroke: none;
+    }
+}
+
+
 
 .edgeAnchor {
   fill: $wes-violet;
