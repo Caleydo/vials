@@ -39,7 +39,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
     y:0,
     panels:{
       prefix:"jxn_weight_panel",
-      minWidth:15,
+      minWidth:10,
       panelGapsize:4,
       scatterWidth:100,
       //dynamic paramters:
@@ -177,7 +177,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       var currentX = 0;
       heatmapPlot.g.on("mousemove", function () {
         currentX = d3.mouse(this)[0];
-        //console.log("mouse", currentX);
         event.fire("crosshair", currentX);
 
       })
@@ -242,7 +241,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       })
 
       // --- changing attr for exon
-      exonHeat.attr({
+      exonHeat.transition().attr({
         x: function (d) {
           return axis.genePosToScreenPos(d.start);
         },
@@ -276,15 +275,23 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       triangles.exit().remove();
 
       triangles.enter().append("polygon").attr({
-        "transform":"translate("+0+","+0+")"
+        "transform": function(d, i) {return "translate(" + d.xStart + ",0)"},
+        "class": connectorPlot.triangles.prefix+" triangle "
       }).on({
         "mouseover":function(d){
           event.fire("crosshair", axis.genePosToScreenPos(d.loc));
+          event.fire("highlightFlag", +d.loc, true);
+        },
+        "mouseout": function (d) {
+          event.fire("highlightFlag", +d.loc, false);
         }
       })
 
+      triangles.classed("donor",function(d){return d.type=='donor'?true:null;})
+      triangles.classed("receptor",function(d){return d.type=='receptor'?true:null;})
+
       triangles.attr({
-        "class": function(d){return connectorPlot.triangles.prefix+" triangle "+ d.type;},
+       //+ d.type;},
         "points": function (d, i) {
           return isLeftArrow(d.type, positiveStrand)?
             [
@@ -302,9 +309,35 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       var trans = triangles;
       if (animate) trans = triangles.transition();
 
-      trans.attr({
+      //TODO: remove one transition
+      trans.transition().attr({
         "transform": function(d, i) {return "translate(" + d.xStart + ",0)"}
       })
+
+      event.on("highlightJxn", function(e,key,highlight){
+
+        var highlightTriangles = triangles.filter(function(d){
+          // TODO: the location could be only a substring of a real location (unlikely but maybe)
+          if (key.indexOf(d.loc)>-1) return true;
+          else return false;
+        })
+        highlightTriangles.classed("highlighted",highlight);
+
+      })
+      
+      event.on("highlightFlag", function(e,loc, highlight){
+        //console.log("allJxns",allJxns);
+
+        _.keys(allJxns).forEach(function(key) {
+            var obj = allJxns[key];
+            if (obj.start == loc || obj.end == loc) {
+              event.fire("highlightJxn",key,highlight);
+            }
+          })
+
+
+      })
+      
 
     }
 
@@ -321,7 +354,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
         "class": connectorPlot.lowerConnectors.prefix+" con"
       })
 
-      lowerConnector.attr({
+      lowerConnector.transition().attr({
         "points": function (d, i) {
           return [
             d.anchor, 0,
@@ -331,18 +364,19 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
         }
       })
 
-
-
       // draw direct neighbors
-      var directNeighors = connectorPlot.upperConnectors.g.selectAll(".neighborCon").data(jxnGroups.filter(function(d){return d.directNeighbor;}))
-      directNeighors.exit().remove();
+      var directNeighbors = connectorPlot.upperConnectors.g.selectAll(".neighborCon").data(jxnGroups.filter(function(d){return d.directNeighbor;}))
+      directNeighbors.exit().remove();
 
-      directNeighors.enter().append("polygon").attr({
+      directNeighbors.enter().append("polygon").attr({
         "class":"neighborCon areaCon"
+      }).on({
+        "mouseover":function(d){event.fire("highlightJxn", (d.jxns[0].start+"_"+d.jxns[0].end), true)},
+        "mouseout":function(d){event.fire("highlightJxn", (d.jxns[0].start+"_"+d.jxns[0].end), false)}
       })
 
       var h = connectorPlot.upperConnectors.height;
-      directNeighors.transition().attr({
+      directNeighbors.transition().attr({
         points:function(d){
           var jxn = d.jxns[0];
           return [
@@ -356,13 +390,27 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       })
 
 
+
+      var allDonors = _.flatten(jxnGroups.filter(function(d){return !d.directNeighbor;}).map(function(d){
+        return d.jxns.map(function(jxn){
+          return {endX:jxn.x+jxn.w, jxns:[jxn], key:(jxn.start+'_'+jxn.end)}
+        })
+      }))
+
+
       // -- draw donor connectors
-      var donorConnectors = connectorPlot.upperConnectors.g.selectAll(".donorCon").data(jxnGroups.filter(function(d){return !d.directNeighbor;}))
+      var donorConnectors = connectorPlot.upperConnectors.g.selectAll(".donorCon")
+        .data(allDonors) //jxnGroups.filter(function(d){return !d.directNeighbor;}) TODO: decide for a strategy: allgroup or single select
       donorConnectors.exit().remove();
 
       donorConnectors.enter().append("polygon").attr({
         "class":"donorCon areaCon"
+      }).on({
+        "mouseover":function(d){event.fire("highlightJxn", d.key, true)},
+        "mouseout":function(d){event.fire("highlightJxn", d.key, false)}
       })
+
+
 
       var h = connectorPlot.upperConnectors.height;
       var connector = (positiveStrand==axis.ascending)?'startTriangle':'endTriangle'
@@ -386,11 +434,9 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       // -- Retrieve Connector Lines
       var allConLines = _.flatten(jxnGroups.filter(function(d){return !d.directNeighbor;}).map(function(d){
          return d.jxns.map(function(jxn){
-            return {startX:(jxn.x+jxn.w/2), endX:jxn[antiConnector].anchor}
+            return {startX:(jxn.x+jxn.w/2), endX:jxn[antiConnector].anchor, key:(jxn.start+'_'+jxn.end)}
           })
       }))
-
-      console.log("allConLines",allConLines);
 
       //--- plot connector lines
       var accConnectors = connectorPlot.upperConnectors.g.selectAll(".accCon").data(allConLines)
@@ -406,6 +452,40 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
             y1:0,
             y2:h
       })
+
+
+
+      /// -- EVENThandling for connectors:
+
+      event.on("highlightJxn", function(e,key,highlight){
+        lowerConnector.filter(function(d){
+          // TODO: the location could be only a substring of a real location (unlikely but maybe)
+          if (key.indexOf(d.loc)>-1) return true;
+          else return false;
+        }).classed("highlighted",highlight);
+
+        directNeighbors.filter(function(d){
+          return key == (d.jxns[0].start+"_"+d.jxns[0].end); // if start and end assemble to the key
+        }).classed("highlighted",highlight);
+
+
+        donorConnectors.filter(function(d){return d.key==key;}).classed("highlighted",highlight);
+        accConnectors.filter(function(d){return d.key==key;}).classed("highlighted",highlight);
+
+
+
+
+
+
+        //var highlightTriangles = triangles.filter(function(d){
+        //  // TODO: the location could be only a substring of a real location (unlikely but maybe)
+        //  if (key.indexOf(d.loc)>-1) return true;
+        //  else return false;
+        //})
+        //highlightTriangles.classed("highlighted",highlight);
+
+      })
+
 
 
 
@@ -437,7 +517,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           event.fire("updateVis")
         },
         "mouseover":function(d){
-          event.fire("highlightJxn", d.key, true)
+          event.fire("highlightJxn", d.key, true);
+
           //d3.select(this).style({stroke:"grey"});
         },
         "mouseout":function(d){
@@ -459,9 +540,12 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           return "translate("+ d.jxn.x +","+0+")";
         }
       })
-      panels.select(".panelBG").transition().attr({
+      panelBG = panels.select(".panelBG")
+      panelBG.transition().attr({
         width: function(d){return d.jxn.w;}
       })
+      panelBG.classed("plot",function(d){return d.jxn.state=='plot'?true:null;})
+
       panels.select(".panelIndicator").transition().attr({
         width: function(d){return d.jxn.w-6;}
       })
@@ -472,9 +556,9 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       event.on("highlightJxn", function(e,key,highlight){
         var keyPanel = panels.filter(function(d){return d.key==key;})
 
-        keyPanel.select(".panelIndicator").style("opacity",highlight?1 :.5);
+        keyPanel.select(".panelIndicator").style("opacity",highlight? 1 :null);
 
-        keyPanel.select(".panelBG").style("opacity",highlight?.2 :.5);
+        keyPanel.select(".panelBG").style("fill-opacity",highlight?.1 :null);
 
       })
 
@@ -518,8 +602,15 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           class:"dots",
           r:3
         }).on({
-        "mouseover":function(d){event.fire("sampleHighlight", d.w.sample, true);},
-        "mouseout":function(d){event.fire("sampleHighlight", d.w.sample, false);}
+        "mouseover":function(d){
+          event.fire("sampleHighlight", d.w.sample, true);
+          //console.log(d3.select(this.parentNode).data()[0].key);
+          event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,true);
+        },
+        "mouseout":function(d){
+          event.fire("sampleHighlight", d.w.sample, false);
+          event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,false);
+        }
 
       })
 
@@ -533,11 +624,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       // --- EvenetHandling DOTS:
       event.on("sampleHighlight", function(e,sample, highlight){
         var hDots = panels.selectAll(".dots").filter(function(d){return d.w.sample==sample;})
-        console.log("hDots",hDots);
-        
         hDots.classed("highlighted",highlight);
-
-
       });
 
 
@@ -616,6 +703,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       }
 
       triangleData.forEach(function(b){
+        b.xStart = Math.floor(b.xStart);
+        b.xEnd = Math.floor(b.xEnd);
         b.anchor = isLeftArrow(b.type, positiveStrand) ? b.xEnd : b.xStart;
       })
     }
@@ -688,20 +777,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       // set start parameters// dont forget the last one :)
       jxnGroups.push({endX:currentXPos, directNeighbor:lastAddedJxn.directNeighbor, jxns: currentGroup});
 
-      console.log("jxnGroups",jxnGroups);
-
-
-
-
-
-
       //TODO: find better solution for that
       svg.transition().attr("width",currentXPos+100);
-
-
-
-      //console.log("allJXNsorted",allJXNsorted);
-
 
     }
 
@@ -825,10 +902,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           }
         })
 
-        console.log("allJxnPos",allJxnPos);
-        console.log("allJxns",allJxns);
-
-
         //cleanup
         sampleOrder = [];
 
@@ -846,7 +919,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
     event.on("crosshair", updateCrosshair);
 
     event.on("updateVis", updateVis);
-
+    event.on("axisChange", updateVis);
 
     initView();
 

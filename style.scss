@@ -268,13 +268,26 @@ input.btn-mini {
 .jxn_con_upper_group{
   .areaCon{
     fill: $wes-gray;
-    fill-opacity: .5;
+    opacity: .6;
     stroke: none;
   }
+  .areaCon.highlighted{
+    opacity: 1;
+  }
+
+
   .lineCon{
     stroke: $wes-violet;
     opacity: .5;
+    pointer-events: none;
   }
+  .lineCon.highlighted{
+    opacity: 1;
+    stroke-width: 2px;
+  }
+;
+
+
 }
 
 .jxn_weight_panel{
@@ -299,27 +312,51 @@ input.btn-mini {
 
 .jxn_con_lower.con{
   stroke: $wes-violet;
-  fill: none
+  fill: none;
+  opacity:.5;
 }
+.jxn_con_lower.con.highlighted{
+  stroke-width: 2px;
+  opacity:1;
+}
+
 
 .jxn_con_triangle.donor{
   fill: $wes-gray;
-  fill-opacity: 1;
+  opacity: 1;
   stroke: $wes-violet;
+
+}
+.jxn_con_triangle.donor.highlighted{
+  opacity: 1;
+  stroke: $wes-blue;
+  stroke-width: 2px;
 }
 
 .jxn_con_triangle.receptor{
   fill: white;
-  fill-opacity: 1;
+  opacity: 1;
   stroke: $wes-violet;
+}
+.jxn_con_triangle.receptor.highlighted {
+  stroke: $wes-blue;
+  stroke-width: 2px;
+  opacity:1;
 }
 
 .jxn_weight_group{
     .panelBG{
       fill: $wes-gray;
-      opacity: .5;
+      fill-opacity: .6;
       stroke: none;
     }
+    .panelBG.plot{
+      //stroke:1px;
+      stroke:$wes-gray;
+      fill-opacity: .4;
+      rx:8;
+    }
+
 }
 
 
