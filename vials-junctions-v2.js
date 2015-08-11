@@ -221,6 +221,9 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       var allExons = allData.gene.exons;
       var heatMapGroup = heatmapPlot.g;
 
+      var startField = axis.ascending?'start':'end';
+      var endField = axis.ascending?'end':'start';
+
       // collect exons:
       var collectExons = []
       Object.keys(allIsoforms).forEach(function (key) {
@@ -243,12 +246,58 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       // --- changing attr for exon
       exonHeat.transition().attr({
         x: function (d) {
-          return axis.genePosToScreenPos(d.start);
+          return axis.genePosToScreenPos(d[startField]);
         },
         width: function (d) {
-          return axis.genePosToScreenPos(d.end) - axis.genePosToScreenPos(d.start);
+          return axis.genePosToScreenPos(d[endField]) - axis.genePosToScreenPos(d[startField]);
         }
       })
+
+
+
+      function updateReverseButton(){
+        var directionToggleGroup = heatMapGroup.selectAll(".directionToggleGroup").data([1])
+        var directionToggleGroupEnter = directionToggleGroup.enter().append("g").attr({
+          "class": "directionToggleGroup"
+        })
+        directionToggleGroupEnter.append("rect").attr({
+          "class": "directionToggle",
+          "width": 125,
+          "height": 20,
+          "rx": 10,
+          "ry": 10
+        }).on("click", function() {
+          axis.reverse();
+          d3.select(this).classed("selected",!axis.ascending);
+          event.fire("axisChange");
+        })
+
+        directionToggleGroupEnter.append("line").attr({
+          "x1": 20,
+          "x2": 50,
+          "y1": 10,
+          "y2": 10,
+          //"stroke": "black",
+          "stroke-width": 5,
+          "marker-end": "url(\#scaleArrow)",
+          "marker-start": "url(\#scaleArrow)",
+        }).style("pointer-events","none");
+        var directionToggleText = directionToggleGroupEnter.append("text").attr({
+
+        }).text("reverse");
+        directionToggleText.attr("transform", "translate(65, 14)");
+        directionToggleText.style("pointer-events","none");
+
+        directionToggleGroup.attr({
+          "transform": "translate(" + (axis.width+10) + ",0)"
+        });
+
+
+
+
+      }
+
+      updateReverseButton();
 
 
 
@@ -346,6 +395,11 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       var positiveStrand = allData.gene.strand === '+';
 
 
+      var startField = axis.ascending?'start':'end';
+      var endField = axis.ascending?'end':'start';
+
+
+
       /* -- update lower connectors - D3 circle -- */
       var lowerConnector = connectorPlot.lowerConnectors.g.selectAll(".con").data(triangleData);
       lowerConnector.exit().remove();
@@ -382,8 +436,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           return [
             jxn.x,0,
             jxn.x+jxn.w,0,
-            jxn.endTriangle.anchor,h,
-            jxn.startTriangle.anchor,h
+            jxn[endField+"Triangle"].anchor,h,
+            jxn[startField+"Triangle"].anchor,h
           ]
 
         }
@@ -400,7 +454,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
       // -- draw donor connectors
       var donorConnectors = connectorPlot.upperConnectors.g.selectAll(".donorCon")
-        .data(allDonors) //jxnGroups.filter(function(d){return !d.directNeighbor;}) TODO: decide for a strategy: allgroup or single select
+        .data(allDonors, function(d){return d.key}) //jxnGroups.filter(function(d){return !d.directNeighbor;}) TODO: decide for a strategy: allgroup or single select
       donorConnectors.exit().remove();
 
       donorConnectors.enter().append("polygon").attr({
@@ -413,8 +467,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
 
       var h = connectorPlot.upperConnectors.height;
-      var connector = (positiveStrand==axis.ascending)?'startTriangle':'endTriangle'
-      var antiConnector = (positiveStrand==axis.ascending)?'endTriangle':'startTriangle'
+      var connector = (positiveStrand/*==axis.ascending*/)?'startTriangle':'endTriangle'
+      var antiConnector = (positiveStrand/*==axis.ascending*/)?'endTriangle':'startTriangle'
 
       donorConnectors.transition().attr({
         points:function(d){
@@ -742,6 +796,9 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       )
 
 
+      if (!axis.ascending)
+        allJXNsorted.reverse();
+
       var currentGroupCriterion = -1;
       var lastAddedJxn = null;
       var currentXPos = 0;
@@ -775,7 +832,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       });
 
       // set start parameters// dont forget the last one :)
-      jxnGroups.push({endX:currentXPos, directNeighbor:lastAddedJxn.directNeighbor, jxns: currentGroup});
+      jxnGroups.push({endX:currentXPos, directNeighbor:(lastAddedJxn.directNeighbor && currentGroup.length==1), jxns: currentGroup});
 
       //TODO: find better solution for that
       svg.transition().attr("width",currentXPos+100);
@@ -794,7 +851,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
      * @returns {boolean}
      */
     function isLeftArrow(type, positiveStrand) {
-      return type == ((positiveStrand || (!positiveStrand && !axis.ascending) ) ? "donor" : "receptor");
+      return type == ((positiveStrand == axis.ascending ) ? "donor" : "receptor");
     }
 
 
