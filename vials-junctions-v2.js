@@ -320,6 +320,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       var triangleLength = connectorPlot.triangles.height;
       var positiveStrand = allData.gene.strand === '+';
 
+      var frozenHighlight = null;
+
       var triangles = connectorPlot.triangles.g.selectAll(".triangle").data(triangleData);
       triangles.exit().remove();
 
@@ -332,7 +334,11 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           event.fire("highlightFlag", +d.loc, true);
         },
         "mouseout": function (d) {
-          event.fire("highlightFlag", +d.loc, false);
+          if (frozenHighlight == null) event.fire("highlightFlag", +d.loc, false);
+        },
+        "click": function (d) {
+          if (frozenHighlight == null) frozenHighlight= +d.loc;
+          else frozenHighlight=null;
         }
       })
 
@@ -364,6 +370,12 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       })
 
       event.on("highlightJxn", function(e,key,highlight){
+        //TODO: potential cause for errors
+        if (frozenHighlight!=null) {
+          var clean = frozenHighlight;
+          frozenHighlight=null;
+          event.fire("highlightFlag",clean,false);
+        }
 
         var highlightTriangles = triangles.filter(function(d){
           // TODO: the location could be only a substring of a real location (unlikely but maybe)
@@ -377,7 +389,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       event.on("highlightFlag", function(e,loc, highlight){
         //console.log("allJxns",allJxns);
 
-        _.keys(allJxns).forEach(function(key) {
+               _.keys(allJxns).forEach(function(key) {
             var obj = allJxns[key];
             if (obj.start == loc || obj.end == loc) {
               event.fire("highlightJxn",key,highlight);
@@ -664,6 +676,18 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
         "mouseout":function(d){
           event.fire("sampleHighlight", d.w.sample, false);
           event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,false);
+        },
+        'click':function(d){
+          if (d3.select(this).classed("selected")) {
+            //deselect
+            d3.select(this).classed("selected",null);
+            event.fire("sampleSelect", d.w.sample, false)
+          } else {
+            //select
+            d3.select(this).classed("selected",true);
+            event.fire("sampleSelect", d.w.sample, true)
+          }
+
         }
 
       })
@@ -680,6 +704,38 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
         var hDots = panels.selectAll(".dots").filter(function(d){return d.w.sample==sample;})
         hDots.classed("highlighted",highlight);
       });
+
+      event.on("groupHighlight", function(e, groupID, highlight) {
+          alldots.filter(function(d){return groupID.samples.indexOf(d.w.sample)>-1}).classed("highlighted",highlight);
+      })
+
+      event.on('sampleSelect',function(e,sample,isSelected){
+        if (isSelected){
+          alldots.filter(function(d){return d.w.sample==sample;}).style({
+            fill:gui.current.getColorForSelection(sample)
+          })
+        }else{
+          alldots.filter(function(d){return d.w.sample==sample;}).style({
+            fill:null
+          })
+        }
+      })
+
+      // group select
+
+      event.on("groupSelect", function(e, groupID, isSelected) {
+        if (isSelected){
+          alldots.filter(function(d){return groupID.samples.indexOf(d.w.sample)>-1}).style({
+            fill:gui.current.getColorForSelection(JSON.stringify(groupID))
+          })
+        }else{
+          alldots.filter(function(d){return groupID.samples.indexOf(d.w.sample)>-1}).style({
+            fill:null
+          })
+        }
+      })
+
+
 
 
 
