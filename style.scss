@@ -99,7 +99,7 @@ $wes-blue: #0093dd;
     stroke:none;
   }
 
-  .highlightBG{
+  .dotightBG{
     pointer-events: none;
   }
 
@@ -271,6 +271,30 @@ input.btn-mini {
     fill-opacity: .5;
     stroke: none;
   }
+  .lineCon{
+    stroke: $wes-violet;
+    opacity: .5;
+  }
+}
+
+.jxn_weight_panel{
+  .dots{ // TODO: make this the same as sampleDot
+    fill:$wes-gray;
+    fill-opacity: .7;
+  }
+
+  .dots.highlighted{
+    fill:$wes-red;
+    fill-opacity: 1;
+  }
+
+  .panelIndicator{
+    fill:$wes-violet;
+    stroke: none;
+    opacity: .5;
+    pointer-events: none;
+
+  }
 }
 
 .jxn_con_lower.con{
@@ -293,7 +317,7 @@ input.btn-mini {
 .jxn_weight_group{
     .panelBG{
       fill: $wes-gray;
-      fill-opacity: .5;
+      opacity: .5;
       stroke: none;
     }
 }
