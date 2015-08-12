@@ -98,12 +98,12 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
     var allData = {}; // api data
     var triangleData = []; // data to draw triangles
     var allJxns = {}; // juncntion information as map
-    var sampleOrder = []; // sort order for elements in scatterplot view (abundance)
     var jxnGroups = []; // end positions of jxn groups for connector drawing
+    var sampleOrder = {definedSize:0, order:[], valid:false}; // sort order for elements in scatterplot view (abundance)
 
     //visual variables:
     var weightScale = d3.scale.linear().range([abundancePlot.height-10,10]);
-
+    var endOfPanels = 10; // whats the final width of all panels
 
 
 
@@ -624,12 +624,12 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
         keyPanel.select(".panelIndicator").style("opacity",highlight? 1 :null);
 
-        keyPanel.select(".panelBG").style("fill-opacity",highlight?.1 :null);
+        keyPanel.select(".panelBG").classed("highlighted", highlight)//.style("fill-opacity",highlight?.1 :null);
 
       })
 
 
-
+      var allConditions = Object.keys(allData.samples).length;
 
 
       var alldots = panels.selectAll(".dots").data(function(d){
@@ -641,10 +641,17 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           return res;
 
         }else if (d.jxn.state == 'plot'){
-          var allConditions = Object.keys(allData.samples).length;
-          res = d.jxn.weights.map(function(w,i){
-            return {x: 6+(i/allConditions*(abundancePlot.panels.scatterWidth-12)), w:w }
-          })
+          var res =[];
+          if (!sampleOrder.valid){
+            res = d.jxn.weights.map(function(w,i){
+              return {x: 6+(i/allConditions*(abundancePlot.panels.scatterWidth-12)), w:w }
+            })
+          }else{
+            res = d.jxn.weights.map(function(w,i) {
+              return {x: 6 + (sampleOrder.order.indexOf(w.sample) / allConditions * (abundancePlot.panels.scatterWidth - 12)), w: w}
+            })
+          }
+
           return res;
           //if (sampleOrder.length<1){
           //  //var weights = d.jxn.weights.map(function(w){return w.weight;})
@@ -697,7 +704,103 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
         cy:function(d){return weightScale(d.w.weight);}
       })
       
-      
+
+
+      // --- SORT DIVIDER to indicate what is valid sorting and what is random
+
+      var sortDevider=panels.selectAll(".sortDivider")
+        .data(function(d){return (sampleOrder.valid && d.jxn.state == 'plot')?
+          [6+3+((sampleOrder.definedSize-1)/allConditions*(abundancePlot.panels.scatterWidth-12))]
+          :[]}
+      );
+      sortDevider.exit().remove();
+      sortDevider.enter().append("line").attr({
+        class:"sortDivider",
+        x1:function(d){return d;},
+        x2:function(d){return d;},
+        y1:weightScale.range()[0],
+        y2:weightScale.range()[1]
+      })
+      sortDevider.attr({
+        x1:function(d){return d;},
+        x2:function(d){return d;}
+      })
+
+
+
+      // --- Decoration gets in here
+      var deco = panels.selectAll(".decoration").data(function(d){
+          if (d.jxn.state=='plot'){
+            return [
+              {icon:"\uf012", callOnClick:function(){ sortByJxn(d.key);}, description:"sort by weight", d:d},
+              {icon:"\uf259", callOnClick:function(){}, description:"Live long and prosper.", d:d}
+            ]
+          }else{
+            return []
+          }
+      })
+
+      deco.exit().remove();
+
+      deco.enter().append("text").attr({
+        class:"decoration",
+        "transform":function(d,i) {return "translate("+(i*15+2)+","+15+")";}
+      })
+        .text(function(d){return d.icon;})
+        .on({
+          'mouseover':function(d){
+            event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,true);
+          },
+          'mouseout':function(d){
+            event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,false);
+          },
+          'click':function(d){d.callOnClick();}
+
+        })
+        .append("title").text(function(d){return d.description;})
+
+
+      function sortByJxn(key){
+        console.log("key",key);
+        console.log("allData",allData);
+        console.log("allJxns",allJxns);
+
+        var allKeys = Object.keys(allData.samples)
+
+        if (key in allJxns){
+
+          var sortedWeights =
+          _.pluck(
+            _.sortBy(
+              allJxns[key].weights
+                .filter(function(d){return d.weight>0;})
+              ,'weight')
+            ,'sample'
+          )
+
+          var allNull = _.difference(allKeys, sortedWeights)
+
+
+
+          sampleOrder.definedSize= sortedWeights.length;
+          sampleOrder.order = sortedWeights.concat(allNull);
+          sampleOrder.valid=true;
+          console.log("sampleOrder",sampleOrder);
+
+          updateAbundanceView();//TODO: can be done more subtle / only update dots!
+
+
+        }
+
+
+
+
+
+
+      }
+
+
+
 
       // --- EvenetHandling DOTS:
       event.on("sampleHighlight", function(e,sample, highlight){
@@ -737,8 +840,27 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
 
 
+      function updateLegend(){
+        var dotAxisDef = d3.svg.axis()
+          .scale(weightScale)
+          .orient("right");
 
+        var dotAxis = abundancePlot.g.selectAll(".axis").data([1]);
+        dotAxis.exit().remove();
 
+        // --- adding Element to class dotAxis
+        dotAxis.enter().append("g").attr({
+          "class":"axis"
+        }).call(dotAxisDef)
+
+        // --- changing nodes for dotAxis
+        dotAxis.transition()
+          .attr({
+            "transform":"translate("+(endOfPanels+5)+",0)"
+          })
+
+      }
+      updateLegend();
       
       
       
@@ -891,7 +1013,9 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       jxnGroups.push({endX:currentXPos, directNeighbor:(lastAddedJxn.directNeighbor && currentGroup.length==1), jxns: currentGroup});
 
       //TODO: find better solution for that
-      svg.transition().attr("width",currentXPos+100);
+      svg.transition().attr("width",currentXPos+300);
+
+      endOfPanels = currentXPos
 
     }
 
@@ -1016,7 +1140,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
         })
 
         //cleanup
-        sampleOrder = [];
+        sampleOrder.valid=false;
 
 
 

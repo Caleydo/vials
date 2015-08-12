@@ -1,7 +1,11 @@
-
 /**
  * Created by Hendrik Strobelt 10/10/14
  */
+
+@import "../bower_components/font-awesome/css/font-awesome.min.css";
+
+
+
 
 // Wes Anderson Color Palette from http://wesandersonpalettes.tumblr.com/ - Fantastic Mr. Fox
 $wes-gray: #B9B09F;
@@ -10,6 +14,34 @@ $wes-green: #A9D8C8;
 $wes-violet: #433447;
 $wes-red: #D16B54;
 $wes-blue: #0093dd;
+
+
+text.decoration{
+  font-family: "FontAwesome", serif;
+  font-size: 12px;
+  fill:$wes-gray;
+  fill-opacity: .6;
+  cursor: pointer;
+
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  /*
+    Introduced in IE 10.
+    See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+  */
+  -ms-user-select: none;
+  user-select: none;
+
+}
+
+text.decoration:hover {
+  fill-opacity: 1;
+  fill:$wes-violet;
+}
+
+
+
 
 //by convention create a namespace for your own plugin
 .gv {
@@ -174,6 +206,7 @@ path.selectionParco{
   }
 
 
+
 }
 
 
@@ -308,6 +341,12 @@ input.btn-mini {
     pointer-events: none;
 
   }
+
+  .sortDivider{
+    stroke:$wes-violet;
+    stroke-opacity: .5;
+    stroke-dasharray: 4, 5 ;
+  }
 }
 
 .jxn_con_lower.con{
@@ -356,8 +395,14 @@ input.btn-mini {
       fill-opacity: .4;
       rx:8;
     }
+  .panelBG.highlighted{
+    fill-opacity: .2;
+    stroke:$wes-gray;
+    stroke-opacity: .6;
+  }
 
 }
+
 
 
 

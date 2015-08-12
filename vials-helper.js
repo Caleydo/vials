@@ -62,6 +62,28 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
     }
 
 
+    VialsHelper.prototype.computeBoxPlot = function(values) {
+      var sortedValues = values.sort(d3.ascending);
+      var Q = new Array(5);
+      Q[0] = d3.min(sortedValues);
+      Q[4] = d3.max(sortedValues);
+      Q[1] = d3.quantile(sortedValues, 0.25);
+      Q[2] = d3.quantile(sortedValues, 0.5);
+      Q[3] = d3.quantile(sortedValues, 0.75);
+      var iqr = 1.5 * (Q[3] - Q[1]);
+      var whiskerTop, whiskerDown;
+      {
+        var i = -1;
+        var j = sortedValues.length;
+        while ((sortedValues[++i] < Q[1] - iqr));
+        while (sortedValues[--j] > Q[3] + iqr);
+        whiskerTop = j == sortedValues.length - 1 ? sortedValues[j] : Q[3] + iqr;
+        whiskerDown = i == 0 ? sortedValues[i] : Q[1] - iqr;
+      }
+      return {"whiskerTop": whiskerTop, "whiskerDown": whiskerDown, "Q": Q};
+    }
+
+
 
 
     return VialsHelper;
