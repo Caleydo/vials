@@ -38,12 +38,30 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
     prefix:"jxn_weight",
     y:0,
     panels:{
-      prefix:"jxn_weight_panel",
-      minWidth:10,
       panelGapsize:4,
-      scatterWidth:100,
+      prefix:"jxn_weight_panel",
+
+      small:{
+        width:5,
+        currentWidth:-1 // dynamic
+      },
+      std:{
+        minWidth:15,
+        boxPlotWidth:7,
+        boxPlotOffset:0,
+        currentWidth:-1 // dynamic
+      },
+      scatter:{
+        minWidth:100,
+        maxWidth:200,
+        boxPlotOffset:0,
+        currentWidth:100 // dynamic
+      },
+
+
+      //scatterWidth:100,
       //dynamic paramters:
-      currentWidth:-1
+
     }
 
   }
@@ -52,6 +70,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
     height:100,
     prefix:"jxn_con",
     y:abundancePlot.height,
+    frozenHighlight:null, // dynamic
     upperConnectors:{
       height:60,
       prefix:"jxn_con_upper",
@@ -181,15 +200,136 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
       })
 
+
+      initEventHandlers();
     }
+
+
+
+    function initEventHandlers(){
+
+      // -- global Events
+      event.on("newDataLoaded", dataUpdate);
+      event.on("crosshair", updateCrosshair);
+      event.on("updateVis", updateVis);
+      event.on("axisChange", updateVis);
+
+      // -- highlight a Junction
+      event.on("highlightJxn", function(e,key,highlight){
+
+        //======== FLAGs =======
+
+        //TODO: potential cause for errors
+        if (connectorPlot.frozenHighlight!=null) {
+          var clean = connectorPlot.frozenHighlight;
+          connectorPlot.frozenHighlight=null;
+          event.fire("highlightFlag",clean,false);
+        }
+
+        var triangles = connectorPlot.triangles.g.selectAll(".triangle")
+        var highlightTriangles = triangles.filter(function(d){
+          // TODO: the location could be only a substring of a real location (unlikely but maybe)
+          if (key.indexOf(d.loc)>-1) return true;
+          else return false;
+        })
+        highlightTriangles.classed("highlighted",highlight);
+
+        //========= CONNECTORS ====
+
+        var lowerConnector = connectorPlot.lowerConnectors.g.selectAll(".con");
+        lowerConnector.filter(function(d){
+          // TODO: the location could be only a substring of a real location (unlikely but maybe)
+          if (key.indexOf(d.loc)>-1) return true;
+          else return false;
+        }).classed("highlighted",highlight);
+
+        var directNeighbors = connectorPlot.upperConnectors.g.selectAll(".neighborCon");
+        directNeighbors.filter(function(d){
+          return key == (d.jxns[0].start+"_"+d.jxns[0].end); // if start and end assemble to the key
+        }).classed("highlighted",highlight);
+
+        var donorConnectors = connectorPlot.upperConnectors.g.selectAll(".donorCon");
+        donorConnectors.filter(function(d){return d.key==key;}).classed("highlighted",highlight);
+
+        var accConnectors = connectorPlot.upperConnectors.g.selectAll(".accCon");
+        accConnectors.filter(function(d){return d.key==key;}).classed("highlighted",highlight);
+
+
+        // ========= Panels =====
+        var panels =  abundancePlot.g.selectAll("."+abundancePlot.panels.prefix);
+        var keyPanel = panels.filter(function(d){return d.key==key;})
+        keyPanel.select(".panelIndicator").style("opacity",highlight? 1 :null);
+        keyPanel.select(".panelBG").classed("highlighted", highlight)//.style("fill-opacity",highlight?.1 :null);
+
+
+
+      })
+
+      // -- hover over a flag
+      event.on("highlightFlag", function(e,loc, highlight){
+        //console.log("allJxns",allJxns);
+
+        _.keys(allJxns).forEach(function(key) {
+          var obj = allJxns[key];
+          if (obj.start == loc || obj.end == loc) {
+            event.fire("highlightJxn",key,highlight);
+          }
+        })
+
+
+      })
+
+      // *****************
+      // ******** External Data Events: highlights & selections
+      // *****************
+
+      event.on("sampleHighlight", function(e,sample, highlight){
+        var panels =  abundancePlot.g.selectAll("."+abundancePlot.panels.prefix);
+        var hDots = panels.selectAll(".dots").filter(function(d){return d.w.sample==sample;})
+        hDots.classed("highlighted",highlight);
+      });
+
+      event.on("groupHighlight", function(e, groupID, highlight) {
+        var alldots =  abundancePlot.g.selectAll("."+abundancePlot.panels.prefix).selectAll(".dots");
+        alldots.filter(function(d){return groupID.samples.indexOf(d.w.sample)>-1}).classed("highlighted",highlight);
+      })
+
+      event.on('sampleSelect',function(e,sample,isSelected){
+        var alldots =  abundancePlot.g.selectAll("."+abundancePlot.panels.prefix).selectAll(".dots");
+        if (isSelected){
+          alldots.filter(function(d){return d.w.sample==sample;}).style({
+            fill:gui.current.getColorForSelection(sample)
+          })
+        }else{
+          alldots.filter(function(d){return d.w.sample==sample;}).style({
+            fill:null
+          })
+        }
+      })
+
+      event.on("groupSelect", function(e, groupID, isSelected) {
+        var alldots =  abundancePlot.g.selectAll("."+abundancePlot.panels.prefix).selectAll(".dots");
+        if (isSelected){
+          alldots.filter(function(d){return groupID.samples.indexOf(d.w.sample)>-1}).style({
+            fill:gui.current.getColorForSelection(JSON.stringify(groupID))
+          })
+        }else{
+          alldots.filter(function(d){return groupID.samples.indexOf(d.w.sample)>-1}).style({
+            fill:null
+          })
+        }
+      })
+
+
+    }
+
+
 
 
 
     /*
     ================= DRAW METHODS =====================
      */
-
-
 
     function updateCrosshair(event, x){
       var visible = (x < 0 || x > axis.getWidth()) ? "hidden" : "visible";
@@ -212,7 +352,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           });
         })
     }
-
 
     // -- HEATMAP PLOT --
     function updateHeatmap() {
@@ -306,10 +445,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
     }
 
-
-
-
-
     /**
      * update flag drawing
      * hidden option is boolean for animation = false
@@ -319,8 +454,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       var animate = arguments[0] || false;
       var triangleLength = connectorPlot.triangles.height;
       var positiveStrand = allData.gene.strand === '+';
-
-      var frozenHighlight = null;
 
       var triangles = connectorPlot.triangles.g.selectAll(".triangle").data(triangleData);
       triangles.exit().remove();
@@ -334,11 +467,11 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           event.fire("highlightFlag", +d.loc, true);
         },
         "mouseout": function (d) {
-          if (frozenHighlight == null) event.fire("highlightFlag", +d.loc, false);
+          if (connectorPlot.frozenHighlight == null) event.fire("highlightFlag", +d.loc, false);
         },
         "click": function (d) {
-          if (frozenHighlight == null) frozenHighlight= +d.loc;
-          else frozenHighlight=null;
+          if (connectorPlot.frozenHighlight == null) connectorPlot.frozenHighlight= +d.loc;
+          else connectorPlot.frozenHighlight=null;
         }
       })
 
@@ -368,37 +501,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       trans.transition().attr({
         "transform": function(d, i) {return "translate(" + d.xStart + ",0)"}
       })
-
-      event.on("highlightJxn", function(e,key,highlight){
-        //TODO: potential cause for errors
-        if (frozenHighlight!=null) {
-          var clean = frozenHighlight;
-          frozenHighlight=null;
-          event.fire("highlightFlag",clean,false);
-        }
-
-        var highlightTriangles = triangles.filter(function(d){
-          // TODO: the location could be only a substring of a real location (unlikely but maybe)
-          if (key.indexOf(d.loc)>-1) return true;
-          else return false;
-        })
-        highlightTriangles.classed("highlighted",highlight);
-
-      })
-      
-      event.on("highlightFlag", function(e,loc, highlight){
-        //console.log("allJxns",allJxns);
-
-               _.keys(allJxns).forEach(function(key) {
-            var obj = allJxns[key];
-            if (obj.start == loc || obj.end == loc) {
-              event.fire("highlightJxn",key,highlight);
-            }
-          })
-
-
-      })
-      
 
     }
 
@@ -519,42 +621,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
             y2:h
       })
 
-
-
-      /// -- EVENThandling for connectors:
-
-      event.on("highlightJxn", function(e,key,highlight){
-        lowerConnector.filter(function(d){
-          // TODO: the location could be only a substring of a real location (unlikely but maybe)
-          if (key.indexOf(d.loc)>-1) return true;
-          else return false;
-        }).classed("highlighted",highlight);
-
-        directNeighbors.filter(function(d){
-          return key == (d.jxns[0].start+"_"+d.jxns[0].end); // if start and end assemble to the key
-        }).classed("highlighted",highlight);
-
-
-        donorConnectors.filter(function(d){return d.key==key;}).classed("highlighted",highlight);
-        accConnectors.filter(function(d){return d.key==key;}).classed("highlighted",highlight);
-
-
-
-
-
-
-        //var highlightTriangles = triangles.filter(function(d){
-        //  // TODO: the location could be only a substring of a real location (unlikely but maybe)
-        //  if (key.indexOf(d.loc)>-1) return true;
-        //  else return false;
-        //})
-        //highlightTriangles.classed("highlighted",highlight);
-
-      })
-
-
-
-
     }
 
     function updateAbundanceView() {
@@ -578,7 +644,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
         height:abundancePlot.height
       }).on({
         "click":function(d){
-          if (d.jxn.state=='std') d.jxn.state='plot';
+          if (d.jxn.state=='std') d.jxn.state='scatter';
           else d.jxn.state='std';
           event.fire("updateVis")
         },
@@ -610,127 +676,212 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       panelBG.transition().attr({
         width: function(d){return d.jxn.w;}
       })
-      panelBG.classed("plot",function(d){return d.jxn.state=='plot'?true:null;})
+      panelBG.classed("scatter",function(d){return d.jxn.state=='scatter'?true:null;})
 
       panels.select(".panelIndicator").transition().attr({
         width: function(d){return d.jxn.w-6;}
       })
 
 
-      // -- eventHandling for Panels
 
-      event.on("highlightJxn", function(e,key,highlight){
-        var keyPanel = panels.filter(function(d){return d.key==key;})
+      var allSampleLength = Object.keys(allData.samples).length;
 
-        keyPanel.select(".panelIndicator").style("opacity",highlight? 1 :null);
+      /**
+       * Update Cycle for the abundance/weight dots per panel
+       */
+      function updateDots(){
 
-        keyPanel.select(".panelBG").classed("highlighted", highlight)//.style("fill-opacity",highlight?.1 :null);
-
-      })
-
-
-      var allConditions = Object.keys(allData.samples).length;
-
-
-      var alldots = panels.selectAll(".dots").data(function(d){
-        if (d.jxn.state == 'std'){
-          var randomizer = helper.getPseudoRandom()
-          res = d.jxn.weights.map(function(w){
-            return {x: (d.jxn.w*3/8+randomizer()*d.jxn.w/4), w:w }
-          })
-          return res;
-
-        }else if (d.jxn.state == 'plot'){
-          var res =[];
-          if (!sampleOrder.valid){
-            res = d.jxn.weights.map(function(w,i){
-              return {x: 6+(i/allConditions*(abundancePlot.panels.scatterWidth-12)), w:w }
+        var alldots = panels.selectAll(".dots").data(function(d){
+          if (d.jxn.state == 'std'){
+            var randomizer = helper.getPseudoRandom()
+            res = d.jxn.weights.map(function(w){
+              return {x: (d.jxn.w*3/8+randomizer()*d.jxn.w/4), w:w }
             })
-          }else{
-            res = d.jxn.weights.map(function(w,i) {
-              return {x: 6 + (sampleOrder.order.indexOf(w.sample) / allConditions * (abundancePlot.panels.scatterWidth - 12)), w: w}
-            })
+            return res;
+
+          }else if (d.jxn.state == 'scatter'){
+            var res =[];
+            if (!sampleOrder.valid){
+              res = d.jxn.weights.map(function(w,i){
+                return {x: 6+(i/allSampleLength*(abundancePlot.panels.scatter.currentWidth-12)), w:w }
+              })
+            }else{
+              res = d.jxn.weights.map(function(w,i) {
+                return {x: 6 + (sampleOrder.order.indexOf(w.sample) / allSampleLength * (abundancePlot.panels.scatter.currentWidth - 12)), w: w}
+              })
+            }
+
+            return res;
+
           }
 
-          return res;
-          //if (sampleOrder.length<1){
-          //  //var weights = d.jxn.weights.map(function(w){return w.weight;})
-          //
-          //  var weights = _.sortBy(d.jxn.weights,function(w){return w.weight;} )
-          //
-          //
-          //  return weights;
-          //}
+        }, function(d){
+          return d.w.sample;
+        })
 
+        alldots.exit().remove();
 
-        }
-
-      }, function(d){
-        return d.w.sample;
-      })
-
-      alldots.exit().remove();
-
-      alldots.enter().append("circle").attr({
+        alldots.enter().append("circle").attr({
           class:"dots",
           r:3
         }).on({
-        "mouseover":function(d){
-          event.fire("sampleHighlight", d.w.sample, true);
-          //console.log(d3.select(this.parentNode).data()[0].key);
-          event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,true);
-        },
-        "mouseout":function(d){
-          event.fire("sampleHighlight", d.w.sample, false);
-          event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,false);
-        },
-        'click':function(d){
-          if (d3.select(this).classed("selected")) {
-            //deselect
-            d3.select(this).classed("selected",null);
-            event.fire("sampleSelect", d.w.sample, false)
-          } else {
-            //select
-            d3.select(this).classed("selected",true);
-            event.fire("sampleSelect", d.w.sample, true)
+          "mouseover":function(d){
+            event.fire("sampleHighlight", d.w.sample, true);
+            //console.log(d3.select(this.parentNode).data()[0].key);
+            event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,true);
+          },
+          "mouseout":function(d){
+            event.fire("sampleHighlight", d.w.sample, false);
+            event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,false);
+          },
+          'click':function(d){
+            if (d3.select(this).classed("selected")) {
+              //deselect
+              d3.select(this).classed("selected",null);
+              event.fire("sampleSelect", d.w.sample, false)
+            } else {
+              //select
+              d3.select(this).classed("selected",true);
+              event.fire("sampleSelect", d.w.sample, true)
+            }
+
           }
 
-        }
+        })
 
-      })
+        alldots.transition().attr({
+          cx:function(d){return d.x;},
+          cy:function(d){return weightScale(d.w.weight);}
+        })
 
-      alldots.transition().attr({
-        cx:function(d){return d.x;},
-        cy:function(d){return weightScale(d.w.weight);}
-      })
+
+
+
+
+      }
+
+      updateDots();
       
 
 
       // --- SORT DIVIDER to indicate what is valid sorting and what is random
 
       var sortDevider=panels.selectAll(".sortDivider")
-        .data(function(d){return (sampleOrder.valid && d.jxn.state == 'plot')?
-          [6+3+((sampleOrder.definedSize-1)/allConditions*(abundancePlot.panels.scatterWidth-12))]
+        .data(function(d){return (sampleOrder.valid && d.jxn.state == 'scatter')?
+          [6+((sampleOrder.definedSize-1)/allSampleLength*(abundancePlot.panels.scatter.currentWidth-12))]
           :[]}
       );
       sortDevider.exit().remove();
       sortDevider.enter().append("line").attr({
         class:"sortDivider",
-        x1:function(d){return d;},
-        x2:function(d){return d;},
+        x1:function(d){return 0;},
+        x2:function(d){return 0;},
         y1:weightScale.range()[0],
         y2:weightScale.range()[1]
       })
-      sortDevider.attr({
+      sortDevider.transition().attr({
         x1:function(d){return d;},
         x2:function(d){return d;}
       })
 
 
+      function updateBoxPlots(){
+        console.log("allData",allData);
+        console.log(allJxns,'-- allJxns --');
 
-      // --- Decoration gets in here
-      var deco = panels.selectAll(".decoration").data(function(d){
-          if (d.jxn.state=='plot'){
+
+        //TODO: copied from isoforms.. maybe externalizing ?!
+
+        var boxPlots = panels.selectAll(".boxplot").data(function(d){
+          return d.jxn.weights.length>3?
+            [{boxPlot: d.jxn.boxPlotData, state: d.jxn.state}]
+            :[]
+        })
+        boxPlots.exit().remove();
+
+        var scaleXScatter = d3.scale.linear().domain(weightScale.domain()).rangeRound(weightScale.range());
+
+        var height = abundancePlot.panels.std.boxPlotWidth;
+        var offsetStd = Math.max(abundancePlot.panels.std.boxPlotOffset,
+          Math.floor((abundancePlot.panels.std.currentWidth-height)/2));
+
+
+        var boxPlotGroup = boxPlots.enter().append("g")
+          .attr({
+            "class":"boxplot",
+            "transform":"translate("+offsetStd+","+0+")"
+          }
+        );
+        //boxPlotGroup.attr({"transform":"rotate(90)"});
+        boxPlotGroup.selectAll(".vticks").data(function (d) {
+          //console.log(d,'-- d --');
+          return [
+            d.boxPlot.whiskerDown,
+            d.boxPlot.Q[1],
+            d.boxPlot.Q[2],
+            d.boxPlot.Q[3],
+            d.boxPlot.whiskerTop]
+        }).enter().append("line").attr({
+          class:"vticks",
+          y1:function(d){return scaleXScatter(d);},
+          y2:scaleXScatter,
+          x1:0,
+          x2:height
+        })
+
+        boxPlotGroup.selectAll(".hticks").data(function (d) {
+          return [
+            [0, d.boxPlot.Q[1], d.boxPlot.Q[3]],
+            [height, d.boxPlot.Q[1], d.boxPlot.Q[3]]
+          ];
+        }).enter().append("line").attr({
+          class:"hticks",
+          y1:function(d){return scaleXScatter(d[1]);},
+          y2:function(d){return scaleXScatter(d[2]);},
+          x1:function(d){return d[0];},
+          x2:function(d){return d[0];}
+        })
+
+        boxPlotGroup.selectAll(".wticks").data(function (d) {
+          return [
+            [d.boxPlot.whiskerDown, d.boxPlot.Q[1]],
+            [d.boxPlot.Q[3], d.boxPlot.whiskerTop]
+          ];
+        }).enter().append("line").attr({
+          class:"wticks",
+          y1:function(d){return scaleXScatter(d[0]);},
+          y2:function(d){return scaleXScatter(d[1]);},
+          x1:Math.round(height/2),
+          x2:Math.round(height/2)
+        })
+
+
+        //UPDATE POSITION:
+        boxPlots.transition().attr({
+          "transform":function(d) {
+            if (d.state == 'std') return "translate("+offsetStd+","+0+")";
+            else if (d.state =='scatter') return "translate("+abundancePlot.panels.scatter.boxPlotOffset+","+0+")";
+          }
+        })
+
+
+
+      }
+      updateBoxPlots();
+
+
+
+
+
+
+      /**
+       * ===== update the menu decoration for each panel ===
+       *
+       */
+      function updateDeco(){
+        // --- Decoration gets in here
+        var deco = panels.selectAll(".decoration").data(function(d){
+          if (d.jxn.state=='scatter'){
             return [
               {icon:"\uf012", callOnClick:function(){ sortByJxn(d.key);}, description:"sort by weight", d:d},
               {icon:"\uf259", callOnClick:function(){}, description:"Live long and prosper.", d:d}
@@ -738,32 +889,37 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           }else{
             return []
           }
-      })
-
-      deco.exit().remove();
-
-      deco.enter().append("text").attr({
-        class:"decoration",
-        "transform":function(d,i) {return "translate("+(i*15+2)+","+15+")";}
-      })
-        .text(function(d){return d.icon;})
-        .on({
-          'mouseover':function(d){
-            event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,true);
-          },
-          'mouseout':function(d){
-            event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,false);
-          },
-          'click':function(d){d.callOnClick();}
-
         })
-        .append("title").text(function(d){return d.description;})
+
+
+        deco.exit().remove();
+
+        deco.enter().append("text").attr({
+          class:"decoration",
+          "transform":function(d,i) {return "translate("+(i*15+2)+","+15+")";}
+        })
+          .text(function(d){return d.icon;})
+          .on({
+            'mouseover':function(d){
+              event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,true);
+            },
+            'mouseout':function(d){
+              event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,false);
+            },
+            'click':function(d){d.callOnClick();}
+
+          })
+          .append("title").text(function(d){return d.description;})
+      }
+
+      updateDeco();
+
 
 
       function sortByJxn(key){
-        console.log("key",key);
-        console.log("allData",allData);
-        console.log("allJxns",allJxns);
+        //console.log("key",key);
+        //console.log("allData",allData);
+        //console.log("allJxns",allJxns);
 
         var allKeys = Object.keys(allData.samples)
 
@@ -788,9 +944,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           console.log("sampleOrder",sampleOrder);
 
           updateAbundanceView();//TODO: can be done more subtle / only update dots!
-
-
-        }
+      }
 
 
 
@@ -802,41 +956,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
 
 
-      // --- EvenetHandling DOTS:
-      event.on("sampleHighlight", function(e,sample, highlight){
-        var hDots = panels.selectAll(".dots").filter(function(d){return d.w.sample==sample;})
-        hDots.classed("highlighted",highlight);
-      });
 
-      event.on("groupHighlight", function(e, groupID, highlight) {
-          alldots.filter(function(d){return groupID.samples.indexOf(d.w.sample)>-1}).classed("highlighted",highlight);
-      })
-
-      event.on('sampleSelect',function(e,sample,isSelected){
-        if (isSelected){
-          alldots.filter(function(d){return d.w.sample==sample;}).style({
-            fill:gui.current.getColorForSelection(sample)
-          })
-        }else{
-          alldots.filter(function(d){return d.w.sample==sample;}).style({
-            fill:null
-          })
-        }
-      })
-
-      // group select
-
-      event.on("groupSelect", function(e, groupID, isSelected) {
-        if (isSelected){
-          alldots.filter(function(d){return groupID.samples.indexOf(d.w.sample)>-1}).style({
-            fill:gui.current.getColorForSelection(JSON.stringify(groupID))
-          })
-        }else{
-          alldots.filter(function(d){return groupID.samples.indexOf(d.w.sample)>-1}).style({
-            fill:null
-          })
-        }
-      })
 
 
 
@@ -872,7 +992,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
 
     }
-
 
 
     /*
@@ -941,7 +1060,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       })
     }
 
-
     function computeAbundanceLayout(){
 
       var gapSize=abundancePlot.panels.panelGapsize;
@@ -950,8 +1068,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       var allJXNsorted = Object.keys(allJxns).map(function (d) {return allJxns[d];});
 
       
-      var elementWidth  = Math.floor(Math.max(w/allJXNsorted.length, abundancePlot.panels.minWidth));
-      abundancePlot.panels.currentWidth = elementWidth;
+      var elementWidth  = Math.floor(Math.max(w/allJXNsorted.length, abundancePlot.panels.std.minWidth));
+      abundancePlot.panels.std.currentWidth = elementWidth;
 
 
       // start the layout here:
@@ -998,8 +1116,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
         if (jxn.state=='std'){
           jxn.w = elementWidth;
-        }else if (jxn.state=='plot'){
-          jxn.w = abundancePlot.panels.scatterWidth;
+        }else if (jxn.state=='scatter'){
+          jxn.w = abundancePlot.panels.scatter.currentWidth;
         }
 
         currentXPos+= jxn.w;
@@ -1019,7 +1137,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
     }
 
-
     /*
      ================= HELPERMETHODS =====================
      */
@@ -1033,8 +1150,6 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
     function isLeftArrow(type, positiveStrand) {
       return type == ((positiveStrand == axis.ascending ) ? "donor" : "receptor");
     }
-
-
 
     /*
      ================= GENERAL METHODS =====================
@@ -1058,9 +1173,9 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       updateConnectors();
     }
 
-
-
     function dataUpdate() {
+
+
 
       axis = that.data.genomeAxis;
       width = axis.getWidth();
@@ -1071,6 +1186,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
       that.data.getGeneData(curProject, curGene).then(function (sampleData) {
 
+        console.time("dataLoading");
         allData = sampleData;
 
         var positiveStrand = (sampleData.gene.strand ==='+');
@@ -1134,32 +1250,45 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
               state: 'std', // or points, groups
               directNeighbor: end == allJxnPos[allJxnPos.indexOf(start) + 1], //  is it the special case ?
               startTriangle:triangleData[allJxnPos.indexOf(start)],
-              endTriangle:triangleData[allJxnPos.indexOf(end)]
+              endTriangle:triangleData[allJxnPos.indexOf(end)],
+              boxPlotData:null
             };
           }
         })
 
+        var allSamplesCount = Object.keys(allData.samples).length;
+        _.keys(allJxns).forEach(function(jKey){
+          var jxn = allJxns[jKey];
+          // number of zero values:
+          var zerocount = allSamplesCount-jxn.weights.length;
+
+          if (zerocount>0){ // add zerocount times 0 at the end
+            jxn.boxPlotData = helper.computeBoxPlot(
+              _.pluck(jxn.weights,'weight')
+                .concat(Array.apply(null, Array(zerocount)).map(Number.prototype.valueOf,0)));
+
+          }else{
+            jxn.boxPlotData = helper.computeBoxPlot(_.pluck(jxn.weights,'weight'));
+          }
+        })
+
+
         //cleanup
         sampleOrder.valid=false;
 
+        console.timeEnd("dataLoading");
 
-
+        console.time("updatevis");
         updateVis();
-
+        console.timeEnd("updatevis");
       });
 
 
     }
 
 
-    event.on("newDataLoaded", dataUpdate);
-    event.on("crosshair", updateCrosshair);
-
-    event.on("updateVis", updateVis);
-    event.on("axisChange", updateVis);
-
+    // start the whole thing:
     initView();
-
 
     return head.node();
   }

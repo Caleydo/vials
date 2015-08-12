@@ -74,6 +74,8 @@ text.decoration:hover {
   .boxplot, .subboxplot{
     stroke-width: 1px;
     stroke:$wes-violet;
+    //stroke-opacity: 1;
+    pointer-events: none;
 
     .wticks{
       stroke-dasharray: 3, 3;
@@ -389,7 +391,7 @@ input.btn-mini {
       fill-opacity: .6;
       stroke: none;
     }
-    .panelBG.plot{
+    .panelBG.scatter{
       //stroke:1px;
       stroke:$wes-gray;
       fill-opacity: .4;
