@@ -61,7 +61,7 @@
         "js-lru": "http://github.com/rsms/js-lru.git",
         "bootstrap": "~3",
         "underscore":"~1.8",
-        "fontawesome":"~4"
+        "font-awesome":"~4"
       }
     },
     "requirejs-config": {
