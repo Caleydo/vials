@@ -136,6 +136,7 @@ define(['exports','d3', '../caleydo_core/event'], function(exports, d3, event){
 
     }
 
+    //TODO: remove this after fixing increase and decrease width
     event.on("redrawAllVis", function(){
       that.allVisUpdates.forEach(function (update) {
         update();
@@ -153,11 +154,7 @@ define(['exports','d3', '../caleydo_core/event'], function(exports, d3, event){
         that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"])
         that.genomeDataLink.genomeAxis.shrinkIntrons(true);
 
-        //console.log(that.genomeDataLink.genomeAxis.arrayPosToScreenPos(2), that.genomeDataLink.genomeAxis.arrayPosToGenePos(10));
-        //observer
-        that.allVisUpdates.forEach(function (update) {
-          update();
-        })
+        event.fire("newDataLoaded");
       })
 
     };

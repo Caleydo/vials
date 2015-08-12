@@ -1,7 +1,11 @@
-
 /**
  * Created by Hendrik Strobelt 10/10/14
  */
+
+@import "../bower_components/font-awesome/css/font-awesome.min.css";
+
+
+
 
 // Wes Anderson Color Palette from http://wesandersonpalettes.tumblr.com/ - Fantastic Mr. Fox
 $wes-gray: #B9B09F;
@@ -10,6 +14,34 @@ $wes-green: #A9D8C8;
 $wes-violet: #433447;
 $wes-red: #D16B54;
 $wes-blue: #0093dd;
+
+
+text.decoration{
+  font-family: "FontAwesome", serif;
+  font-size: 12px;
+  fill:$wes-gray;
+  fill-opacity: .6;
+  cursor: pointer;
+
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  /*
+    Introduced in IE 10.
+    See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+  */
+  -ms-user-select: none;
+  user-select: none;
+
+}
+
+text.decoration:hover {
+  fill-opacity: 1;
+  fill:$wes-violet;
+}
+
+
+
 
 //by convention create a namespace for your own plugin
 .gv {
@@ -99,7 +131,7 @@ $wes-blue: #0093dd;
     stroke:none;
   }
 
-  .highlightBG{
+  .dotightBG{
     pointer-events: none;
   }
 
@@ -174,6 +206,7 @@ path.selectionParco{
   }
 
 
+
 }
 
 
@@ -210,32 +243,6 @@ path.selectionParco{
 
 
 
-//===> jxn view <===
-#jxnArea{
-  .jxnWrapperBox{
-      fill:$wes-gray;
-      fill-opacity: .5;
-  }
-
-  .JXNAreaConnector{
-    fill:$wes-gray;
-    fill-opacity: .5;
-  }
-}
-
-.exonHeatMap{
-  .exonHeat{
-      fill:$wes-violet;
-      fill-opacity:.1;
-
-  }
-
-  .background{
-    fill:white;
-//    fill-opacity: .3;
-  }
-
-}
 
 .strandIndicator {
   .genomeAxisTicks {
@@ -276,28 +283,128 @@ input.btn-mini {
   //line-height: 6px;
 }
 
-// BILAL
+// ---- JUNCTION VIEW ----
+
+.jxn_heat_group{
+  .exon{
+    fill:$wes-violet;
+    fill-opacity:.1;
+  }
+
+  .background{
+    fill:white;
+    //    fill-opacity: .3;
+  }
+
+}
+
+.jxn_con_upper_group{
+  .areaCon{
+    fill: $wes-gray;
+    opacity: .6;
+    stroke: none;
+  }
+  .areaCon.highlighted{
+    opacity: 1;
+  }
 
 
-.RNASite[type=donor]{
+  .lineCon{
+    stroke: $wes-violet;
+    opacity: .5;
+    pointer-events: none;
+  }
+  .lineCon.highlighted{
+    opacity: 1;
+    stroke-width: 2px;
+  }
+;
+
+
+}
+
+.jxn_weight_panel{
+  .dots{ // TODO: make this the same as sampleDot
+    fill:$wes-gray;
+    fill-opacity: .7;
+  }
+
+  .dots.highlighted{
+    fill:$wes-red;
+    fill-opacity: 1;
+  }
+
+  .panelIndicator{
+    fill:$wes-violet;
+    stroke: none;
+    opacity: .5;
+    pointer-events: none;
+
+  }
+
+  .sortDivider{
+    stroke:$wes-violet;
+    stroke-opacity: .5;
+    stroke-dasharray: 4, 5 ;
+  }
+}
+
+.jxn_con_lower.con{
+  stroke: $wes-violet;
+  fill: none;
+  opacity:.5;
+}
+.jxn_con_lower.con.highlighted{
+  stroke-width: 2px;
+  opacity:1;
+}
+
+
+.jxn_con_triangle.donor{
   fill: $wes-gray;
-  fill-opacity: 1;
-  stroke: $wes-violet;}
+  opacity: 1;
+  stroke: $wes-violet;
 
-.RNASite[type=receptor]  {
+}
+.jxn_con_triangle.donor.highlighted{
+  opacity: 1;
+  stroke: $wes-blue;
+  stroke-width: 2px;
+}
+
+.jxn_con_triangle.receptor{
   fill: white;
-  fill-opacity: 1;
-  stroke: $wes-violet;}
-
-.RNASiteConnector[type=donor] {
-  //stroke: $wes-blue;
+  opacity: 1;
   stroke: $wes-violet;
-  fill: none}
+}
+.jxn_con_triangle.receptor.highlighted {
+  stroke: $wes-blue;
+  stroke-width: 2px;
+  opacity:1;
+}
 
-.RNASiteConnector[type=receptor] {
-  //stroke: $wes-red;
-  stroke: $wes-violet;
-  fill: none}
+.jxn_weight_group{
+    .panelBG{
+      fill: $wes-gray;
+      fill-opacity: .6;
+      stroke: none;
+    }
+    .panelBG.plot{
+      //stroke:1px;
+      stroke:$wes-gray;
+      fill-opacity: .4;
+      rx:8;
+    }
+  .panelBG.highlighted{
+    fill-opacity: .2;
+    stroke:$wes-gray;
+    stroke-opacity: .6;
+  }
+
+}
+
+
+
 
 .edgeAnchor {
   fill: $wes-violet;

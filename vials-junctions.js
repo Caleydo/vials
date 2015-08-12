@@ -1921,7 +1921,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
           "transform": function() {
             return axis.ascending?
             "translate(" + (startX + i * expandedSpace) + ", 0)" :
-            "translate(" + ((startX +  (numOfJunctions - i - 1) * expandedSpace) + ", 0)"
+            "translate(" + (startX +  (numOfJunctions - i - 1) * expandedSpace) + ", 0)"
           }
         }).each("end", function() {
           expandJxn(this);
@@ -2171,8 +2171,8 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
     //globalCallCount = 1;
 
-    gui.current.addUpdateEvent(updateVisualization)
-    //updateVisualization();
+    event.on("newDataLoaded", updateVisualization)
+
     return head.node();
   };
 

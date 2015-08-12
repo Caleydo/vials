@@ -21,7 +21,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
    * factory method of this module
    * @param data the data to show
    * @param parent the parent dom element to append
-   * @returns {GenomeVis} the visualization
+   * @returns {SimpleReadsVis} the visualization
    */
   function create(data, parent) {
     return new SimpleReadsVis(data, parent);
@@ -1021,8 +1021,9 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
     }
 
 
-    gui.current.addUpdateEvent(updateData);
 
+
+    event.on("newDataLoaded", updateData);
 
     event.on("axisChange", axisUpdate)
 
