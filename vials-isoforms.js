@@ -337,16 +337,16 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
         isoformEnter.append("g").attr("class","foreground");
         var highlight = isoformEnter.append("g").attr("class","highlight");
-        highlight.append("rect").attr({
-          class:"highlightBG",
-          x:axisOffset,
-          y:0,
-          width:scatterWidth,
-          height:exonHeight
-        }).style({
-          fill: "white",
-          opacity:0
-        })
+        //highlight.append("rect").attr({
+        //  class:"highlightBG",
+        //  x:axisOffset,
+        //  y:0,
+        //  width:scatterWidth,
+        //  height:exonHeight
+        //}).style({
+        //  fill: "white",
+        //  opacity:0
+        //})
 
 
 
