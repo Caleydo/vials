@@ -122,6 +122,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
     var jxnGroups = []; // end positions of jxn groups for connector drawing
     var sampleOrder = {definedSize:0, order:[], valid:false, sortByKey:null}; // sort order for elements in scatterplot view (abundance)
 
+    var isSelectedIsoForm = false;
+
     //visual variables:
     var weightScale = d3.scale.linear().range([abundancePlot.height-10,10]);
     var endOfPanels = 10; // whats the final width of all panels
@@ -326,6 +328,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
         //{isoform: d.id, index:-1}
 
         if (isoInfo.index>-1){
+          isSelectedIsoForm=true;
           var exonIDs = allData.gene.isoforms[isoInfo.isoform].exons;
           var selectedExons = _.sortBy(exonIDs.map(function(exID){return allData.gene.exons[exID];}),'start');
 
@@ -333,6 +336,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           // all JXNs to std:
           _.values(allJxns).forEach(function (jxn) {
             jxn.state = 'mini';
+            jxn.selectedIsoform = false;
           })
 
 
@@ -347,6 +351,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
               var match = allJxns[lastExon.end+'_'+exon.start];
               if (match != null){
                 match.state='scatter' // TODO: modify default behavior
+                match.selectedIsoform = true; // needed for decoration
                 //matchingJxn.push(match);
               }
               lastExon=exon;
@@ -363,9 +368,11 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
 
         }else{
+          isSelectedIsoForm=false;
           // all JXNs to std:
           _.values(allJxns).forEach(function (jxn) {
             jxn.state = 'std';
+            jxn.selectedIsoform = false;
           })
 
         }
@@ -610,6 +617,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
         }
       })
+      // isoformselection
+      directNeighbors.classed('hiddenCon',function(d){return (isSelectedIsoForm && !d.jxns[0].selectedIsoform)?true:null;})
 
 
 
@@ -650,13 +659,14 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
         }
       })
 
+      donorConnectors.classed('hiddenCon',function(d){return (isSelectedIsoForm && !d.jxns[0].selectedIsoform)?true:null;})
 
 
 
       // -- Retrieve Connector Lines
       var allConLines = _.flatten(jxnGroups.filter(function(d){return !d.directNeighbor;}).map(function(d){
          return d.jxns.map(function(jxn){
-            return {startX:(jxn.x+jxn.w/2), endX:jxn[antiConnector].anchor, key:(jxn.start+'_'+jxn.end)}
+            return {startX:(jxn.x+jxn.w/2), endX:jxn[antiConnector].anchor, key:(jxn.start+'_'+jxn.end), jxn:jxn}
           })
       }))
 
@@ -674,6 +684,16 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
             y1:0,
             y2:h
       })
+
+      //isoformselction
+      accConnectors.classed('hiddenCon',function(d){return (isSelectedIsoForm && !d.jxn.selectedIsoform)?true:null;})
+
+
+      console.log(allDonors,'\n','-- allDonors --');
+      console.log(triangleData,'\n','-- triangleData --');
+      console.log(allConLines,'\n','-- allConLines--');
+      console.log(jxnGroups,'\n','-- jxnGroups --');
+
 
     }
 
@@ -943,25 +963,20 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
        */
       function updateDeco(){
         // --- Decoration gets in here
-        var deco = panels.selectAll(".decoration").data(function(d){
+        var decoLeft = panels.selectAll(".decoration.left").data(function(d){
           if (d.jxn.state=='scatter'){
             return [
               {icon:"\uf012", callOnClick:function(){ sortByJxn(d.key);}, description:"sort by weight", d:d, isSelected: (d.key==sampleOrder.sortByKey && sampleOrder.valid)},
               {icon:"\uf24d", callOnClick:function(){}, description:"compare groups", d:d, isSelected: false},
               {icon:"\uf259", callOnClick:function(){}, description:"Live long and prosper.", d:d, isSelected: false}
-              //f24d
-
             ]
           }else{
             return []
           }
         })
-
-
-        deco.exit().remove();
-
-        deco.enter().append("text").attr({
-          class:"decoration",
+        decoLeft.exit().remove();
+        decoLeft.enter().append("text").attr({
+          class:"decoration left",
           "transform":function(d,i) {return "translate("+(i*15+2)+","+15+")";}
         })
           .text(function(d){return d.icon;})
@@ -976,8 +991,60 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
           })
           .append("title").text(function(d){return d.description;})
+        decoLeft.classed("selected", function(d){return d.isSelected?true:null;})
 
-        deco.classed("selected", function(d){return d.isSelected?true:null;})
+
+        // right indicators
+        var decoRight = panels.selectAll(".decoration.right").data(function(d){
+          if (d.jxn.state=='scatter' || d.jxn.state=='std'){
+            if (d.jxn.selectedIsoform){
+              return [{
+                icon:"\uf02e",
+                callOnClick:function(){},
+                description:"in selected Isoform",
+                class:'inIsoformIndicator',
+                d:d,
+                isSelected: false
+              }]
+            }
+          }
+
+          return []
+
+        })
+        decoRight.exit().remove();
+
+        decoRight.enter().append("text").attr({
+          class:function(d){return "decoration right "+ d.class;},
+          "transform":function(d,i) {
+            var w = d.d.jxn.state=='std'?abundancePlot.panels.std.currentWidth:abundancePlot.panels.scatter.currentWidth;
+            return "translate("+(w-(i*15+2))+","+15+")";
+          }
+        })
+          .text(function(d){return d.icon;})
+          .on({
+            'mouseover':function(d){
+              event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,true);
+            },
+            'mouseout':function(d){
+              event.fire("highlightJxn",d3.select(this.parentNode).data()[0].key,false);
+            },
+            'click':function(d){d.callOnClick();}
+
+          })
+          .append("title").text(function(d){return d.description;})
+
+        decoRight.transition().attr({
+          "transform":function(d,i) {
+            var w = d.d.jxn.state=='std'?abundancePlot.panels.std.currentWidth:abundancePlot.panels.scatter.currentWidth;
+            return "translate("+(w-15-2-(i*15))+","+15+")";
+          }
+        })
+        decoRight.classed("selected", function(d){return d.isSelected?true:null;})
+
+
+
+
 
 
       }
@@ -1324,7 +1391,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
               directNeighbor: end == allJxnPos[allJxnPos.indexOf(start) + 1], //  is it the special case ?
               startTriangle:triangleData[allJxnPos.indexOf(start)],
               endTriangle:triangleData[allJxnPos.indexOf(end)],
-              boxPlotData:null
+              boxPlotData:null,
+              selectedIsoform:false
             };
           }
         })
