@@ -100,6 +100,16 @@ text.decoration.selected {
   }
 }
 
+.highlight, .highlights{
+  .jxn{
+    fill:$wes-blue;
+    //stroke-width: 1px;
+    //stroke:$wes-blue;
+    fill-opacity: .7;
+
+  }
+}
+
 .isoform {
   .exon{
     fill-opacity: .8;
@@ -111,17 +121,6 @@ text.decoration.selected {
     fill:white;
     fill-opacity:.001;
 
-  }
-
-
-  .highlight{
-    .jxn{
-      fill:$wes-blue;
-      //stroke-width: 1px;
-      //stroke:$wes-blue;
-      fill-opacity: .7;
-
-    }
   }
 
 
@@ -360,9 +359,10 @@ input.btn-mini {
   }
 
   .sortDivider{
+    stroke-width: 1px;
     stroke:$wes-violet;
-    stroke-opacity: .5;
-    stroke-dasharray: 4, 5 ;
+    stroke-opacity: .3;
+    stroke-dasharray: 7, 1 ;
     pointer-events: none;
   }
 }

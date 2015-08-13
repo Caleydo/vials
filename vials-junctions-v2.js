@@ -830,7 +830,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
       var sortDevider=panels.selectAll(".sortDivider")
         .data(function(d){return (sampleOrder.valid && d.jxn.state == 'scatter')?
-          [6+((sampleOrder.definedSize-1)/allSampleLength*(abundancePlot.panels.scatter.currentWidth-12))]
+          [Math.ceil(6+((sampleOrder.definedSize-1)/allSampleLength*(abundancePlot.panels.scatter.currentWidth-12)))]
           :[]}
       );
       sortDevider.exit().remove();
