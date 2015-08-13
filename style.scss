@@ -40,6 +40,11 @@ text.decoration:hover {
   fill:$wes-violet;
 }
 
+text.decoration.selected {
+  fill-opacity: 1;
+  fill: $wes-blue;
+}
+
 
 
 
@@ -395,7 +400,7 @@ input.btn-mini {
       //stroke:1px;
       stroke:$wes-gray;
       fill-opacity: .4;
-      rx:8;
+      //rx:8;
     }
   .panelBG.highlighted{
     fill-opacity: .2;

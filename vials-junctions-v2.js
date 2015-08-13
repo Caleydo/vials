@@ -41,9 +41,11 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       panelGapsize:4,
       prefix:"jxn_weight_panel",
 
-      small:{
-        width:5,
-        currentWidth:-1 // dynamic
+      mini:{
+        //boxPlotWidth:3,
+        boxPlotOffset:0,
+        //width:5,
+        currentWidth:5 // STATIC !!
       },
       std:{
         minWidth:15,
@@ -118,7 +120,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
     var triangleData = []; // data to draw triangles
     var allJxns = {}; // juncntion information as map
     var jxnGroups = []; // end positions of jxn groups for connector drawing
-    var sampleOrder = {definedSize:0, order:[], valid:false}; // sort order for elements in scatterplot view (abundance)
+    var sampleOrder = {definedSize:0, order:[], valid:false, sortByKey:null}; // sort order for elements in scatterplot view (abundance)
 
     //visual variables:
     var weightScale = d3.scale.linear().range([abundancePlot.height-10,10]);
@@ -318,6 +320,58 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
             fill:null
           })
         }
+      })
+
+      event.on("isoFormSelect", function(e, isoInfo){
+        //{isoform: d.id, index:-1}
+
+        if (isoInfo.index>-1){
+          var exonIDs = allData.gene.isoforms[isoInfo.isoform].exons;
+          var selectedExons = _.sortBy(exonIDs.map(function(exID){return allData.gene.exons[exID];}),'start');
+
+
+          // all JXNs to std:
+          _.values(allJxns).forEach(function (jxn) {
+            jxn.state = 'mini';
+          })
+
+
+          //var jxnIDs =[];
+          //var matchingJxn = [];
+          var lastExon = null;
+
+          selectedExons.forEach(function(exon){
+            if (lastExon!=null){
+              //jxnIDs.push(lastExon.end+'_'+exon.start);
+
+              var match = allJxns[lastExon.end+'_'+exon.start];
+              if (match != null){
+                match.state='scatter' // TODO: modify default behavior
+                //matchingJxn.push(match);
+              }
+              lastExon=exon;
+            }else{
+              lastExon=exon;
+            }
+          })
+
+
+          //console.log(matchingJxn,'-- matchingJxn --');
+          //console.log(jxnIDs,'-- jxnIDs --');
+          //console.log(selectedExons,'-- selectedExons --');
+          //console.log(allJxns,'-- allJxns --');
+
+
+        }else{
+          // all JXNs to std:
+          _.values(allJxns).forEach(function (jxn) {
+            jxn.state = 'std';
+          })
+
+        }
+
+        updateVis();
+
       })
 
 
@@ -679,7 +733,10 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
       panelBG.classed("scatter",function(d){return d.jxn.state=='scatter'?true:null;})
 
       panels.select(".panelIndicator").transition().attr({
-        width: function(d){return d.jxn.w-6;}
+        width: function(d){
+          if (d.jxn.state == 'mini') return 1;
+          return d.jxn.w-6;
+        }
       })
 
 
@@ -713,6 +770,11 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
             return res;
 
+          }else if (d.jxn.state == 'mini'){
+            res = d.jxn.weights.map(function(w){
+              return {x:abundancePlot.panels.mini.currentWidth/2, w:w }
+            })
+            return res;
           }
 
         }, function(d){
@@ -723,7 +785,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
         alldots.enter().append("circle").attr({
           class:"dots",
-          r:3
+          r:2
         }).on({
           "mouseover":function(d){
             event.fire("sampleHighlight", d.w.sample, true);
@@ -786,14 +848,14 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
 
       function updateBoxPlots(){
-        console.log("allData",allData);
-        console.log(allJxns,'-- allJxns --');
+        //console.log("allData",allData);
+        //console.log(allJxns,'-- allJxns --');
 
 
         //TODO: copied from isoforms.. maybe externalizing ?!
 
         var boxPlots = panels.selectAll(".boxplot").data(function(d){
-          return d.jxn.weights.length>3?
+          return (d.jxn.weights.length>3 && !(d.jxn.state =='mini'))?
             [{boxPlot: d.jxn.boxPlotData, state: d.jxn.state}]
             :[]
         })
@@ -861,6 +923,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           "transform":function(d) {
             if (d.state == 'std') return "translate("+offsetStd+","+0+")";
             else if (d.state =='scatter') return "translate("+abundancePlot.panels.scatter.boxPlotOffset+","+0+")";
+            //else if (d.state =='mini') return "translate("+abundancePlot.panels.mini.boxPlotOffset+","+0+")";
           }
         })
 
@@ -883,8 +946,11 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
         var deco = panels.selectAll(".decoration").data(function(d){
           if (d.jxn.state=='scatter'){
             return [
-              {icon:"\uf012", callOnClick:function(){ sortByJxn(d.key);}, description:"sort by weight", d:d},
-              {icon:"\uf259", callOnClick:function(){}, description:"Live long and prosper.", d:d}
+              {icon:"\uf012", callOnClick:function(){ sortByJxn(d.key);}, description:"sort by weight", d:d, isSelected: (d.key==sampleOrder.sortByKey && sampleOrder.valid)},
+              {icon:"\uf24d", callOnClick:function(){}, description:"compare groups", d:d, isSelected: false},
+              {icon:"\uf259", callOnClick:function(){}, description:"Live long and prosper.", d:d, isSelected: false}
+              //f24d
+
             ]
           }else{
             return []
@@ -910,6 +976,10 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
           })
           .append("title").text(function(d){return d.description;})
+
+        deco.classed("selected", function(d){return d.isSelected?true:null;})
+
+
       }
 
       updateDeco();
@@ -940,6 +1010,7 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
 
           sampleOrder.definedSize= sortedWeights.length;
           sampleOrder.order = sortedWeights.concat(allNull);
+          sampleOrder.sortByKey = key;
           sampleOrder.valid=true;
           console.log("sampleOrder",sampleOrder);
 
@@ -1118,6 +1189,8 @@ define(['exports', 'd3','underscore','./vials-gui', '../caleydo_core/event','via
           jxn.w = elementWidth;
         }else if (jxn.state=='scatter'){
           jxn.w = abundancePlot.panels.scatter.currentWidth;
+        }else if (jxn.state == 'mini'){
+          jxn.w = abundancePlot.panels.mini.currentWidth;
         }
 
         currentXPos+= jxn.w;
