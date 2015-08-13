@@ -445,6 +445,59 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
 
       /*
+       * ========================
+       * Draw junction highlight
+       * =========================
+       * */
+      var collectedJunctions = [];
+
+      function updateJxn(){
+
+        var l = collectedJunctions.length;
+        var jxn = isoform.select(".highlight").selectAll(".jxn").data(collectedJunctions);
+        jxn.exit().remove();
+
+        jxn.enter().append("rect").attr("class","jxn");
+        jxn.attr({
+          x:function(d){return that.axis.genePosToScreenPos(that.axis.ascending ? d.start : d.end);},
+          y:function(d,i){
+            return i*exonHeight/l;
+          },
+          width:function(d,i){
+            return Math.abs(that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start))
+          },
+          height:function(){
+
+            if (l>1) return exonHeight/(l+1);
+            else return exonHeight*.9;
+          },
+        })
+
+      }
+
+      // TODO: there is a better place for EVENT handling when update done.
+      event.on("highlightJxn", function(e,key,highlight){
+
+        if (highlight){
+          var positions = key.split("_");
+          collectedJunctions.push({key:key,start: positions[0], end:positions[1]});
+          collectedJunctions = _.sortBy(collectedJunctions, function(d){return d.end-d.start;})
+          updateJxn();
+        }else{
+          collectedJunctions =_.reject(collectedJunctions, function(d){return d.key==key;})
+          updateJxn();
+        }
+        
+
+      })
+
+
+
+
+
+
+
+      /*
        * ===============
        * Draw samples
        * ===============

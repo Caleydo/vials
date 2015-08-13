@@ -114,6 +114,16 @@ text.decoration.selected {
   }
 
 
+  .highlight{
+    .jxn{
+      fill:$wes-blue;
+      //stroke-width: 1px;
+      //stroke:$wes-blue;
+      fill-opacity: .7;
+
+    }
+  }
+
 
 
   .selected{
@@ -353,6 +363,7 @@ input.btn-mini {
     stroke:$wes-violet;
     stroke-opacity: .5;
     stroke-dasharray: 4, 5 ;
+    pointer-events: none;
   }
 }
 
