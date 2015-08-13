@@ -40,6 +40,11 @@ text.decoration:hover {
   fill:$wes-violet;
 }
 
+text.decoration.selected {
+  fill-opacity: 1;
+  fill: $wes-blue;
+}
+
 
 
 
@@ -74,6 +79,8 @@ text.decoration:hover {
   .boxplot, .subboxplot{
     stroke-width: 1px;
     stroke:$wes-violet;
+    //stroke-opacity: 1;
+    pointer-events: none;
 
     .wticks{
       stroke-dasharray: 3, 3;
@@ -106,6 +113,16 @@ text.decoration:hover {
 
   }
 
+
+  .highlight{
+    .jxn{
+      fill:$wes-blue;
+      //stroke-width: 1px;
+      //stroke:$wes-blue;
+      fill-opacity: .7;
+
+    }
+  }
 
 
 
@@ -346,6 +363,7 @@ input.btn-mini {
     stroke:$wes-violet;
     stroke-opacity: .5;
     stroke-dasharray: 4, 5 ;
+    pointer-events: none;
   }
 }
 
@@ -389,11 +407,11 @@ input.btn-mini {
       fill-opacity: .6;
       stroke: none;
     }
-    .panelBG.plot{
+    .panelBG.scatter{
       //stroke:1px;
       stroke:$wes-gray;
       fill-opacity: .4;
-      rx:8;
+      //rx:8;
     }
   .panelBG.highlighted{
     fill-opacity: .2;

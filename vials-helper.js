@@ -62,7 +62,12 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
     }
 
 
-    VialsHelper.prototype.computeBoxPlot = function(values) {
+    /**
+     * computes all boxplot parameters for a giveb  array of values
+     * @param values
+     * @returns {{whiskerTop: *, whiskerDown: *, Q: Array}}
+     */
+    VialsHelper.prototype.computeBoxPlot = function(values) { // by bilal
       var sortedValues = values.sort(d3.ascending);
       var Q = new Array(5);
       Q[0] = d3.min(sortedValues);
@@ -95,7 +100,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
   exports.VialsHelper = VialsHelper;
   exports.drawSideLabel = global.drawSideLabel.bind(global)
   exports.getPseudoRandom = global.getPseudoRandom.bind(global)
-
+  exports.computeBoxPlot = global.computeBoxPlot.bind(global)
 
 
 })
