@@ -454,14 +454,38 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
       function updateJxn(){
 
         var l = collectedJunctions.length;
-        var jxn = isoform.select(".highlight").selectAll(".jxn").data(collectedJunctions);
-        jxn.exit().remove();
+        var allJxnStarts = _.pluck(collectedJunctions,'start');
+        var allJxnEnds = _.pluck(collectedJunctions,'end');
+        var startIndex = -1;
 
+        var jxn = isoform.select(".highlight").selectAll(".jxn").data(function(d){
+
+          var ranges = _.sortBy(d.ranges,'start');
+          var rangesLength=ranges.length;
+
+          var relevantJunction = null;
+          var i = -1;
+          while (!relevantJunction && ++i<rangesLength){
+            startIndex = null;
+            while((startIndex==null || startIndex>-1) && !relevantJunction){
+              startIndex = allJxnEnds.indexOf(ranges[i].start, (startIndex==null)?0:startIndex+1); // find the exon start == jxn end
+              if (startIndex>-1 && i>0){ // excludes all exons without predecessor !!
+                  if (allJxnStarts[startIndex]==ranges[i-1].end){ // if previous exon end matches jxn start...
+                    relevantJunction = collectedJunctions[startIndex]; // .. SUCESS !!!
+                  }
+              }
+            }
+          }
+          if (relevantJunction) return [relevantJunction]
+          else return [];
+        });
+        jxn.exit().remove();
         jxn.enter().append("rect").attr("class","jxn");
         jxn.attr({
           x:function(d){return that.axis.genePosToScreenPos(that.axis.ascending ? d.start : d.end);},
           y:function(d,i){
-            return i*exonHeight/l;
+            if (l>1) return (exonHeight-(exonHeight/l+1))/2;
+            else return .05*exonHeight;
           },
           width:function(d,i){
             return Math.abs(that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start))
@@ -473,6 +497,26 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
           },
         })
 
+
+        var menuJxn = gHighlight.selectAll(".jxn").data(collectedJunctions)
+        menuJxn.exit().remove();
+        menuJxn.enter().append("rect").attr("class","jxn");
+
+        menuJxn.attr({
+          "x":function(d){return that.axis.genePosToScreenPos(that.axis.ascending ? d.start : d.end)},
+          "y":function(d,i){
+            return menuOffset+ i*exonHeight/l;},
+          "width":function(d){return Math.abs(that.axis.genePosToScreenPos(d.end)-that.axis.genePosToScreenPos(d.start))},
+          "height":function(){
+            if (l>1) return exonHeight/(l+1);
+            else return exonHeight*.9;
+          }
+        })
+
+
+
+
+
       }
 
       // TODO: there is a better place for EVENT handling when update done.
@@ -480,7 +524,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
         if (highlight){
           var positions = key.split("_");
-          collectedJunctions.push({key:key,start: positions[0], end:positions[1]});
+          collectedJunctions.push({key:key,start: +positions[0], end:+positions[1]});
           collectedJunctions = _.sortBy(collectedJunctions, function(d){return d.end-d.start;})
           updateJxn();
         }else{

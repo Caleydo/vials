@@ -100,6 +100,18 @@ text.decoration.selected {
   }
 }
 
+.highlight, .highlights{
+  .jxn{
+    fill:$wes-blue;
+    //stroke-width: 1px;
+    //stroke:$wes-blue;
+    fill-opacity: .7;
+
+  }
+}
+
+
+
 .isoform {
   .exon{
     fill-opacity: .8;
@@ -111,17 +123,6 @@ text.decoration.selected {
     fill:white;
     fill-opacity:.001;
 
-  }
-
-
-  .highlight{
-    .jxn{
-      fill:$wes-blue;
-      //stroke-width: 1px;
-      //stroke:$wes-blue;
-      fill-opacity: .7;
-
-    }
   }
 
 
@@ -321,6 +322,10 @@ input.btn-mini {
     opacity: .6;
     stroke: none;
   }
+  .areaCon.hiddenCon{
+    opacity: 0.1;
+  }
+
   .areaCon.highlighted{
     opacity: 1;
   }
@@ -331,6 +336,10 @@ input.btn-mini {
     opacity: .5;
     pointer-events: none;
   }
+  .lineCon.hiddenCon{
+    opacity: 0.1;
+  }
+
   .lineCon.highlighted{
     opacity: 1;
     stroke-width: 2px;
@@ -360,10 +369,19 @@ input.btn-mini {
   }
 
   .sortDivider{
+    stroke-width: 1px;
     stroke:$wes-violet;
-    stroke-opacity: .5;
-    stroke-dasharray: 4, 5 ;
+    stroke-opacity: .3;
+    stroke-dasharray: 7, 1 ;
     pointer-events: none;
+  }
+
+  .inIsoformIndicator{
+    fill:$wes-yellow;//TODO: get from isoform
+    stroke: $wes-violet;
+    stroke-opacity: 1;
+
+
   }
 }
 
@@ -410,7 +428,7 @@ input.btn-mini {
     .panelBG.scatter{
       //stroke:1px;
       stroke:$wes-gray;
-      fill-opacity: .4;
+      fill-opacity: .1;
       //rx:8;
     }
   .panelBG.highlighted{
