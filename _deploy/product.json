@@ -1,0 +1,5 @@
+{
+  "name": "Vials",
+  "type": "static",
+  "app_main": "./main"
+}
