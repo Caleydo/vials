@@ -73,7 +73,7 @@ define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', '.
 
 
     // start here !!
-    C.all([vis1Loaded, vis2Loaded, vis3Loaded]).then(function () {
+    Promise.all([vis1Loaded, vis2Loaded, vis3Loaded]).then(function () {
       gui.current.start(options.projectID, options.geneID, options.exonLength);
     })
 
