@@ -6,6 +6,7 @@
   "dependencies": {
   },
   "peerDependencies": {
+    "caleydo_d3":"*",
     "caleydo_core": "*"
   },
   "caleydo": {
@@ -61,7 +62,8 @@
         "js-lru": "http://github.com/rsms/js-lru.git",
         "bootstrap": "~3",
         "underscore":"~1.8",
-        "font-awesome":">=4.3.0"
+        "font-awesome":">=4.3.0",
+        "jquery":">=1.11.0"
       }
     },
     "requirejs-config": {

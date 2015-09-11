@@ -30,7 +30,7 @@ define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', '.
     }
 
 
-    var vis1Loaded = C.promised(function(resolve,reject){
+    var vis1Loaded = new Promise(function(resolve,reject){
       if (!options.mode || options.mode==='bilal' ){
         var junctionVis = visses.filter(function (vis) { return vis.id === 'vials-junctions'})[0];
         junctionVis.load().then(function (plugin) {
@@ -42,7 +42,7 @@ define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', '.
       }
     })
 
-    var vis2Loaded = C.promised(function(resolve,reject){
+    var vis2Loaded = new Promise(function(resolve,reject){
     if (!options.mode || options.mode==='joseph') {
         var readVis = visses.filter(function (vis) {
           return vis.id === 'vials-reads'
@@ -56,7 +56,7 @@ define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', '.
     }
   });
 
-    var vis3Loaded = C.promised(function(resolve,reject){
+    var vis3Loaded = new Promise(function(resolve,reject){
       if (!options.mode || options.mode==='hen') {
         var readVis = visses.filter(function (vis) {
           return vis.id === 'vials-isoforms'

@@ -1,7 +1,7 @@
 'use strict';
 
 //noinspection Annotator
-define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js-lru','./caleydo-broken-axis'], function(exports, C, datatypes, d3, LRUCache, brokenAxis) {
+define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js-lru','./caleydo-broken-axis','jquery'], function(exports, C, datatypes, d3, LRUCache, brokenAxis) {
 
     exports.GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link', {
       init: function (desc) {
