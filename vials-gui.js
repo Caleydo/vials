@@ -2,259 +2,324 @@
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 2/25/15.
  */
 
-define(['exports','d3', '../caleydo_core/event'], function(exports, d3, event){
+define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], function (exports, d3, $, event, selectivity) {
 
-  function VialsGUI(){
-    var that = this;
+    //'../bower_components/selectivity/dist/selectivity-full.js'
+    function VialsGUI() {
+        var that = this;
 
-    this.projectSelector = d3.select("#projectSelect");
+        this.chromIDDiv = d3.select("#chromosomeInfo");
 
-    this.geneSelector = d3.select("#geneSelect");
+        this.startPosDiv = d3.select("#startPos");
 
-    this.chromIDDiv = d3.select("#chromosomeInfo");
+        this.strandDiv = d3.select("#strandInfo");
 
-    this.startPosDiv = d3.select("#startPos");
+        this.toggleIntrons = d3.select("#toggleIntrons");
 
-    this.strandDiv = d3.select("#strandInfo")
+        this.isoformSort = d3.select("#isoformSort");
 
-    this.toggleIntrons = d3.select("#toggleIntrons");
-
-    this.isoformSort = d3.select("#isoformSort")
-
-    this.baseWidthInputDiv = d3.select("#baseWidth").attr({
-      type:"text",
-      value:"1500"
-    })
-
-    this.allVisUpdates= [];
-
-
-    // TODO: delete this after iso implementation
-    this.isoForm = null;
-
-    this.mappedColors = d3.map();
-    this.availableColors = d3.scale.category10().range().map(function(d){return d}).reverse();
-
-
-    this.getColorForSelection=function(name){
-      if (!(that.mappedColors.has(name))){
-        var theColor = "#666666"
-        if (that.availableColors.length>0){
-          theColor =that.availableColors.pop()
-        }
-
-        that.mappedColors.set(name,theColor);
-      }
-
-
-      return that.mappedColors.get(name);
-    }
-
-    this.releaseColorForSelection= function(name){
-      if (that.mappedColors.has(name)){
-          var theColor = that.mappedColors.get(name);
-
-          if (theColor!="#666666"){
-            that.availableColors.push(theColor);
-          }
-          that.mappedColors.remove(name)
-
-      }
-
-    }
-
-
-
-
-    this.init = function (genomeDataLink) {
-      that.genomeDataLink = genomeDataLink;
-      d3.select("#toggleIntrons").on({
-        click: function () {
-          var el = d3.select(this);
-          if (el.classed("buttonSelected")){
-            // de-activate
-            el.classed("buttonSelected", false);
-            that.genomeDataLink.genomeAxis.shrinkIntrons(false);
-            event.fire("axisChange");
-
-          }else{
-           el.classed("buttonSelected", true);
-            that.genomeDataLink.genomeAxis.shrinkIntrons(true);
-            event.fire("axisChange");
-          }
-        }
-      })
-
-
-      d3.select("#decreaseWidth").on("click", function () {
-        that.genomeDataLink.getGeneData(that.getSelectedProject(), that.getSelectedGene()).then(function(geneData) {
-          that.genomeDataLink.genomeAxis.avrgExonLength = Math.max(that.genomeDataLink.genomeAxis.avrgExonLength - 10, 10);
-          that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"])
-          event.fire("redrawAllVis");
-        })
-      })
-
-      d3.select("#increaseWidth").on("click", function () {
-        that.genomeDataLink.getGeneData(that.getSelectedProject(), that.getSelectedGene()).then(function(geneData) {
-        that.genomeDataLink.genomeAxis.avrgExonLength = that.genomeDataLink.genomeAxis.avrgExonLength +10;
-        that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"])
-        event.fire("redrawAllVis");
-        })
-      })
-
-
-      that.isoformSort.on({
-        "change":function(){
-          event.fire("isoformSort",$(that.isoformSort.node()).val(), null);
-
-
-          //console.log($(that.isoformSort.node()).val());
-        }
-      })
-
-
-      event.on("isoformSort", function(event, method, parameter){
-        if (method=="byExon"){
-          $(that.isoformSort.node()).val("byExon");
-        }
-      })
-
-      function defineButtonFire(bName){
-        d3.select("#"+bName).on("click", function(){
-          event.fire(bName, !d3.select(this).classed("buttonSelected"));
-        })
-
-        event.on(bName, function (e,state) {
-          d3.select("#"+bName).classed("buttonSelected",state);
-        })
-
-
-      }
-
-      defineButtonFire("dotsJittering");
-      defineButtonFire("overlayDots");
-
-    }
-
-    //TODO: remove this after fixing increase and decrease width
-    event.on("redrawAllVis", function(){
-      that.allVisUpdates.forEach(function (update) {
-        update();
-      })
-    })
-
-
-    this.populateGeneData= function(project, geneName){
-      that.genomeDataLink.getGeneData(project, geneName).then(function(geneData){
-        $(that.chromIDDiv.node()).val(geneData.gene.chromID);
-        $(that.startPosDiv.node()).val(geneData.gene.start);
-        $(that.strandDiv.node()).val(geneData.gene.strand);
-
-        that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start,geneData.gene.end)
-        that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"])
-        that.genomeDataLink.genomeAxis.shrinkIntrons(true);
-
-        event.fire("newDataLoaded");
-      })
-
-    };
-
-
-    function updateGeneSelector(selectedProject, selectedGene) {
-      //console.log(that.genomeDataLink.getAllGenes(selectedProject));
-      that.genomeDataLink.getAllGenes(selectedProject).then(function (genes) {
-
-        that.geneSelector.selectAll("option").remove();
-        genes.forEach(function (gene) {
-          that.geneSelector.append("option")
-            .attr("selected", (gene==selectedGene)?true:null)
-            .attr('value', gene)
-            .text(gene);
-        })
-
-        that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
-
-        // activate GeneSelector
-        that.geneSelector.on({
-          "change": function () {
-            that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
-          }
-        })
-
-      });
-    }
-
-    this.start = function(selectedProject, selectedGene, exonLength){
-      that.genomeDataLink.genomeAxis.avrgExonLength = +exonLength || 30;
-      that.genomeDataLink.getAllProjects().then(function (projects) {
-        //console.log("allProjects", projects);
-
-        selectedProject = selectedProject || Object.keys(projects)[0]
-
-        Object.keys(projects).forEach(function (projectID, index) {
-
-          that.projectSelector.append("option")
-            .attr("selected", (projectID==selectedProject)?true:null)
-            .attr("value", projectID)
-            .text(projectID + " ("+projects[projectID].data[0]["data_type"]+")")
-
+        this.baseWidthInputDiv = d3.select("#baseWidth").attr({
+            type: "text",
+            value: "1500"
         });
 
-        that.projectSelector.on({
-          "change": function () {
-            updateGeneSelector($(that.projectSelector.node()).val())
-          }
+        this.allVisUpdates = [];
+
+        var $projectSelector = $('#projectSelector');
+        var $geneSelector = $('#geneSelector');
+
+
+        // TODO: delete this after iso implementation
+        this.isoForm = null;
+
+        this.mappedColors = d3.map();
+        this.availableColors = d3.scale.category10().range().map(function (d) {
+            return d
+        }).reverse();
+
+        this.getColorForSelection = function (name) {
+            if (!(that.mappedColors.has(name))) {
+                var theColor = "#666666";
+                if (that.availableColors.length > 0) {
+                    theColor = that.availableColors.pop()
+                }
+
+                that.mappedColors.set(name, theColor);
+            }
+
+
+            return that.mappedColors.get(name);
+        };
+
+        this.releaseColorForSelection = function (name) {
+            if (that.mappedColors.has(name)) {
+                var theColor = that.mappedColors.get(name);
+
+                if (theColor != "#666666") {
+                    that.availableColors.push(theColor);
+                }
+                that.mappedColors.remove(name)
+
+            }
+
+        };
+
+
+        this.init = function (genomeDataLink) {
+            that.genomeDataLink = genomeDataLink;
+            d3.select("#toggleIntrons").on({
+                click: function () {
+                    var el = d3.select(this);
+                    if (el.classed("buttonSelected")) {
+                        // de-activate
+                        el.classed("buttonSelected", false);
+                        that.genomeDataLink.genomeAxis.shrinkIntrons(false);
+                        event.fire("axisChange");
+
+                    } else {
+                        el.classed("buttonSelected", true);
+                        that.genomeDataLink.genomeAxis.shrinkIntrons(true);
+                        event.fire("axisChange");
+                    }
+                }
+            });
+
+
+            d3.select("#decreaseWidth").on("click", function () {
+                that.genomeDataLink.getGeneData(that.getSelectedProject(), that.getSelectedGene()).then(function (geneData) {
+                    that.genomeDataLink.genomeAxis.avrgExonLength = Math.max(that.genomeDataLink.genomeAxis.avrgExonLength - 10, 10);
+                    that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"]);
+                    event.fire("redrawAllVis");
+                })
+            });
+
+            d3.select("#increaseWidth").on("click", function () {
+                that.genomeDataLink.getGeneData(that.getSelectedProject(), that.getSelectedGene()).then(function (geneData) {
+                    that.genomeDataLink.genomeAxis.avrgExonLength = that.genomeDataLink.genomeAxis.avrgExonLength + 10;
+                    that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"]);
+                    event.fire("redrawAllVis");
+                })
+            });
+
+
+            that.isoformSort.on({
+                "change": function () {
+                    event.fire("isoformSort", $(that.isoformSort.node()).val(), null);
+
+
+                    //console.log($(that.isoformSort.node()).val());
+                }
+            });
+
+
+            event.on("isoformSort", function (event, method, parameter) {
+                if (method == "byExon") {
+                    $(that.isoformSort.node()).val("byExon");
+                }
+            });
+
+            function defineButtonFire(bName) {
+                d3.select("#" + bName).on("click", function () {
+                    event.fire(bName, !d3.select(this).classed("buttonSelected"));
+                });
+
+                event.on(bName, function (e, state) {
+                    d3.select("#" + bName).classed("buttonSelected", state);
+                })
+
+
+            }
+
+            defineButtonFire("dotsJittering");
+            defineButtonFire("overlayDots");
+
+
+            $projectSelector.selectivity({
+                //allowClear: true,
+                items: ['Amsterdam', 'Antwerp'/*, ...*/],
+                placeholder: 'No project selected'
+            });
+
+            $geneSelector.selectivity({
+                ajax: {
+                    url: this.genomeDataLink.serveradress + '/geneselect',
+                    dataType: 'json',
+                    minimumInputLength: 1,
+                    quietMillis: 250,
+                    params: function (term, offset) {
+                        return {projectID: 'hen01', selectFilter: term}
+                    },
+                    processItem: function (item) {
+                        return {
+                            id: item.id,
+                            text: item.name || '---',
+                            description: item.desc || '---'
+                        }
+                    },
+                    results: function (data, offset) {
+                        console.log(data);
+                        return {
+                            results: data,
+                            more: false
+
+
+                        }
+                    }
+                },
+                readOnly: true,
+                templates: {
+                    resultItem: function (item) {
+                        return (
+                            '<div class="selectivity-result-item" data-item-id="' + item.id + '">' +
+                            '<b>' + item.text + '</b> (' + item.id + ')<br>' +
+                            item.description +
+                            '</div>'
+                        );
+                    },
+                    singleSelectedItem: function (options) {
+                        return (
+                            '<span class="selectivity-single-selected-item" ' +
+                            'data-item-id="' + escape(options.id) + '">' +
+                            (options.removable ? '<a class="selectivity-single-selected-item-remove">' +
+                            '<i class="fa fa-remove"></i>' +
+                            '</a>'
+                                : '') +
+                            escape(options.text) +' ('+options.id+
+                            ')</span>'
+                        );
+                    },
+                },
+                placeholder: 'No gene selected'
+            });
+
+
+        };
+
+        //TODO: remove this after fixing increase and decrease width
+        event.on("redrawAllVis", function () {
+            that.allVisUpdates.forEach(function (update) {
+                update();
+            })
         });
 
-        updateGeneSelector(selectedProject, selectedGene);
-      })
 
-    };
+        this.populateGeneData = function (project, geneName) {
+            that.genomeDataLink.getGeneData(current_project, geneName).then(function (geneData) {
+                $(that.chromIDDiv.node()).val(geneData.gene.chromID);
+                $(that.startPosDiv.node()).val(geneData.gene.start);
+                $(that.strandDiv.node()).val(geneData.gene.strand);
+
+                that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start, geneData.gene.end);
+                that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"]);
+                that.genomeDataLink.genomeAxis.shrinkIntrons(true);
+
+                event.fire("newDataLoaded");
+            })
+
+        };
 
 
-    this.getSelectedProject = function(){
-      return $(that.projectSelector.node()).val();
+        function updateGeneSelector(selectedProject, selectedGene) {
+            //console.log(that.genomeDataLink.getAllGenes(selectedProject));
+            that.genomeDataLink.getAllGenes(selectedProject).then(function (genes) {
+
+                that.geneSelector.selectAll("option").remove();
+                genes.forEach(function (gene) {
+                    that.geneSelector.append("option")
+                        .attr("selected", (gene == selectedGene) ? true : null)
+                        .attr('value', gene)
+                        .text(gene);
+                });
+
+                that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
+
+                // activate GeneSelector
+                that.geneSelector.on({
+                    "change": function () {
+                        that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
+                    }
+                })
+
+            });
+        }
+
+        this.start = function (selectedProject, selectedGene, exonLength) {
+            that.genomeDataLink.genomeAxis.avrgExonLength = +exonLength || 30;
+            that.genomeDataLink.getAllProjects().then(function (projects) {
+                //console.log("allProjects", projects);
+
+                var selectedProjectID = selectedProject || Object.keys(projects)[0];
+                var selectedProjectItem = null;
+
+
+                var itemList = Object.keys(projects).map(function (projectID, index) {
+                    var current_project = projects[projectID];
+                    var res = {id: current_project['project_id'], text: current_project['name']};
+                    if (projectID === selectedProjectID) selectedProjectItem = res;
+                    return res;
+                });
+
+
+                $projectSelector.selectivity({
+                    items: itemList,
+                    placeholder: 'No project selected'
+                });
+
+
+                if (selectedProjectItem) {
+                    $projectSelector.selectivity('data', selectedProjectItem);
+                    $geneSelector.selectivity('setOptions', {readOnly: false});
+                }
+
+                $projectSelector.on('change', function (event) {
+                    updateGeneSelector(event.value);
+                });
+
+                //updateGeneSelector(selectedProject, selectedGene);
+
+            })
+
+
+        };
+
+
+        this.getSelectedProject = function () {
+            return $(that.projectSelector.node()).val();
+        };
+
+
+        this.getSelectedGene = function () {
+            return $(that.geneSelector.node()).val();
+        };
+
+
+        this.addUpdateEvent = function (updateFunction) {
+            that.allVisUpdates.push(updateFunction);
+        };
+
+
+        this.getStartPos = function () {
+            return parseInt($(that.startPosDiv.node()).val())
+        };
+
+        this.getBaseWidth = function () {
+            return parseInt($(that.baseWidthInputDiv.node()).val())
+        }
+
+
     }
 
-    this.getSelectedGene = function(){
-      return $(that.geneSelector.node()).val();
-    }
+
+    var globalGUI = new VialsGUI();
+
+    exports.VialsGUI = VialsGUI;
+    exports.current = globalGUI;
 
 
-    this.addUpdateEvent= function(updateFunction){
-      that.allVisUpdates.push(updateFunction);
-    }
+    //exports.geneSelector = globalGUI.geneSelector;
+    //exports.init = globalGUI.init;
+    //exports.start = globalGUI.start;
+    //exports.allVisUpdates = globalGUI.allVisUpdates;
 
 
-    this.getStartPos = function()  {
-      return parseInt($(that.startPosDiv.node()).val())
-    }
-
-    this.getBaseWidth = function()  {
-      return  parseInt($(that.baseWidthInputDiv.node()).val())
-    }
-
-
-
-  }
-
-
-
-
-
-
-  var globalGUI = new VialsGUI();
-
-  exports.VialsGUI = VialsGUI;
-  exports.current = globalGUI;
-
-
-  //exports.geneSelector = globalGUI.geneSelector;
-  //exports.init = globalGUI.init;
-  //exports.start = globalGUI.start;
-  //exports.allVisUpdates = globalGUI.allVisUpdates;
-
-
-
-
-})
+});

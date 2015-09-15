@@ -1,149 +1,87 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Vials</title>
-  <meta name="description" content="">
-  <meta name="viewport" content="width=device-width">
-  <!-- Place favicon.ico and apple-touch-barplot_icon.png in the root directory -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Vials (a Caleydo Web Project)</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width">
+    <!-- Place favicon.ico and apple-touch-barplot_icon.png in the root directory -->
 
-  <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../bower_components/selectivity/dist/selectivity-full.css">
+    <link rel="stylesheet" href="style.css">
 
-  <script src="/caleydo_web.js"></script>
+
+    <script src="/caleydo_web.js"></script>
+    <style type="text/css">
+        .selectivity-input, .selectivity-dropdown {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            /*font-weight: lighter;*/
+            font-size: 9pt;
+            margin-top: 12px;
+        }
+
+        .selectivity-single-select {
+            min-height: 10px;
+        }
+
+        .selectivity-single-select-input {
+            border-width: 0;
+            font-size: 7px;
+        }
+
+        .selectivity-single-result-container, .selectivity-caret {
+            top: 5px;
+        }
+    </style>
 </head>
-	<body>
-
-  <nav class="navbar navbar-default navbar-static-top">
+<body>
+<nav class="navbar navbar-default ">
     <div class="container-fluid">
-      <div class="navbar-header">
-        <a class="navbar-brand" href="#">
-          <img alt="Brand" src="img/logo_vials.png" width="20">
-        </a>
-      </div>
-    <!--<div class="form-group col-md-6 col-sm-12" style="max-width: 800px">-->
-      <div class="form-inline" style="padding-top: 10px;">
 
-        <button class="btn btn-sm btn-default buttonSelected" id="toggleIntrons"> shrink introns</button>
-        &nbsp;
-        <button class="btn btn-sm btn-default buttonSelected" id="dotsJittering"> jitter dots</button>
-        &nbsp;
-        <button class="btn btn-sm btn-default buttonSelected" id="overlayDots"> overlay dots</button>
-        &nbsp;
-      <div class="form-group" >
-    <label for="geneSelect">project:</label>
-      <select class="form-control btn  btn-mini" id="projectSelect">
-      </select>
-    </div>
-
-    <div class="form-group" >
-      <label for="geneSelect"> gene:</label>
-      <select class="form-control btn  btn-mini" id="geneSelect">
-      </select>
-    </div>
-
-
-        <div class="form-group form-group-sm">
-          <label>chr:</label>
-          <!--<div id="chromosomeInfo" class="navbar-text"></div>-->
-          <input class="form-control btn-mini" id="chromosomeInfo" type="text" placeholder="..." style="max-width: 30px;padding: 1px;padding-left: 5px;" readonly>
-        <!--</div>-->
-
-        <!--<div class="form-group form-group-sm">-->
-          <label for="startPos">start:</label>
-          <input class="form-control btn-mini" id="startPos" type="text" placeholder="..." style="max-width: 100px;padding: 1px;padding-left: 5px;"readonly>
-        <!--</div>-->
-
-        <!--<div class="form-group form-group-sm">-->
-          <label for="strandInfo">strand:</label>
-          <input class="form-control btn-mini" id="strandInfo" type="text" placeholder="..." style="max-width: 20px;padding: 1px;padding-left: 5px;font-weight: bold;"readonly>
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#" style="padding:5px; height: 35px;">
+                <img alt="Brand" src="img/logo_vials.png" style="padding: 5px; width: 40px;">
+            </a>
         </div>
 
-        <!--<div class="form-group form-group-sm">-->
-          <!--<label for="baseWidth">base width:</label>-->
-          <!--<input class="form-control" id="baseWidth" type="text" placeholder="..." readonly>-->
-        <!--</div>-->
+        <button class="btn btn-sm btn-default buttonSelected navbar-btn navbar-left" id="toggleIntrons" style="margin-right: 3px; "> shrink introns</button>
+        <button class="btn btn-sm btn-default buttonSelected navbar-btn navbar-left" id="dotsJittering" style="margin-right: 3px; "> jitter dots</button>
+        <button class="btn btn-sm btn-default buttonSelected navbar-btn navbar-left" id="overlayDots" style="margin-right: 3px; "> overlay dots</button>
 
-      </div>
+        <div id="projectSelector" class="selectivity-input navbar-form navbar-left" style="width: 200px;"></div>
+        <div id="geneSelector" class="selectivity-input navbar-form navbar-left" style="width: 200px; "></div>
 
+        <div class="form-group form-group-sm navbar-form navbar-left">
+            <label>chr:</label>
+            <input class="form-control btn-mini" id="chromosomeInfo" type="text" placeholder="..."
+                   style="max-width: 30px;padding: 1px;padding-left: 5px;" readonly>
 
+            <label for="startPos">start:</label>
+            <input class="form-control btn-mini" id="startPos" type="text" placeholder="..."
+                   style="max-width: 100px;padding: 1px;padding-left: 5px;" readonly>
+
+            <label for="strandInfo">strand:</label>
+            <input class="form-control btn-mini" id="strandInfo" type="text" placeholder="..."
+                   style="max-width: 20px;padding: 1px;padding-left: 5px;font-weight: bold;" readonly>
+        </div>
 
 
 
     </div>
-  </nav>
+
+    </div>
+</nav>
+
+<div class="container-fluid" style="margin-top: 60px;">
+     <!--<div id="geneSelector" class="selectivity-input navbar-form navbar-left" style="width: 200px; "></div>-->
+    <div id="visJxns"></div>
+    <div id="visIso"></div>
+    <div id="visReads"></div>
+
+</div>
 
 
-  <!--<div id="userinput" class="container-fluid hidden-print" style="padding-top: 10px">-->
-
-
-    <!--<div class="row">-->
-      <!--&lt;!&ndash;<div class="form-group col-md-6 col-sm-12" style="max-width: 800px">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label for="geneSelect">Select project:</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<select class="form-control" id="projectSelect">&ndash;&gt;-->
-        <!--&lt;!&ndash;</select>&ndash;&gt;-->
-      <!--&lt;!&ndash;</div>&ndash;&gt;-->
-    <!--&lt;!&ndash;</div>&ndash;&gt;-->
-    <!--&lt;!&ndash;<div class="row">&ndash;&gt;-->
-        <!--<div class="form-group col-md-6 col-sm-12" style="max-width: 800px">-->
-          <!--<label for="geneSelect">Select gene:</label>-->
-          <!--<select class="form-control" id="geneSelect">-->
-          <!--</select>-->
-        <!--</div>-->
-    <!--</div>-->
-    <!--<div class="row">-->
-      <!--<div class="form-inline col-md-12 col-sm-12">-->
-      <!--&lt;!&ndash;<div class="form-group form-group-sm">&ndash;&gt;-->
-        <!--&lt;!&ndash;<label for="chromosomeInfo">chromosome:</label>&ndash;&gt;-->
-        <!--&lt;!&ndash;<input class="form-control" id="chromosomeInfo" type="text" placeholder="..." readonly>&ndash;&gt;-->
-      <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group form-group-sm">&ndash;&gt;-->
-          <!--&lt;!&ndash;<label for="startPos">start position:</label>&ndash;&gt;-->
-          <!--&lt;!&ndash;<input class="form-control" id="startPos" type="text" placeholder="..." readonly>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-        <!--&lt;!&ndash;<div class="form-group form-group-sm">&ndash;&gt;-->
-          <!--&lt;!&ndash;<label for="baseWidth">base width:</label>&ndash;&gt;-->
-          <!--&lt;!&ndash;<input class="form-control" id="baseWidth" type="text" placeholder="..." readonly>&ndash;&gt;-->
-        <!--&lt;!&ndash;</div>&ndash;&gt;-->
-
-    <!--</div>-->
-    <!--</div>-->
-    <!--<div class="row" style="padding-top: 10px;">-->
-      <!--<div class="form-inline col-md-12 col-sm-12">-->
-        <!--<div class="form-group col-md-10 col-sm-10">-->
-          <!--&lt;!&ndash;<label for="toggleIntrons">Select gene:</label>&ndash;&gt;-->
-          <!--&lt;!&ndash;<button class="btn btn-sm btn-default" id="toggleIntrons"> shrink Introns</button>&ndash;&gt;-->
-
-          <!--&nbsp;-->
-          <!--&lt;!&ndash;<div class="form-group form-group-sm">&ndash;&gt;-->
-            <!--&lt;!&ndash;<label for="isoformSort">sort iso:</label>&ndash;&gt;-->
-            <!--&lt;!&ndash;<select class="form-control form-group-sm" id="isoformSort">&ndash;&gt;-->
-              <!--&lt;!&ndash;<option value="mean_sorting">by abundance mean</option>&ndash;&gt;-->
-              <!--&lt;!&ndash;<option value="byExon" disabled>by selected Exon </option>&ndash;&gt;-->
-              <!--&lt;!&ndash;<option>Relish</option>&ndash;&gt;-->
-            <!--&lt;!&ndash;</select>&ndash;&gt;-->
-          <!--&lt;!&ndash;</div>&ndash;&gt;-->
-
-          <!--&lt;!&ndash;<button class="btn btn-sm btn-default" id="decreaseWidth"> narrower </button>&ndash;&gt;-->
-          <!--&lt;!&ndash;<button class="btn btn-sm btn-default" id="increaseWidth"> wider </button>&ndash;&gt;-->
-
-          <!--&lt;!&ndash;<button class="btn btn-sm " id="testIso"> select Isoform TCGA </button>&ndash;&gt;-->
-          <!--&lt;!&ndash;<button class="btn btn-sm " id="testIso2"> select Isoform EGFR (bodymap) </button>&ndash;&gt;-->
-          <!--&lt;!&ndash;<button class="btn btn-sm " id="testIso3"> unselect isoform</button>&ndash;&gt;-->
-        <!--</div>-->
-      <!--</div>-->
-    <!--</div>-->
-
-
-
-
-  <!--</div>-->
-  <!--<hr/>-->
-  <div id="visJxns"></div>
-  <div id="visIso"></div>
-  <div id="visReads" ></div>
-
-
-	</body>
+</body>
 </html>

@@ -13,7 +13,7 @@ define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', '.
   data.create({
     type: 'caleydo-genome-data-link',
     name: 'Vials',
-    serveradress: '/api/genomebrowser'
+    serveradress: '/api/vials'
   }).then(function (genomeDataLink) {
 
     gui.current.init(genomeDataLink);

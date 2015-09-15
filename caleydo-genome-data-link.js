@@ -15,6 +15,7 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
         this.genomeAxis=brokenAxis.create(600, this.options);
         this.localFileName = null;
         this.localFileData = null;
+
       },
 
       useFile:function(fileName){
@@ -93,6 +94,25 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
         return res;
       },
 
+
+      /**
+       * current format:
+       * {
+       *  "hen01": {
+       *    "dir": ".//_data/vials_projects/hen01.vials_project",
+       *    "info": {
+       *      "bam_root_dir": "/vagrant_external/bodyMap_broad_igv/indexed",
+       *      "gene_name_mapped": "event_names_enriched",
+       *      "id_type_guessed": "ensembl",
+       *      "project_type": "miso",
+       *      "ref_genome": "hg19"
+       *    },
+       *    "name": "hen01",
+       *    "project_id": "hen01"
+       *  }
+       *}
+       * @returns {null|*}
+       */
       getAllProjects:function(){
 
         if (this.localFileName){

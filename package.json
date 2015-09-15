@@ -1,6 +1,6 @@
 {
   "name": "vials",
-  "version": "0.0.1",
+  "version": "0.1.5",
   "license" : "SEE LICENSE IN LICENSE",
   "repository": "Caleydo/vials",
   "dependencies": {
@@ -63,16 +63,24 @@
         "bootstrap": "~3",
         "underscore":"~1.8",
         "font-awesome":">=4.3.0",
-        "jquery":">=1.11.0"
+        "jquery":">=1.11.0",
+        "selectivity":">=2.0"
       }
     },
     "requirejs-config": {
       "paths": {
-        "js-lru": "${baseUrl}/js-lru/lru"
+        "js-lru": "${baseUrl}/js-lru/lru",
+        "selectivityjs":"${baseUrl}/selectivity/dist/selectivity-full.min"
       },
       "shim": {
         "js-lru": {
           "exports": "LRUCache"
+
+        },
+        "selectivityjs":{
+          "deps":["jquery"],
+          "exports":"selectivity"
+
         }
       }
     }
