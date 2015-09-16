@@ -353,10 +353,8 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
 
                 if (isoInfo.index > -1) {
                     isSelectedIsoForm = true;
-                    var exonIDs = allData.gene.isoforms[isoInfo.isoform].exons;
-                    var selectedExons = _.sortBy(exonIDs.map(function (exID) {
-                        return allData.gene.exons[exID];
-                    }), 'start');
+                    //var exonIDs = allData.gene.isoforms[isoInfo.isoform].exons;
+                    var selectedExons = _.sortBy(allExons.filter(function(d){return d.isoformID == isoInfo.isoform;}), 'start');
 
 
                     // all JXNs to std:
@@ -1593,18 +1591,13 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
                             allExons.push({
                                 id: exon,
                                 end: +exonEnds[index],
-                                start: +exonStarts[index]
+                                start: +exonStarts[index],
+                                isoformID:isoform.isoformID
                             })
                         })
                     }
 
                 });
-
-                console.log(allExons,'\n-- allExons --'); 
-                
-
-
-
 
 
                 triangleData = [];

@@ -87,7 +87,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
     var svgLabelText = svgLabel.append("text").text("isoforms").attr({
       "class": "viewLabelText",
     });
-    var bbMainLabel = svgLabelText.node().getBBox();
+    var bbMainLabel = {height: 15, width:svgLabelText.node().getBBox().width }//svgLabelText.node().getBBox();
     svgLabelBg.attr({
       "height": bbMainLabel.height+4
     })
@@ -523,7 +523,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
       event.on("highlightJxn", function(e,key,highlight){
 
         if (highlight){
-          var positions = key.split("_");
+          var positions = key.split(":");
           collectedJunctions.push({key:key,start: +positions[0], end:+positions[1]});
           collectedJunctions = _.sortBy(collectedJunctions, function(d){return d.end-d.start;})
           updateJxn();
@@ -1211,8 +1211,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
       var
         curGene = gui.current.getSelectedGene(),
-        startPos = gui.current.getStartPos(),
-        baseWidth = gui.current.getBaseWidth(),
         curProject = gui.current.getSelectedProject();
 
       that.data.getGeneData(curProject, curGene).then(function(sampleData) {
@@ -1237,11 +1235,36 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
           if (isokey in allIsoforms){
             var res = {weights:usedIsoforms[isokey], id: isokey}
-            res.ranges =
-              allIsoforms[isokey].exons.map(function(exKey){
-                var ex = allExons[exKey];
-                return {"start": ex.start, "end": ex.end, "id": ex.id}
-              });
+
+            var isoform = allIsoforms[isokey];
+            var exonNames = isoform.exonNames.split('_');
+            var exonEnds = isoform.exonEnds.split('_');
+            var exonStarts = isoform.exonStarts.split('_');
+
+            //console.log(isoform,'\n-- isoform --');
+            //console.log(exonNames, exonEnds, exonStarts,'\n-- exon --');
+            var exons = []
+            if ((exonNames.length == exonEnds.length) && (exonNames.length == exonStarts.length)) {
+
+              exonNames.forEach(function (exon, index) {
+                exons.push({
+                  id: exon,
+                  end: +exonEnds[index],
+                  start: +exonStarts[index],
+                  isoformID: isoform.isoformID
+                })
+              })
+            }
+
+
+
+
+
+            res.ranges = exons
+              //allIsoforms[isokey].exons.map(function(exKey){
+              //  var ex = allExons[exKey];
+              //  return {"start": ex.start, "end": ex.end, "id": ex.id}
+              //});
 
 
             var allWeights = res.weights.map(function(d){return +d.weight;})

@@ -31,7 +31,7 @@ define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', '.
 
 
     var vis1Loaded = new Promise(function(resolve,reject){
-      if (!options.mode || options.mode==='bilal' ){
+      if (!options.mode || options.mode.indexOf('jxn')>-1 ){
         var junctionVis = visses.filter(function (vis) { return vis.id === 'vials-junctions'})[0];
         junctionVis.load().then(function (plugin) {
           vis = plugin.factory(genomeDataLink, document.querySelector("#visJxns") );
@@ -43,7 +43,7 @@ define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', '.
     })
 
     var vis2Loaded = new Promise(function(resolve,reject){
-    if (!options.mode || options.mode==='joseph') {
+    if (!options.mode || options.mode.indexOf('count')>-1) {
         var readVis = visses.filter(function (vis) {
           return vis.id === 'vials-reads'
         })[0];
@@ -57,7 +57,7 @@ define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', '.
   });
 
     var vis3Loaded = new Promise(function(resolve,reject){
-      if (!options.mode || options.mode==='hen') {
+      if (!options.mode || options.mode.indexOf('iso')>-1) {
         var readVis = visses.filter(function (vis) {
           return vis.id === 'vials-isoforms'
         })[0];
