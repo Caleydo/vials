@@ -51,7 +51,7 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
       },
 
       getGeneData:function(projectID, geneName){
-
+        console.log("getGeneData",projectID, geneName);
         var cacheID = projectID+"==>"+geneName;
 
         var res = this.geneCache.get(cacheID);
@@ -79,12 +79,12 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
           }else{
             // regular server handling
             var parameters = [];
-            parameters.push("geneName="+encodeURIComponent(geneName));
+            parameters.push("geneID="+encodeURIComponent(geneName));
             parameters.push("projectID="+encodeURIComponent(projectID));
             // if (startPos) parameters.push("pos="+encodeURIComponent(startPos));
             // if (baseWidth) parameters.push("baseWidth="+encodeURIComponent(baseWidth))
 
-            res = $.getJSON(this.serveradress+ "/gene?"+parameters.join("&"));
+            res = $.getJSON(this.serveradress+ "/geneinfo?"+parameters.join("&"));
           }
 
           this.geneCache.put(cacheID, res);
@@ -133,6 +133,11 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
 
         return this.allProjects;
       },
+
+      getAllGeneNames:function(projectID, geneDescriptor){
+        return $.getJSON(this.serveradress+"/geneselect?projectID="+projectID+"&selectFilter="+geneDescriptor+"&exactMatch=True")
+      },
+
 
       getAllGenes:function(projectID){
         if (this.localFileName){

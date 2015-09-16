@@ -4,7 +4,30 @@
 
 @import "../bower_components/font-awesome/css/font-awesome.min.css";
 
-
+.fa-spin-custom, .glyphicon-spin {
+    -webkit-animation: spin 5000ms infinite linear;
+    animation: spin 5000ms infinite linear;
+}
+@-webkit-keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg);
+    }
+}
+@keyframes spin {
+    0% {
+        -webkit-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(359deg);
+        transform: rotate(359deg);
+    }
+}
 
 
 // Wes Anderson Color Palette from http://wesandersonpalettes.tumblr.com/ - Fantastic Mr. Fox

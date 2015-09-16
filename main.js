@@ -79,6 +79,29 @@ define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', '.
 
 
 
+    event.on('resizeCanvas',function(event,w,h){
+      var $visCanvas = $('#vis_canvas');
+      $visCanvas.css({
+              width: w,
+              height: h
+        })
+      if ($visCanvas.css("opacity") == 0){
+        $visCanvas.fadeTo('fast',1);
+      }
+    })
+
+    $( window ).resize(function() {
+        event.fire('resizeCanvas',
+            $( window ).width(),
+            $( window ).height() - $('#navbar').height()-5)
+
+    });
+
+    event.fire('resizeCanvas',
+            $( window ).width(),
+            $( window ).height() - $('#navbar').height()-5)
+
+
     // ==============
     // -- HELPERS ---
     // ==============

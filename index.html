@@ -37,7 +37,7 @@
     </style>
 </head>
 <body>
-<nav class="navbar navbar-default ">
+<nav class="navbar navbar-default" id='navbar' style="margin: 0">
     <div class="container-fluid">
 
         <div class="navbar-header">
@@ -47,7 +47,7 @@
         </div>
 
         <button class="btn btn-sm btn-default buttonSelected navbar-btn navbar-left" id="toggleIntrons" style="margin-right: 3px; "> shrink introns</button>
-        <button class="btn btn-sm btn-default buttonSelected navbar-btn navbar-left" id="dotsJittering" style="margin-right: 3px; "> jitter dots</button>
+        <!--<button class="btn btn-sm btn-default buttonSelected navbar-btn navbar-left" id="dotsJittering" style="margin-right: 3px; "> jitter dots</button>-->
         <button class="btn btn-sm btn-default buttonSelected navbar-btn navbar-left" id="overlayDots" style="margin-right: 3px; "> overlay dots</button>
 
         <div id="projectSelector" class="selectivity-input navbar-form navbar-left" style="width: 200px;"></div>
@@ -74,14 +74,25 @@
     </div>
 </nav>
 
-<div class="container-fluid" style="margin-top: 60px;">
-     <!--<div id="geneSelector" class="selectivity-input navbar-form navbar-left" style="width: 200px; "></div>-->
-    <div id="visJxns"></div>
-    <div id="visIso"></div>
-    <div id="visReads"></div>
+<div id="vis_canvas" style="overflow-y: auto;opacity:0 ">
+    <div id="startScreen" style="position: relative; top: 30%;left: 50%;
+         margin-left: -162px;margin-top: -162px; width:324px;">
+        <img src="img/logo_vials_large.png" />
+        <p id="startScreenText" style="text-align: center">
+            <!--<span class="glyphicon glyphicon-refresh glyphicon-spin" ></span>-->
+            <span style="font-size: 18pt; font-weight: bold;">
+                Vials 1.5
+            </span>
+        </p>
+    </div>
 
+    <div id="vials_vis" hidden>
+         <!--<div id="geneSelector" class="selectivity-input navbar-form navbar-left" style="width: 200px; "></div>-->
+        <div id="visJxns"></div>
+        <div id="visIso"></div>
+        <div id="visReads"></div>
+    </div>
 </div>
-
 
 </body>
 </html>

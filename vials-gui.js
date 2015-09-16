@@ -16,7 +16,6 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
 
         this.toggleIntrons = d3.select("#toggleIntrons");
 
-        this.isoformSort = d3.select("#isoformSort");
 
         this.baseWidthInputDiv = d3.select("#baseWidth").attr({
             type: "text",
@@ -102,22 +101,6 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
             });
 
 
-            that.isoformSort.on({
-                "change": function () {
-                    event.fire("isoformSort", $(that.isoformSort.node()).val(), null);
-
-
-                    //console.log($(that.isoformSort.node()).val());
-                }
-            });
-
-
-            event.on("isoformSort", function (event, method, parameter) {
-                if (method == "byExon") {
-                    $(that.isoformSort.node()).val("byExon");
-                }
-            });
-
             function defineButtonFire(bName) {
                 d3.select("#" + bName).on("click", function () {
                     event.fire(bName, !d3.select(this).classed("buttonSelected"));
@@ -141,31 +124,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
             });
 
             $geneSelector.selectivity({
-                ajax: {
-                    url: this.genomeDataLink.serveradress + '/geneselect',
-                    dataType: 'json',
-                    minimumInputLength: 1,
-                    quietMillis: 250,
-                    params: function (term, offset) {
-                        return {projectID: 'hen01', selectFilter: term}
-                    },
-                    processItem: function (item) {
-                        return {
-                            id: item.id,
-                            text: item.name || '---',
-                            description: item.desc || '---'
-                        }
-                    },
-                    results: function (data, offset) {
-                        console.log(data);
-                        return {
-                            results: data,
-                            more: false
-
-
-                        }
-                    }
-                },
+                ajax: {},
                 readOnly: true,
                 templates: {
                     resultItem: function (item) {
@@ -184,7 +143,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
                             '<i class="fa fa-remove"></i>' +
                             '</a>'
                                 : '') +
-                            escape(options.text) +' ('+options.id+
+                            escape(options.text) + ' (' + options.id +
                             ')</span>'
                         );
                     },
@@ -203,8 +162,20 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
         });
 
 
-        this.populateGeneData = function (project, geneName) {
-            that.genomeDataLink.getGeneData(current_project, geneName).then(function (geneData) {
+        this.populateGeneData = function (projectIDitem, geneID) {
+            $('#startScreenText')
+                .html(' Loading.. ') //<span class="glyphicon glyphicon-refresh glyphicon-spin" ></span>
+            $('#startScreen').find('img').addClass('fa-spin-custom')
+            $('#vials_vis').fadeOut()
+            $('#startScreen').fadeIn()
+
+            that.genomeDataLink.getGeneData(projectIDitem['id'] , geneID).then(function (geneData) {
+                $('#startScreen').fadeOut()
+                //$('#startScreen').find('img').removeClass('fa-spin-custom')
+
+                $('#vials_vis').fadeIn()
+
+
                 $(that.chromIDDiv.node()).val(geneData.gene.chromID);
                 $(that.startPosDiv.node()).val(geneData.gene.start);
                 $(that.strandDiv.node()).val(geneData.gene.strand);
@@ -219,36 +190,76 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
         };
 
 
-        function updateGeneSelector(selectedProject, selectedGene) {
-            //console.log(that.genomeDataLink.getAllGenes(selectedProject));
-            that.genomeDataLink.getAllGenes(selectedProject).then(function (genes) {
-
-                that.geneSelector.selectAll("option").remove();
-                genes.forEach(function (gene) {
-                    that.geneSelector.append("option")
-                        .attr("selected", (gene == selectedGene) ? true : null)
-                        .attr('value', gene)
-                        .text(gene);
-                });
-
-                that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
-
-                // activate GeneSelector
-                that.geneSelector.on({
-                    "change": function () {
-                        that.populateGeneData($(that.projectSelector.node()).val(), $(that.geneSelector.node()).val());
+        this.getAjaxConfiguration = function (projectID) {
+            return {
+                url: this.genomeDataLink.serveradress + '/geneselect',
+                dataType: 'json',
+                minimumInputLength: 1,
+                quietMillis: 250,
+                params: function (term, offset) {
+                    return {projectID: projectID, selectFilter: term}
+                },
+                processItem: function (item) {
+                    return {
+                        id: item.id,
+                        text: item.name || '---',
+                        description: item.desc || '---'
                     }
-                })
+                },
+                results: function (data, offset) {
+                    console.log(data);
+                    return {
+                        results: data,
+                        more: false
 
-            });
+
+                    }
+                }
+            }
+
+
         }
 
-        this.start = function (selectedProject, selectedGene, exonLength) {
+
+        function updateGeneSelector(projectIDitem, selectedGene) {
+            var ajax = that.getAjaxConfiguration(projectIDitem['id'])
+            $geneSelector.selectivity('setOptions', {ajax: ajax})
+
+            
+            if (selectedGene) {
+                that.genomeDataLink.getAllGeneNames(projectIDitem['id'], selectedGene).then(function (selGeneInfoArray) {
+                    if (selGeneInfoArray.length == 1) { // if there is one result coming back from the exact matching
+                        var selGeneInfo = selGeneInfoArray[0];
+                        var geneIDitem = {
+                            id: selGeneInfo.id,
+                            text: selGeneInfo.name ? selGeneInfo.name : '---' + " (" + selGeneInfo.id + ") "
+                        }
+                        $geneSelector.selectivity('data', geneIDitem)
+                        that.populateGeneData(projectIDitem, selGeneInfo.id)
+                    }
+                    $geneSelector.on('change', function (event) {
+                        that.populateGeneData(projectIDitem, event.value)
+                    })
+
+                })
+            } else {
+
+                $geneSelector.on('change', function (event) {
+                    //console.log(projectIDitem,'\n-- projectIDitem --');
+                    //console.log(event,'\n-- event --');
+                    that.populateGeneData(projectIDitem, event.value)
+                })
+            }
+
+
+        }
+
+        this.start = function (selectedProjectID, selectedGene, exonLength) {
             that.genomeDataLink.genomeAxis.avrgExonLength = +exonLength || 30;
             that.genomeDataLink.getAllProjects().then(function (projects) {
                 //console.log("allProjects", projects);
 
-                var selectedProjectID = selectedProject || Object.keys(projects)[0];
+                var selectedProjectID = selectedProjectID || Object.keys(projects)[0];
                 var selectedProjectItem = null;
 
 
@@ -269,13 +280,13 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
                 if (selectedProjectItem) {
                     $projectSelector.selectivity('data', selectedProjectItem);
                     $geneSelector.selectivity('setOptions', {readOnly: false});
+                    updateGeneSelector(selectedProjectItem, selectedGene);
                 }
 
                 $projectSelector.on('change', function (event) {
                     updateGeneSelector(event.value);
                 });
 
-                //updateGeneSelector(selectedProject, selectedGene);
 
             })
 
@@ -284,19 +295,13 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
 
 
         this.getSelectedProject = function () {
-            return $(that.projectSelector.node()).val();
+            return $projectSelector.selectivity('value');
         };
 
 
         this.getSelectedGene = function () {
-            return $(that.geneSelector.node()).val();
+            return $geneSelector.selectivity('value');
         };
-
-
-        this.addUpdateEvent = function (updateFunction) {
-            that.allVisUpdates.push(updateFunction);
-        };
-
 
         this.getStartPos = function () {
             return parseInt($(that.startPosDiv.node()).val())
