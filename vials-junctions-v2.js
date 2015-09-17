@@ -136,7 +136,7 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
         //visual variables:
         var weightScale = d3.scale.linear().range([abundancePlot.height - 10, 10]);
         var endOfPanels = 10; // whats the final width of all panels
-
+        var textLabelPadding = 0
 
         //--  create the outer DOM structure:
         var head = $parent.append("div").attr({
@@ -151,7 +151,9 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
             })
 
         //--  create textLabel and retrieve its width
-        var textLabelPadding = helper.drawSideLabel(svg, height, margin, 'center');
+        textLabelPadding = 40;
+        helper.drawSideLabel(svg, height, margin, 'center', 'junctions');
+
 
         //--  create a group offset by the label
         var svgMain = svg.append("g").attr({
@@ -186,7 +188,6 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
                 "class": connectorPlot[subGroup].prefix + "_group"
             });
         });
-
 
         function initView() {
 
@@ -354,7 +355,9 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
                 if (isoInfo.index > -1) {
                     isSelectedIsoForm = true;
                     //var exonIDs = allData.gene.isoforms[isoInfo.isoform].exons;
-                    var selectedExons = _.sortBy(allExons.filter(function(d){return d.isoformID == isoInfo.isoform;}), 'start');
+                    var selectedExons = _.sortBy(allExons.filter(function (d) {
+                        return d.isoformID == isoInfo.isoform;
+                    }), 'start');
 
 
                     // all JXNs to std:
@@ -1584,15 +1587,15 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
 
                     //console.log(isoform,'\n-- isoform --');
                     //console.log(exonNames, exonEnds, exonStarts,'\n-- exon --');
-                    
-                    if ((exonNames.length == exonEnds.length) && (exonNames.length == exonStarts.length)){
 
-                        exonNames.forEach(function(exon, index){
+                    if ((exonNames.length == exonEnds.length) && (exonNames.length == exonStarts.length)) {
+
+                        exonNames.forEach(function (exon, index) {
                             allExons.push({
                                 id: exon,
                                 end: +exonEnds[index],
                                 start: +exonStarts[index],
-                                isoformID:isoform.isoformID
+                                isoformID: isoform.isoformID
                             })
                         })
                     }
@@ -1647,13 +1650,13 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
                         if (weightScale.domain()[1] < jxnWeight) weightScale.domain([0, jxnWeight]);
 
                         var currentPos = allJxns[jxnKey];
-                        if (currentPos) currentPos.weights.push({weight: jxnWeight, sample:sample.sample});
+                        if (currentPos) currentPos.weights.push({weight: jxnWeight, sample: sample.sample});
                         else {
                             allJxns[jxnKey] =
                             {
                                 start: start_end[0],
                                 end: start_end[1],
-                                weights: [{weight: jxnWeight, sample:sample.sample}],
+                                weights: [{weight: jxnWeight, sample: sample.sample}],
                                 state: 'std', // or points, groups
                                 directNeighbor: false, // for now -- see later code
                                 startTriangle: null, // later
@@ -1673,26 +1676,27 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
                 triangleData.sort(function (a, b) {
                     return a.loc < b.loc ? -1 : a.loc == b.loc ? 0 : 1
                 });
-                triangleData = _.uniq(triangleData, function(item){return item.loc+item.type})
+                triangleData = _.uniq(triangleData, function (item) {
+                    return item.loc + item.type
+                })
 
-                console.log(triangleData,'\n-- triangleData --');
-                
+                console.log(triangleData, '\n-- triangleData --');
+
                 // SORT and REMOVE DUPLICATES
                 allJxnPos.sort();
                 allJxnPos = _.uniq(allJxnPos, true);
 
-                console.log(allJxnPos,'\n-- allJxnPos --');
+                console.log(allJxnPos, '\n-- allJxnPos --');
 
                 var allSamplesCount = Object.keys(allData.samples).length;
 
                 // add some global knowledge to each junction
-                _.keys(allJxns).map(function(jxnKey){
+                _.keys(allJxns).map(function (jxnKey) {
                     var jxn = allJxns[jxnKey]
 
-                    jxn.directNeighbor= jxn.end == allJxnPos[allJxnPos.indexOf(jxn.start) + 1]; //  is it the special case ?
-                    jxn.startTriangle= triangleData[allJxnPos.indexOf(jxn.start)];
-                    jxn.endTriangle= triangleData[allJxnPos.indexOf(jxn.end)];
-
+                    jxn.directNeighbor = jxn.end == allJxnPos[allJxnPos.indexOf(jxn.start) + 1]; //  is it the special case ?
+                    jxn.startTriangle = triangleData[allJxnPos.indexOf(jxn.start)];
+                    jxn.endTriangle = triangleData[allJxnPos.indexOf(jxn.end)];
 
 
                     // number of zero values:

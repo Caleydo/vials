@@ -17,7 +17,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
      * @param align - alignment of label (right, center,..)
      * @returns {*} - padding width for the current label
      */
-    VialsHelper.prototype.drawSideLabel = function(svg, height, margin, align) {
+    VialsHelper.prototype.drawSideLabel = function(svg, height, margin, align, labelText) {
       var svgLabel = svg.append("g")
         .attr("transform", "translate(0," + (height + margin.top) + ")rotate(-90)");
 
@@ -28,7 +28,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
         "rx": 10,
         "ry": 10
       });
-      var svgLabelText = svgLabel.append("text").text("junctions").attr({
+      var svgLabelText = svgLabel.append("text").text(labelText).attr({
         "class": "viewLabelText"
       });
       var bb = svgLabelText.node().getBBox();
@@ -39,6 +39,10 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
       if (align==='center'){
         svgLabelText.attr("transform", "translate(" +
           (height + margin.top - bb.width) / 2
+          + "," + (bb.height - 3) + ")")
+      } else if (align==='right'){
+        svgLabelText.attr("transform", "translate(" +
+          (height - bb.width)
           + "," + (bb.height - 3) + ")")
       }
 

@@ -32,7 +32,7 @@ define(['exports','d3'],function(exports,d3){
     this.scale_arrayPosToGenePos = d3.scale.linear().domain([0,10000]).range([0,100])
 
     this.arrayPosToScreenPos = function(x){
-      return that.scale_arrayPosToScreenPos(x);
+      return that.genePosToScreenPos(that.scale_arrayPosToGenePos(x));
     }
 
     this.arrayPosToGenePos = function(x){

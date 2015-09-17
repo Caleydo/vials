@@ -1226,8 +1226,11 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
           .key(function(measure){return measure.id})
           .map(sampleData.measures.isoforms);
 
+        
+        console.log(sampleData.measures.isoforms,usedIsoforms,'\n-- sampleData.measures.isoforms,usedIsoforms --'); 
+        
         var allIsoforms = sampleData.gene.isoforms;
-        var allExons = sampleData.gene.exons;
+        //var allExons = sampleData.gene.exons;
 
 
         var usedIsoformsList =  []

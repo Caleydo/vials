@@ -43,7 +43,7 @@ define(['../caleydo_core/main','../caleydo_core/data', '../caleydo_core/vis', '.
     })
 
     var vis2Loaded = new Promise(function(resolve,reject){
-    if (!options.mode || options.mode.indexOf('count')>-1) {
+    if (!options.mode || options.mode.indexOf('reads')>-1) {
         var readVis = visses.filter(function (vis) {
           return vis.id === 'vials-reads'
         })[0];

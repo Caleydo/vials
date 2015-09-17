@@ -166,18 +166,23 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
             $('#startScreenText')
                 .html(' Loading.. ') //<span class="glyphicon glyphicon-refresh glyphicon-spin" ></span>
             $('#startScreen').find('img').addClass('fa-spin-custom')
-            $('#vials_vis').fadeOut()
-            $('#startScreen').fadeIn()
+
+            $('#vials_vis').fadeOut(function(){
+                $('#startScreen').fadeIn()
+            })
+
 
             that.genomeDataLink.getGeneData(projectIDitem['id'] , geneID).then(function (geneData) {
-                $('#startScreen').fadeOut()
+                $('#startScreen').fadeOut(function(){
+                    $('#vials_vis').fadeTo('fast',1)
+                })
                 //$('#startScreen').find('img').removeClass('fa-spin-custom')
 
-                $('#vials_vis').fadeIn()
+
 
 
                 $(that.chromIDDiv.node()).val(geneData.gene.chromID);
-                $(that.startPosDiv.node()).val(geneData.gene.start);
+                $(that.startPosDiv.node()).val(geneData.gene.start+"-"+geneData.gene.end);
                 $(that.strandDiv.node()).val(geneData.gene.strand);
 
                 that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start, geneData.gene.end);
@@ -207,7 +212,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
                     }
                 },
                 results: function (data, offset) {
-                    console.log(data);
+                    //console.log(data);
                     return {
                         results: data,
                         more: false

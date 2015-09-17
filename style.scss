@@ -217,38 +217,63 @@ path.selectionParco{
   background-color: $wes-green !important;
 }
 
-.abundances{
+.sampleGroup{
 
-  .abundanceGraph{
+  .sampleGraph{
     fill-opacity: .8;
     pointer-events: none;
     stroke:$wes-gray;
     stroke-width: 1px;
     fill:$wes-gray;
   }
-  .abundanceGraph.highlighted{
+  .sampleGroupBG, .sampleGroupLabelBG{
+    fill: white;
+  }
+
+}
+
+.sampleGroup.highlighted{
+  .sampleGraph{
     //fill-opacity: .8;
     //pointer-events: none;
     stroke:$wes-red;
     fill:$wes-red;
   }
 
-  .background{
-
-    fill:white;
-
+  .sampleGroupLabelBG{
+    fill: $wes-red;
+    fill-opacity: .1;
+    stroke: $wes-red;
   }
-  .selected{
-    stroke:$wes-yellow;
-  }
-  .fixed{
-    fill:$wes-yellow;
-    fill-opacity: .5;
-  }
-
-
+  //.background{
+  //
+  //  fill:white;
+  //
+  //}
+  //.selected{
+  //  stroke:$wes-yellow;
+  //}
+  //.fixed{
+  //  fill:$wes-yellow;
+  //  fill-opacity: .5;
+  //}
 
 }
+
+.sampleGroup.selected{
+  .sampleGroupBG{
+    stroke:$wes-red;
+    fill: $wes-red;
+    fill-opacity: .1;
+  }
+  //.sampleGraph{
+  //  //fill-opacity: .8;
+  //  //pointer-events: none;
+  //  stroke:$wes-red;
+  //  fill:$wes-red;
+  //}
+}
+
 
 
 .rangeRect{
@@ -519,7 +544,7 @@ path.stdDev{
 }
 .viewLabelText{
   fill:$wes-violet;
-  font-size: 18px;
+  font-size: 14px;
 }
 
 // ===> here for html <===
