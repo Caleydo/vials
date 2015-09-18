@@ -167,30 +167,32 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
                 .html(' Loading.. ') //<span class="glyphicon glyphicon-refresh glyphicon-spin" ></span>
             $('#startScreen').find('img').addClass('fa-spin-custom')
 
-            $('#vials_vis').fadeOut(function(){
-                $('#startScreen').fadeIn()
+            $('#vials_vis').fadeOut(function () {
+                $('#startScreen').fadeIn(
+                    loadData
+                )
             })
 
+            function loadData() {
+                that.genomeDataLink.getGeneData(projectIDitem['id'], geneID).then(function (geneData) {
+                    $('#startScreen').fadeOut(function () {
+                        $('#vials_vis').fadeTo('fast', 1)
+                    })
+                    //$('#startScreen').find('img').removeClass('fa-spin-custom')
 
-            that.genomeDataLink.getGeneData(projectIDitem['id'] , geneID).then(function (geneData) {
-                $('#startScreen').fadeOut(function(){
-                    $('#vials_vis').fadeTo('fast',1)
+
+                    $(that.chromIDDiv.node()).val(geneData.gene.chromID);
+                    $(that.startPosDiv.node()).val(geneData.gene.start + "-" + geneData.gene.end);
+                    $(that.strandDiv.node()).val(geneData.gene.strand);
+
+                    that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start, geneData.gene.end);
+                    that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"]);
+                    that.genomeDataLink.genomeAxis.shrinkIntrons(true);
+
+                    event.fire("newDataLoaded");
                 })
-                //$('#startScreen').find('img').removeClass('fa-spin-custom')
+            }
 
-
-
-
-                $(that.chromIDDiv.node()).val(geneData.gene.chromID);
-                $(that.startPosDiv.node()).val(geneData.gene.start+"-"+geneData.gene.end);
-                $(that.strandDiv.node()).val(geneData.gene.strand);
-
-                that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start, geneData.gene.end);
-                that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"]);
-                that.genomeDataLink.genomeAxis.shrinkIntrons(true);
-
-                event.fire("newDataLoaded");
-            })
 
         };
 
@@ -230,7 +232,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
             var ajax = that.getAjaxConfiguration(projectIDitem['id'])
             $geneSelector.selectivity('setOptions', {ajax: ajax})
 
-            
+
             if (selectedGene) {
                 that.genomeDataLink.getAllGeneNames(projectIDitem['id'], selectedGene).then(function (selGeneInfoArray) {
                     if (selGeneInfoArray.length == 1) { // if there is one result coming back from the exact matching

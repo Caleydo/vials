@@ -230,6 +230,12 @@ path.selectionParco{
     fill: white;
   }
 
+  .sampleGroupLabelText{
+    pointer-events: none;
+    font-size: 14px;
+
+  }
+
 }
 
 .sampleGroup.highlighted{
@@ -245,18 +251,6 @@ path.selectionParco{
     fill-opacity: .1;
     stroke: $wes-red;
   }
-  //.background{
-  //
-  //  fill:white;
-  //
-  //}
-  //.selected{
-  //  stroke:$wes-yellow;
-  //}
-  //.fixed{
-  //  fill:$wes-yellow;
-  //  fill-opacity: .5;
-  //}
 
 }
 
@@ -266,12 +260,6 @@ path.selectionParco{
     fill: $wes-red;
     fill-opacity: .1;
   }
-  //.sampleGraph{
-  //  //fill-opacity: .8;
-  //  //pointer-events: none;
-  //  stroke:$wes-red;
-  //  fill:$wes-red;
-  //}
 }
 
 
@@ -281,19 +269,25 @@ path.selectionParco{
   fill-opacity: .3;
 }
 
-.isoMenu{
+.isoMenu, .guiButtonBG{
   fill:$wes-gray;
   fill-opacity: .3;
   stroke: $wes-gray;
   //stroke-width: 1;
 
 }
-.isoMenu.selected{
+.isoMenu.selected, .guiButtonBG:hover{
   fill:$wes-gray;
   fill-opacity: 1;
   stroke: $wes-violet;
   stroke-width: 1;
 
+}
+
+.guiButtonLabel{
+  font-size: 14px;
+  fill:$wes-violet;
+  pointer-events: none;
 }
 
 .menuDivideLine{

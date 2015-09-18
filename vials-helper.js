@@ -4,108 +4,104 @@
 
 define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (exports, d3, gui, event) {
 
-  var VialsHelper = function(){
-    function VialsHelper(){
+    var VialsHelper = function () {
+        function VialsHelper() {
 
-    }
+        }
 
-    /**
-     * creates the label for each view
-     * @param svg - the outer SVG
-     * @param height - the height for the visualization
-     * @param margin - margin informations
-     * @param align - alignment of label (right, center,..)
-     * @returns {*} - padding width for the current label
-     */
-    VialsHelper.prototype.drawSideLabel = function(svg, height, margin, align, labelText) {
-      var svgLabel = svg.append("g")
-        .attr("transform", "translate(0," + (height + margin.top) + ")rotate(-90)");
+        /**
+         * creates the label for each view
+         * @param svg - the outer SVG
+         * @param height - the height for the visualization
+         * @param margin - margin informations
+         * @param align - alignment of label (right, center,..)
+         * @returns {*} - padding width for the current label
+         */
+        VialsHelper.prototype.drawSideLabel = function (svg, height, margin, align, labelText) {
+            var svgLabel = svg.append("g")
+                .attr("transform", "translate(0," + (height + margin.top) + ")rotate(-90)");
 
-      // create label bg and text:
-      var svgLabelBg = svgLabel.append("rect").attr({
-        "class": "viewLabelBg",
-        "width": height + margin.top,
-        "rx": 10,
-        "ry": 10
-      });
-      var svgLabelText = svgLabel.append("text").text(labelText).attr({
-        "class": "viewLabelText"
-      });
-      var bb = svgLabelText.node().getBBox();
+            // create label bg and text:
+            var svgLabelBg = svgLabel.append("rect").attr({
+                "class": "viewLabelBg",
+                "width": height + margin.top,
+                "rx": 10,
+                "ry": 10
+            });
+            var svgLabelText = svgLabel.append("text").text(labelText).attr({
+                "class": "viewLabelText"
+            });
+            var bb = svgLabelText.node().getBBox();
 
-      // adjust sizes after measuring text size:
-      svgLabelBg.attr({"height": bb.height + 4})
+            // adjust sizes after measuring text size:
+            svgLabelBg.attr({"height": bb.height + 4})
 
-      if (align==='center'){
-        svgLabelText.attr("transform", "translate(" +
-          (height + margin.top - bb.width) / 2
-          + "," + (bb.height - 3) + ")")
-      } else if (align==='right'){
-        svgLabelText.attr("transform", "translate(" +
-          (height - bb.width)
-          + "," + (bb.height - 3) + ")")
-      }
+            if (align === 'center') {
+                svgLabelText.attr("transform", "translate(" +
+                    (height + margin.top - bb.width) / 2
+                    + "," + (bb.height - 3) + ")")
+            } else if (align === 'right') {
+                svgLabelText.attr("transform", "translate(" +
+                    (height - bb.width)
+                    + "," + (bb.height - 3) + ")")
+            }
 
-
-      return bb.height+2*4;
-    }
-
-
-    VialsHelper.prototype.getPseudoRandom = function(){
-      var seed = 0x2F6E2B1;
-      return function() {
-        // Robert Jenkins’ 32 bit integer hash function
-        seed = ((seed + 0x7ED55D16) + (seed << 12))  & 0xFFFFFFFF;
-        seed = ((seed ^ 0xC761C23C) ^ (seed >>> 19)) & 0xFFFFFFFF;
-        seed = ((seed + 0x165667B1) + (seed << 5))   & 0xFFFFFFFF;
-        seed = ((seed + 0xD3A2646C) ^ (seed << 9))   & 0xFFFFFFFF;
-        seed = ((seed + 0xFD7046C5) + (seed << 3))   & 0xFFFFFFFF;
-        seed = ((seed ^ 0xB55A4F09) ^ (seed >>> 16)) & 0xFFFFFFFF;
-        return (seed & 0xFFFFFFF) / 0x10000000;
-      };
-    }
+            return bb.height + 2 * 4;
+        }
 
 
-    /**
-     * computes all boxplot parameters for a giveb  array of values
-     * @param values
-     * @returns {{whiskerTop: *, whiskerDown: *, Q: Array}}
-     */
-    VialsHelper.prototype.computeBoxPlot = function(values) { // by bilal
-      var sortedValues = values.sort(d3.ascending);
-      var Q = new Array(5);
-      Q[0] = d3.min(sortedValues);
-      Q[4] = d3.max(sortedValues);
-      Q[1] = d3.quantile(sortedValues, 0.25);
-      Q[2] = d3.quantile(sortedValues, 0.5);
-      Q[3] = d3.quantile(sortedValues, 0.75);
-      var iqr = 1.5 * (Q[3] - Q[1]);
-      var whiskerTop, whiskerDown;
-      {
-        var i = -1;
-        var j = sortedValues.length;
-        while ((sortedValues[++i] < Q[1] - iqr));
-        while (sortedValues[--j] > Q[3] + iqr);
-        whiskerTop = j == sortedValues.length - 1 ? sortedValues[j] : Q[3] + iqr;
-        whiskerDown = i == 0 ? sortedValues[i] : Q[1] - iqr;
-      }
-      return {"whiskerTop": whiskerTop, "whiskerDown": whiskerDown, "Q": Q};
-    }
+        VialsHelper.prototype.getPseudoRandom = function () {
+            var seed = 0x2F6E2B1;
+            return function () {
+                // Robert Jenkins’ 32 bit integer hash function
+                seed = ((seed + 0x7ED55D16) + (seed << 12)) & 0xFFFFFFFF;
+                seed = ((seed ^ 0xC761C23C) ^ (seed >>> 19)) & 0xFFFFFFFF;
+                seed = ((seed + 0x165667B1) + (seed << 5)) & 0xFFFFFFFF;
+                seed = ((seed + 0xD3A2646C) ^ (seed << 9)) & 0xFFFFFFFF;
+                seed = ((seed + 0xFD7046C5) + (seed << 3)) & 0xFFFFFFFF;
+                seed = ((seed ^ 0xB55A4F09) ^ (seed >>> 16)) & 0xFFFFFFFF;
+                return (seed & 0xFFFFFFF) / 0x10000000;
+            };
+        }
 
 
+        /**
+         * computes all boxplot parameters for a giveb  array of values
+         * @param values
+         * @returns {{whiskerTop: *, whiskerDown: *, Q: Array}}
+         */
+        VialsHelper.prototype.computeBoxPlot = function (values) { // by bilal
+            var sortedValues = values.sort(d3.ascending);
+            var Q = new Array(5);
+            Q[0] = d3.min(sortedValues);
+            Q[4] = d3.max(sortedValues);
+            Q[1] = d3.quantile(sortedValues, 0.25);
+            Q[2] = d3.quantile(sortedValues, 0.5);
+            Q[3] = d3.quantile(sortedValues, 0.75);
+            var iqr = 1.5 * (Q[3] - Q[1]);
+            var whiskerTop, whiskerDown;
+            {
+                var i = -1;
+                var j = sortedValues.length;
+                while ((sortedValues[++i] < Q[1] - iqr));
+                while (sortedValues[--j] > Q[3] + iqr);
+                whiskerTop = j == sortedValues.length - 1 ? sortedValues[j] : Q[3] + iqr;
+                whiskerDown = i == 0 ? sortedValues[i] : Q[1] - iqr;
+            }
+            return {"whiskerTop": whiskerTop, "whiskerDown": whiskerDown, "Q": Q};
+        }
 
 
-    return VialsHelper;
-  }();
+        return VialsHelper;
+    }();
 
 
-
-  var global = new VialsHelper();
-  exports.VialsHelper = VialsHelper;
-  exports.drawSideLabel = global.drawSideLabel.bind(global)
-  exports.getPseudoRandom = global.getPseudoRandom.bind(global)
-  exports.computeBoxPlot = global.computeBoxPlot.bind(global)
-
+    var global = new VialsHelper();
+    exports.VialsHelper = VialsHelper;
+    exports.drawSideLabel = global.drawSideLabel.bind(global)
+    exports.getPseudoRandom = global.getPseudoRandom.bind(global)
+    exports.computeBoxPlot = global.computeBoxPlot.bind(global)
+    exports.drawButton = global.drawButton
 
 })
 

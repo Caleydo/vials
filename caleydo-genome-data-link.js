@@ -1,188 +1,162 @@
 'use strict';
 
 //noinspection Annotator
-define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js-lru','./caleydo-broken-axis','jquery'], function(exports, C, datatypes, d3, LRUCache, brokenAxis) {
+define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js-lru', './caleydo-broken-axis', 'jquery','lodash'], function (exports, C, datatypes, d3, LRUCache, brokenAxis, $ , _) {
 
     exports.GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link', {
-      init: function (desc) {
-        this.serveradress = desc.serveradress;
-        this.sampleCache = new LRUCache(5); // create a cache of size 5
-        this.geneCache = new LRUCache(5); // create a cache of size 5
-        this.allGenes=null;
-        this.bamHeader=null;
-        this.allProjects = null;
-        this.options={"showIntrons": true};
-        this.genomeAxis=brokenAxis.create(600, this.options);
-        this.localFileName = null;
-        this.localFileData = null;
+        init: function (desc) {
+            this.serveradress = desc.serveradress;
+            this.sampleCache = new LRUCache(5); // create a cache of size 5
+            this.geneCache = new LRUCache(5); // create a cache of size 5
+            this.allGenes = null;
+            this.bamHeader = null;
+            this.allProjects = null;
+            this.options = {"showIntrons": true};
+            this.genomeAxis = brokenAxis.create(600, this.options);
+            this.localFileName = null;
+            this.localFileData = null;
+            this.groupings = {}
 
-      },
+        },
 
-      useFile:function(fileName){
-        this.localFileName = fileName;
-        this.localFileData = $.getJSON(fileName);
-      },
-
-      getSamples:function (gene, startPos, baseWidth){
-        var res = this.sampleCache.get(gene+"-"+startPos+"-"+ baseWidth);
-
-        /* cache fail */
-        if (!res){
-          //console.log("cahce miss");
-          var parameters = ["geneName="+encodeURIComponent(gene)];
-          // if (startPos) parameters.push("pos="+encodeURIComponent(startPos));
-          // if (baseWidth) parameters.push("baseWidth="+encodeURIComponent(baseWidth))
-
-          res = $.getJSON(this.serveradress+ "/pileup?"+parameters.join("&"));
-
-          this.sampleCache.put(gene+"-"+startPos+"-"+ baseWidth, res);
-        }
-        //else{
-        //  console.log("cahce hit");
-        //}
-
-        /* return a (fullfilled) promise */
-        return res;
-      },
+        useFile: function (fileName) {
+            this.localFileName = fileName;
+            this.localFileData = $.getJSON(fileName);
+        },
 
 
-      getTestSamples:function(jsonFile) {
-        return $.getJSON(jsonFile);
-      },
+        getGeneData: function (projectID, geneName) {
+            console.log("getGeneData", projectID, geneName);
+            var cacheID = projectID + "==>" + geneName;
 
-      getGeneData:function(projectID, geneName){
-        console.log("getGeneData",projectID, geneName);
-        var cacheID = projectID+"==>"+geneName;
+            var res = this.geneCache.get(cacheID);
 
-        var res = this.geneCache.get(cacheID);
+            if (!res) {
 
-        if (!res){
+                if (this.localFileName) {
+                    // -- localFile handling
+                    var that = this;
 
-          if (this.localFileName){
-            // -- localFile handling
-            var that = this;
+                    res = C.promised(function (resolve, reject) {
+                        that.localFileData.then(function (localData) {
 
-            res = C.promised(function (resolve, reject) {
-              that.localFileData.then(function (localData) {
+                            var res = {
+                                "gene": localData.gene,
+                                "measures": localData.measures,
+                                "samples": localData.samples
+                            }
 
-                var res = {
-                  "gene":localData.gene,
-                  "measures":localData.measures,
-                  "samples":localData.samples
+                            resolve(res)
+
+                        })
+                    })
+
+                } else {
+                    // regular server handling
+                    var parameters = [];
+                    parameters.push("geneID=" + encodeURIComponent(geneName));
+                    parameters.push("projectID=" + encodeURIComponent(projectID));
+                    // if (startPos) parameters.push("pos="+encodeURIComponent(startPos));
+                    // if (baseWidth) parameters.push("baseWidth="+encodeURIComponent(baseWidth))
+
+                    res = $.getJSON(this.serveradress + "/geneinfo?" + parameters.join("&"));
                 }
 
-                resolve(res)
+                this.geneCache.put(cacheID, res);
 
-              })
+            }
+
+            return res;
+        },
+
+
+        /**
+        * current format:
+        * {
+        *  "hen01": {
+        *    "dir": ".//_data/vials_projects/hen01.vials_project",
+        *    "info": {
+        *      "bam_root_dir": "/vagrant_external/bodyMap_broad_igv/indexed",
+        *      "gene_name_mapped": "event_names_enriched",
+        *      "id_type_guessed": "ensembl",
+        *      "project_type": "miso",
+        *      "ref_genome": "hg19"
+        *    },
+        *    "name": "hen01",
+        *    "project_id": "hen01"
+        *  }
+        *}
+        * @returns {null|*}
+        */
+        getAllProjects: function () {
+
+            if (this.localFileName) {
+                // -- localFile handling
+
+                var projects = {};
+                projects[this.localFileName] = {"data": [{"data_type": "file"}]}
+
+                if (this.allProjects === null)
+                    this.allProjects = C.promised(function (resolve, reject) {
+                        resolve(projects)
+                    })
+            } else {
+                // -- server handling
+                if (this.allProjects === null)
+                    this.allProjects = $.getJSON(this.serveradress + "/projects");
+            }
+
+            return this.allProjects;
+        },
+
+        getAllGeneNames: function (projectID, geneDescriptor) {
+            return $.getJSON(this.serveradress + "/geneselect?projectID=" + projectID + "&selectFilter=" + geneDescriptor + "&exactMatch=True")
+        },
+
+        /*
+        *
+        * Status Variables
+        *
+        * */
+
+
+        setGrouping: function(idList){
+
+            var groupName = _.uniqueId('group_')
+            this.groupings[groupName] = idList;
+            return groupName;
+        },
+        clearGrouping: function(groupName){
+            if (groupName in this.groupings){
+                delete this.groupings[groupName]
+                return true;
+            }
+            return false;
+        },
+        clearAllGroupings: function () {
+            this.groupings = {}
+        },
+        getGroupings: function(){
+            return _.map(this.groupings,function(v,k){
+                return {
+                    name:k,
+                    samples:v
+                }
             })
-
-          }else{
-            // regular server handling
-            var parameters = [];
-            parameters.push("geneID="+encodeURIComponent(geneName));
-            parameters.push("projectID="+encodeURIComponent(projectID));
-            // if (startPos) parameters.push("pos="+encodeURIComponent(startPos));
-            // if (baseWidth) parameters.push("baseWidth="+encodeURIComponent(baseWidth))
-
-            res = $.getJSON(this.serveradress+ "/geneinfo?"+parameters.join("&"));
-          }
-
-          this.geneCache.put(cacheID, res);
-
-        }
-
-        return res;
-      },
-
-
-      /**
-       * current format:
-       * {
-       *  "hen01": {
-       *    "dir": ".//_data/vials_projects/hen01.vials_project",
-       *    "info": {
-       *      "bam_root_dir": "/vagrant_external/bodyMap_broad_igv/indexed",
-       *      "gene_name_mapped": "event_names_enriched",
-       *      "id_type_guessed": "ensembl",
-       *      "project_type": "miso",
-       *      "ref_genome": "hg19"
-       *    },
-       *    "name": "hen01",
-       *    "project_id": "hen01"
-       *  }
-       *}
-       * @returns {null|*}
-       */
-      getAllProjects:function(){
-
-        if (this.localFileName){
-          // -- localFile handling
-
-          var projects={};
-          projects[this.localFileName] = {"data":[{"data_type":"file"}]}
-
-          if (this.allProjects === null)
-            this.allProjects = C.promised(function(resolve, reject){
-              resolve(projects)
-            })
-        }else{
-          // -- server handling
-          if (this.allProjects === null)
-            this.allProjects = $.getJSON(this.serveradress + "/projects");
-        }
-
-        return this.allProjects;
-      },
-
-      getAllGeneNames:function(projectID, geneDescriptor){
-        return $.getJSON(this.serveradress+"/geneselect?projectID="+projectID+"&selectFilter="+geneDescriptor+"&exactMatch=True")
-      },
-
-
-      getAllGenes:function(projectID){
-        if (this.localFileName){
-          // -- localFile handling
-          var that = this;
-          return C.promised(function (resolve, reject) {
-            that.localFileData.then(function (localdata) {
-              var genes = [localdata.gene.name]
-              resolve(genes)
-            })
-          })
-
-        }else{
-          //server call
-
-          projectID = projectID || "";
-          //var currentProject = this.allProjects[projectID];
-
-          if (this.currentProjectID === null || this.currentProjectID != projectID){
-            this.allGenes = $.getJSON(this.serveradress + "/genes?projectID="+projectID);
-            this.currentProjectID = projectID;
-          }
-          return this.allGenes;
-
         }
 
 
-      },
-
-      getBamHeader:function(){
-        if (this.bamHeader == null)
-          this.bamHeader = $.getJSON(this.serveradress+"/header");
-        return this.bamHeader;
-      }
     });
 
-    exports.create = function(desc) {
-      return new exports.GenomeDataLink(desc);
+    exports.create = function (desc) {
+        return new exports.GenomeDataLink(desc);
     };
 });
 
 /*
  !! this file makes use of the js-lru implementation from https://github.com/rsms/js-lru
 
-License:
+ License:
  Copyright (c) 2010 Rasmus Andersson http://hunch.se/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:

@@ -4,7 +4,7 @@
  */
 
 
-define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', 'vials-helper'], function (exports, d3, _, gui, event, helper) {
+define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vials-helper'], function (exports, d3, _, gui, event, helper) {
     /**
      * a simple template class of a visualization. Up to now there is no additional logic required.
      * @param data
@@ -306,6 +306,7 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
                     return d.w.sample == sample;
                 })
                 hDots.classed("highlighted", highlight);
+                hDots.attr({r: highlight ? 4 : 2})
             });
 
             event.on("groupHighlight", function (e, groupID, highlight) {
@@ -403,16 +404,14 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
             })
 
 
-            event.on("groupingChanged", function (e, a, b, c) {
-                console.log(a, '\n', '-- new --');
-                console.log(b, '\n', '-- old --');
+            event.on("groupingChanged", function (e, groupName, samples) {
 
-                if (a.length == 1) {
-                    groupings.push(a[0]);
-                    //a[0].samples
-
-                    var samples = a[0].samples;
-
+                if (samples && samples.length > 0) {
+                    // add grouping
+                    groupings.push({
+                        name: groupName,
+                        samples: samples
+                    })
 
                     var allBoxPlots = {};
                     _.keys(allJxns).forEach(function (jkey) {
@@ -427,15 +426,11 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
 
                     groupingsMeta.push(allBoxPlots);
 
-                    //console.log(allData,'\n-- allData --');
-                    //console.log(allJxns,'\n-- allJxns --');
-
-
                     computeAbundanceLayout();
                     updateAbundanceView();
-
-                } else if (b.length == 1) {
-                    var index = groupings.indexOf(b[0]);
+                } else {
+                    //remove grouping
+                    var index = _.findIndex(groupings,'name',groupName)
                     if (index > -1) {
                         groupings.splice(index, 1);
                         groupingsMeta.splice(index, 1);
@@ -445,6 +440,8 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
                     updateAbundanceView();
 
                 }
+
+
 
                 console.log(groupingsMeta, '\n-- groupingsMeta --');
 

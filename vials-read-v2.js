@@ -4,7 +4,7 @@
  */
 
 
-define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', 'vials-helper'], function (exports, d3, _, gui, event, helper) {
+define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vials-helper'], function (exports, d3, _, gui, event, helper) {
     /**
      * a simple template class of a visualization. Up to now there is no additional logic required.
      * @param data
@@ -32,18 +32,51 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
     var fullHeight = 370;
     var height = fullHeight - margin.top - margin.bottom;
 
+
+
+
+    var guiPanel = {
+        buttonHeight: 20,
+        buttonPadding: 5,
+        y: 5,
+        buttons: [
+            {
+                w: 150,
+                label: 'group selected',
+                event: 'buttonGroupSelected'
+            },
+            {
+                w: 150,
+                label: 'ungroup selected',
+                event: 'buttonUnGroupSelected'
+
+            },
+            {
+                w: 150,
+                label: 'unselect all',
+                event: 'buttonUnselectAll'
+
+            },
+            {
+                w: 150,
+                label: 'group by attribute',
+                event: 'buttonGroupByAttribute'
+            }
+        ]
+
+
+    }
+
     var readsPlot = {
         height: 200,
-        prefix: "reads_plot",
-        y: 0,
-        labelWidth:300,
+        prefix: "readsPlot",
+        y: guiPanel.buttonHeight + guiPanel.y + 5,
+        labelWidth: 300,
         panels: {
-            prefix: "reads_plot_panel",
             std: {
-                height: 35,
-                xDiff: 40
-            },
-
+                height: 20,
+                xDiff: 25
+            }
         }
     }
 
@@ -67,8 +100,14 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
 
         // data var:
         var allData = {}; // api data
-        var dataExtent = [0, 1] // data extent
+        var dataExtent = [0, 1]; // data extent
+        var allWiggles = [];
+        var groupWiggleCache = {};
+
+
         var textLabelPadding = 0
+
+
 
         //--  create the outer DOM structure:
         var head = $parent.append("div").attr({
@@ -93,9 +132,14 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
             "transform": "translate(" + textLabelPadding + ",0)"
         });
 
+        guiPanel.g = svg.append("g").attr({
+            'class': 'guiPanel',
+            "transform": "translate(" + textLabelPadding + "," + guiPanel.y + ")"
+        })
+
         readsPlot.g = svgMain.append("g").attr({
             "transform": "translate(" + 0 + "," + readsPlot.y + ")",
-            "class": readsPlot.prefix + "_group"
+            "class": readsPlot.prefix + "Group"
         });
 
         var crosshairGroup = svgMain.append("g").attr({
@@ -125,6 +169,17 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
             svg.on("mousemove", function () {
                 currentX = d3.mouse(this)[0] - 40;
                 event.fire("crosshair", currentX);
+
+            })
+
+            var offsetX = 0;
+            guiPanel.buttons.forEach(function (d) {
+                d.x = offsetX;
+                offsetX += d.w + guiPanel.buttonPadding;
+                d.h = guiPanel.buttonHeight;
+                d.y = 0;
+
+                drawButton(guiPanel.g, d)
 
             })
 
@@ -159,29 +214,36 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
             })
 
             event.on("sampleHighlight", function (e, sample, highlight) {
-                //TODO
+                svgMain.selectAll(".sampleGroup")
+                    .filter(function (d) {
+                        return d.sample == sample;
+                    })
+                    .classed("highlighted", highlight)
             });
+
+            event.on('sampleSelect', function (e, sample, isSelected) {
+                var allSelected = svgMain.selectAll(".sampleGroup")
+                    .filter(function (d) {
+                        return d.sample == sample;
+                    })
+                allSelected.classed("selected", isSelected)
+
+                if (isSelected) {
+                    allSelected.select(".sampleGroupLabelBG").style({
+                        fill: gui.current.getColorForSelection(sample),
+                        'fill-opacity': .5
+                    })
+                } else {
+                    allSelected.select(".sampleGroupLabelBG").style({
+                        fill: null,
+                        'fill-opacity': null
+                    })
+                }
+
+            })
 
             event.on("groupHighlight", function (e, groupID, highlight) {
                 //TODO
-            })
-
-            event.on('sampleSelect', function (e, sample, isSelected) {
-                //TODO
-                //var alldots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
-                //if (isSelected) {
-                //    alldots.filter(function (d) {
-                //        return d.w.sample == sample;
-                //    }).style({
-                //        fill: gui.current.getColorForSelection(sample)
-                //    })
-                //} else {
-                //    alldots.filter(function (d) {
-                //        return d.w.sample == sample;
-                //    }).style({
-                //        fill: null
-                //    })
-                //}
             })
 
             event.on("groupSelect", function (e, groupID, isSelected) {
@@ -288,10 +350,8 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
 
 
         function updateWiggles() {
-            allWiggles = allData.measures.wiggles
             axis.setArrayWidth(allData.measures['wiggle_sample_size'] - 1)
 
-            console.log(dataExtent, '\n-- dataExtent --');
             var areaScale = d3.scale.linear().domain([0, dataExtent[1]]).range([readsPlot.panels.std.height, 0])
 
             var area = d3.svg.area()
@@ -305,7 +365,7 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
                 })
 
 
-            var sampleGroup = readsPlot.g.selectAll(".sampleGroup").data(allWiggles);
+            var sampleGroup = readsPlot.g.selectAll(".sampleGroup").data(allWiggles, function(d){return d.sample});
             sampleGroup.exit().remove();
 
             // --- adding Element to class sampleGroup
@@ -323,49 +383,48 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
             }).on({
                 "mouseenter": function (d) {
                     event.fire("sampleHighlight", d.sample, true)
-
-                    d3.select(this.parentNode).classed("highlighted", true)
                 },
                 "mouseout": function (d) {
                     event.fire("sampleHighlight", d.sample, false);
-                    d3.select(this.parentNode).classed("highlighted", false)
                 },
-                "click":function(d){
+                "click": function (d) {
                     var isSelected = d3.select(this.parentNode).classed("selected");
-                    d3.select(this.parentNode).classed("selected", !isSelected);
-                    event.fire('sampleSelect', d.sample,!isSelected);
+                    event.fire('sampleSelect', d.sample, !isSelected);
 
                 }
             })
 
             sampleGroupEnter.append("rect").attr({
                 "class": "sampleGroupLabelBG",
-                x: axis.getWidth()+5,
+                x: axis.getWidth() + 5,
                 y: 0,
                 height: readsPlot.panels.std.height,
                 width: readsPlot.labelWidth
             }).on({
                 "mouseenter": function (d) {
                     event.fire("sampleHighlight", d.sample, true)
-
-                    d3.select(this.parentNode).classed("highlighted", true)
                 },
                 "mouseout": function (d) {
                     event.fire("sampleHighlight", d.sample, false);
-                    d3.select(this.parentNode).classed("highlighted", false)
                 },
-                "click":function(d){
+                "click": function (d) {
                     var isSelected = d3.select(this.parentNode).classed("selected");
-                    d3.select(this.parentNode).classed("selected", !isSelected);
-                    
-                    event.fire('sampleSelect', d.sample,!isSelected);
+                    event.fire('sampleSelect', d.sample, !isSelected);
 
                 }
             })
 
+            sampleGroupEnter.append("text").attr({
+                "class": "sampleGroupLabelText",
+                x: axis.getWidth() + 5,
+                y: readsPlot.panels.std.height - (readsPlot.panels.std.height - 14) / 2
+            }).text(function (d) {
+                return d.sample;
+            })
+
 
             // --- changing nodes for sampleGroup
-            sampleGroup.attr({
+            sampleGroup.transition().attr({
                 "transform": function (d, i) {
                     return "translate(" + 0 + "," + i * readsPlot.panels.std.xDiff + ")";
                 }
@@ -373,6 +432,10 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
 
             sampleGroup.select(".sampleGroupBG").attr({
                 width: axis.getWidth()
+            })
+
+            sampleGroup.select(".sampleGroupLabelBG").attr({
+                x: axis.getWidth()
             })
 
 
@@ -416,6 +479,109 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
             return type == ((positiveStrand == axis.ascending ) ? "donor" : "receptor");
         }
 
+        var drawButton = function (d3sel, options) {
+            //x, y, w, h, label, event
+            var buttonG = d3sel.append("g").attr('class', 'guiButton')
+            buttonG.attr({
+                "transform": "translate(" + options.x + "," + options.y + ")"
+            });
+
+
+            buttonG.append('rect').attr({
+                class: 'guiButtonBG',
+                width: options.w,
+                height: options.h,
+                rx: 3,
+                ry: 3
+            }).on({
+                'click': function () {
+                    event.fire(options.event)
+                }
+            });
+
+            var buttonLabel = buttonG.append('text').text(options.label)
+            var bb = buttonLabel.node().getBBox();
+
+
+            buttonLabel.attr({
+                class: 'guiButtonLabel',
+                x: (options.w - bb.width) / 2,
+                y: options.h - (options.h - bb.height) / 2 - 3
+            })
+
+
+        }
+
+
+        event.on('buttonGroupSelected', function(){
+
+            var allSelected = svgMain.selectAll(".sampleGroup.selected")
+
+            if (allSelected[0].length>1){
+
+                var ids = _.map(allSelected.data(),'sample')
+                var groupName = that.data.setGrouping(ids)
+
+                event.fire('groupingChanged', groupName, ids)
+            }
+
+
+        })
+
+
+        event.on('groupingChanged', function(e, groupName, ids){
+
+            if (ids && ids.length>0){
+                groupWiggleCache[groupName]=Array.apply(null, Array(allData.measures['wiggle_sample_size'])).map(Number.prototype.valueOf,0); // _.map(_.range(allData.measures['wiggle_sample_size']),)
+            }else{
+                if (groupName in groupWiggleCache) {
+                    delete groupWiggleCache[groupName];
+                }
+            }
+
+            var groupings = that.data.getGroupings();
+
+            var groupMappedSamples = _.flatten(_.pluck(groupings,'samples'))
+
+            allWiggles = _.filter(allData.measures.wiggles,
+                function(d){ return ! _.contains(groupMappedSamples, d.sample)})
+
+            _.each(groupings, function(grouping){
+
+                var name = grouping.name;
+                allWiggles.push({
+                    sample: name,
+                    type:'grp',
+                    grpItems:grouping.samples,
+                    data: (name in groupWiggleCache)?groupWiggleCache[name]:[]
+                });
+
+            });
+
+
+            allWiggles.sort(regularSorting)
+
+            updateVis();
+
+        })
+
+        
+        
+        function regularSorting(a,b){
+            var aType = a.type || 'std';
+            var bType = b.type || 'std';
+            
+            if (aType == bType){
+                return a.sample.localeCompare(b.sample);
+            }else if (aType=='grp'){
+                return -1;
+            }else{
+                return 1;
+            }
+
+        }
+
+
         /*
          ================= GENERAL METHODS =====================
          */
@@ -426,12 +592,17 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
 
         function updateVis() {
             //TODO
-            svg.attr("height", allData.measures.wiggles.length * readsPlot.panels.std.xDiff)
+            svg.attr("height", allData.measures.wiggles.length * readsPlot.panels.std.xDiff+readsPlot.y)
 
 
             updateWiggles();
 
 
+        }
+
+        function cleanVis() {
+            //console.log(readsPlot.g,readsPlot.g.selectAll(""),'\n-- readsPlot.g,readsPlot.g.selectAll("") --');
+            readsPlot.g.selectAll("*").remove();
         }
 
         function dataUpdate() {
@@ -445,8 +616,11 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
 
             that.data.getGeneData(curProject, curGene).then(function (sampleData) {
 
+
                 console.time("dataLoading");
                 allData = sampleData;
+                allWiggles = allData.measures.wiggles.sort(regularSorting)
+                console.log(allWiggles,'\n-- allWiggles --');
 
                 var positiveStrand = (sampleData.gene.strand === '+');
 
@@ -463,6 +637,7 @@ define(['exports', 'd3', 'underscore', './vials-gui', '../caleydo_core/event', '
                 console.timeEnd("dataLoading");
 
                 console.time("updatevis");
+                cleanVis();
                 updateVis();
                 console.timeEnd("updatevis");
             });
