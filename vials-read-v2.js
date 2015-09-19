@@ -33,8 +33,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
     var height = fullHeight - margin.top - margin.bottom;
 
 
-
-
     var guiPanel = {
         buttonHeight: 20,
         buttonPadding: 5,
@@ -108,7 +106,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         var textLabelPadding = 0
 
 
-
         //--  create the outer DOM structure:
         var head = $parent.append("div").attr({
             "class": "gv"
@@ -147,6 +144,16 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
             "class": "crosshair_group"
         });
 
+        function reset() {
+            allData = {};// api data
+            dataExtent = [0, 1]; // data extent
+            allWiggles = [];
+            groupWiggleCache = {};
+            that.data.clearAllGroups();
+
+        }
+
+        reset();
 
         function initView() {
 
@@ -196,10 +203,143 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
             event.on("updateVis", updateVis);
             event.on("axisChange", updateVis);
 
+            // *****************
+            // ******** Internal Data Events: highlights & selections
+            // *****************
+
+            event.on('buttonGroupSelected', function () {
+
+                var allSelected = svgMain.selectAll(".sampleGroup.selected")
+                var ids = _.map(
+                    _.filter(allSelected.data(), // only the non-groups !!
+                        function (d) {
+                            return !(d.type && d.type == 'grp')
+                        })
+                    , 'sample')
+
+                if (ids.length > 1) {
+
+                    var groupName = that.data.setGroup(ids)
+
+
+                    // unselect all group member
+                    _.each(ids, function (sampleID) {
+                        gui.current.releaseColorForSelection(sampleID)
+                        event.fire('sampleSelect', sampleID, false)
+                    })
+
+                    event.fire('groupingChanged', groupName, ids)
+
+                }
+
+
+            })
+
+            event.on('buttonUnGroupSelected', function () {
+
+                var allSelected = svgMain.selectAll(".sampleGroup.selected")
+
+                var ids = _.map(
+                    _.filter(allSelected.data(), // only groups !!
+                        function (d) {
+                            return (d.type && d.type == 'grp')
+                        })
+                    , 'sample');
+
+                if (ids.length > 0) {
+                    _.each(ids, function (groupName) {
+                        event.fire('groupingChanged', groupName, null);
+                    })
+
+                }
+
+            })
+
 
             // *****************
             // ******** External Data Events: highlights & selections
             // *****************
+
+
+            // -- grouping changed
+            event.on('groupingChanged', function (e, groupName, ids) {
+
+                var groupings = that.data.getGroups();
+                var groupMappedSamples = [];
+
+
+                if (ids && ids.length > 0) {
+                    that.data.retainGroup(groupName);
+
+                    groupMappedSamples =  _.flatten(_.pluck(groupings, 'samples'));
+
+                    var groupedData = _.filter(allData.measures.wiggles,
+                        function (d) {
+                            return _.contains(groupMappedSamples, d.sample)
+                        })
+
+                    var sampleLength = groupedData[0].data.length
+                    var wiggleSummary = _.map(_.range(0, sampleLength), function () {
+                        return {
+                            all: []
+                        }
+                    })
+
+
+                    _.each(groupedData, function (d) {
+                        _.each(d.data, function (wi, i) {
+                            wiggleSummary[i].all.push(wi)
+                        })
+                    })
+
+                    _.each(wiggleSummary, function (wi) {
+                        wi.low = _.min(wi.all);
+                        wi.high = _.max(wi.all);
+                        wi.median = d3.median(wi.all);
+                        delete wi.all
+                    })
+
+
+                    groupWiggleCache[groupName] = wiggleSummary
+                } else {
+                    groupings = _.filter(groupings,function(d){return d.name != groupName;})
+
+                    groupMappedSamples =  _.flatten(_.pluck(groupings, 'samples'));
+
+                    if (groupName in groupWiggleCache) {
+                        delete groupWiggleCache[groupName];
+                    }
+
+                    gui.current.releaseColorForSelection(groupName);
+                    that.data.releaseGroup(groupName);
+
+                }
+
+
+                allWiggles = _.filter(allData.measures.wiggles,
+                    function (d) {
+                        return !_.contains(groupMappedSamples, d.sample)
+                    })
+
+                _.each(groupings, function (grouping) {
+
+                    var name = grouping.name;
+                    allWiggles.push({
+                        sample: name,
+                        type: 'grp',
+                        grpItems: grouping.samples,
+                        data: (name in groupWiggleCache) ? groupWiggleCache[name] : []
+                    });
+
+                });
+
+
+                allWiggles.sort(regularSorting)
+
+                updateVis();
+
+            })
+
 
             // -- highlight a Junction
             event.on("highlightJxn", function (e, key, highlight) {
@@ -234,86 +374,49 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                         'fill-opacity': .5
                     })
                 } else {
-                    allSelected.select(".sampleGroupLabelBG").style({
-                        fill: null,
-                        'fill-opacity': null
-                    })
+                    gui.current.releaseColorForSelection(sample),
+                        allSelected.select(".sampleGroupLabelBG").style({
+                            fill: null,
+                            'fill-opacity': null
+                        })
                 }
 
             })
 
             event.on("groupHighlight", function (e, groupID, highlight) {
-                //TODO
+                 var allSelected = svgMain.selectAll(".sampleGroup")
+                    .filter(function (d) {
+                        return d.sample == groupID;
+                    })
+                allSelected.classed("highlighted", highlight)
             })
 
             event.on("groupSelect", function (e, groupID, isSelected) {
-                //TODO
-                //var alldots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
-                //if (isSelected) {
-                //    alldots.filter(function (d) {
-                //        return groupID.samples.indexOf(d.w.sample) > -1
-                //    }).style({
-                //        fill: gui.current.getColorForSelection(JSON.stringify(groupID))
-                //    })
-                //} else {
-                //    alldots.filter(function (d) {
-                //        return groupID.samples.indexOf(d.w.sample) > -1
-                //    }).style({
-                //        fill: null
-                //    })
-                //}
+               var allSelected = svgMain.selectAll(".sampleGroup")
+                    .filter(function (d) {
+                        return d.sample == groupID;
+                    })
+                allSelected.classed("selected", isSelected)
+                if (isSelected) {
+                    allSelected.select(".sampleGroupLabelBG").style({
+                        fill: gui.current.getColorForSelection(groupID),
+                        'fill-opacity': .5
+                    })
+                } else {
+                    gui.current.releaseColorForSelection(groupID),
+                        allSelected.select(".sampleGroupLabelBG").style({
+                            fill: null,
+                            'fill-opacity': null
+                        })
+                }
+
+
+
+
             })
 
             event.on("isoFormSelect", function (e, isoInfo) {
                 //TODO maybe del
-            })
-
-
-            event.on("groupingChanged", function (e, a, b, c) {
-                //TODO
-
-                //if (a.length == 1) {
-                //    groupings.push(a[0]);
-                //    //a[0].samples
-                //
-                //    var samples = a[0].samples;
-                //
-                //
-                //    var allBoxPlots = {};
-                //    _.keys(allJxns).forEach(function (jkey) {
-                //        var jxn = allJxns[jkey];
-                //
-                //
-                //        var allWeights = _.pluck(jxn.weights.filter(function (d) {
-                //            return _.contains(samples, d.sample);
-                //        }), 'weight');
-                //        if (allWeights.length > 2) allBoxPlots[jkey] = {boxplot: helper.computeBoxPlot(allWeights)};
-                //    })
-                //
-                //    groupingsMeta.push(allBoxPlots);
-                //
-                //    //console.log(allData,'\n-- allData --');
-                //    //console.log(allJxns,'\n-- allJxns --');
-                //
-                //
-                //    computeAbundanceLayout();
-                //    updateAbundanceView();
-                //
-                //} else if (b.length == 1) {
-                //    var index = groupings.indexOf(b[0]);
-                //    if (index > -1) {
-                //        groupings.splice(index, 1);
-                //        groupingsMeta.splice(index, 1);
-                //    }
-                //
-                //    computeAbundanceLayout();
-                //    updateAbundanceView();
-                //
-                //}
-                //
-                //console.log(groupingsMeta, '\n-- groupingsMeta --');
-
-
             })
 
 
@@ -352,7 +455,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         function updateWiggles() {
             axis.setArrayWidth(allData.measures['wiggle_sample_size'] - 1)
 
-            var areaScale = d3.scale.linear().domain([0, dataExtent[1]]).range([readsPlot.panels.std.height, 0])
+            var areaScale = d3.scale.linear().domain([0, dataExtent[1]]).clamp(true).range([readsPlot.panels.std.height, 0])
 
             var area = d3.svg.area()
                 .x(function (d, i) {
@@ -364,8 +467,23 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                     return areaScale(d);
                 })
 
+            var areaGrp = d3.svg.area()
+                .x(function (d, i) {
+                    return axis.arrayPosToScreenPos(i)
+                })
+                .y0(function (d) {
+                    //console.log(areaScale(d))
+                    return areaScale(d.low);
+                })
+                .y1(function (d) {
+                    //console.log(areaScale(d))
+                    return areaScale(d.high);
+                })
 
-            var sampleGroup = readsPlot.g.selectAll(".sampleGroup").data(allWiggles, function(d){return d.sample});
+
+            var sampleGroup = readsPlot.g.selectAll(".sampleGroup").data(allWiggles, function (d) {
+                return d.sample
+            });
             sampleGroup.exit().remove();
 
             // --- adding Element to class sampleGroup
@@ -382,14 +500,29 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                 width: axis.getWidth()
             }).on({
                 "mouseenter": function (d) {
-                    event.fire("sampleHighlight", d.sample, true)
+                    if (d.type && d.type == 'grp') {
+                        event.fire("groupHighlight", d.sample, true);
+                    } else {
+                        event.fire("sampleHighlight", d.sample, true);
+                    }
+
                 },
                 "mouseout": function (d) {
-                    event.fire("sampleHighlight", d.sample, false);
+                    if (d.type && d.type == 'grp') {
+                        event.fire("groupHighlight", d.sample, false);
+                    } else {
+                        event.fire("sampleHighlight", d.sample, false);
+                    }
                 },
                 "click": function (d) {
                     var isSelected = d3.select(this.parentNode).classed("selected");
-                    event.fire('sampleSelect', d.sample, !isSelected);
+
+                    if (d.type && d.type == 'grp') {
+                        event.fire('groupSelect', d.sample, !isSelected);
+                    } else {
+                        event.fire('sampleSelect', d.sample, !isSelected);
+                    }
+
 
                 }
             })
@@ -402,14 +535,27 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                 width: readsPlot.labelWidth
             }).on({
                 "mouseenter": function (d) {
-                    event.fire("sampleHighlight", d.sample, true)
+                    if (d.type && d.type == 'grp') {
+                        event.fire("groupHighlight", d.sample, true);
+                    } else {
+                        event.fire("sampleHighlight", d.sample, true);
+                    }
+
                 },
                 "mouseout": function (d) {
-                    event.fire("sampleHighlight", d.sample, false);
+                    if (d.type && d.type == 'grp') {
+                        event.fire("groupHighlight", d.sample, false);
+                    } else {
+                        event.fire("sampleHighlight", d.sample, false);
+                    }
                 },
                 "click": function (d) {
                     var isSelected = d3.select(this.parentNode).classed("selected");
-                    event.fire('sampleSelect', d.sample, !isSelected);
+                    if (d.type && d.type == 'grp') {
+                        event.fire('groupSelect', d.sample, !isSelected);
+                    } else {
+                        event.fire('sampleSelect', d.sample, !isSelected);
+                    }
 
                 }
             })
@@ -439,21 +585,33 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
             })
 
 
-            var sampleGraph = sampleGroup.selectAll(".sampleGraph").data(function (data) {
-                return [data.data]
+            /*
+             * =============
+             * drawing the wiggle lines
+             * =============
+             * */
 
+
+            var sampleGraph = sampleGroup.selectAll(".sampleGraph").data(function (data) {
+                return [data]
             });
             sampleGraph.exit().remove();
 
             // --- adding Element to class sampleGraph
             var sampleLineEnter = sampleGraph.enter().append("path").attr({
-                "class": "sampleGraph",
-                'd': area
+                "class": "sampleGraph"
             })
 
             // --- changing nodes for sampleGraph
             sampleGraph.attr({
-                'd': area
+                'd': function (d) {
+                    if (d.type && d.type == 'grp') {
+                        return areaGrp(d.data)
+                    } else {
+                        return area(d.data)
+                    }
+
+                }
             })
 
 
@@ -475,9 +633,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
          * @param positiveStrand - boolean if on a positive strand
          * @returns {boolean}
          */
-        function isLeftArrow(type, positiveStrand) {
-            return type == ((positiveStrand == axis.ascending ) ? "donor" : "receptor");
-        }
 
         var drawButton = function (d3sel, options) {
             //x, y, w, h, label, event
@@ -513,69 +668,15 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         }
 
 
-        event.on('buttonGroupSelected', function(){
-
-            var allSelected = svgMain.selectAll(".sampleGroup.selected")
-
-            if (allSelected[0].length>1){
-
-                var ids = _.map(allSelected.data(),'sample')
-                var groupName = that.data.setGrouping(ids)
-
-                event.fire('groupingChanged', groupName, ids)
-            }
-
-
-        })
-
-
-        event.on('groupingChanged', function(e, groupName, ids){
-
-            if (ids && ids.length>0){
-                groupWiggleCache[groupName]=Array.apply(null, Array(allData.measures['wiggle_sample_size'])).map(Number.prototype.valueOf,0); // _.map(_.range(allData.measures['wiggle_sample_size']),)
-            }else{
-                if (groupName in groupWiggleCache) {
-                    delete groupWiggleCache[groupName];
-                }
-            }
-
-            var groupings = that.data.getGroupings();
-
-            var groupMappedSamples = _.flatten(_.pluck(groupings,'samples'))
-
-            allWiggles = _.filter(allData.measures.wiggles,
-                function(d){ return ! _.contains(groupMappedSamples, d.sample)})
-
-            _.each(groupings, function(grouping){
-
-                var name = grouping.name;
-                allWiggles.push({
-                    sample: name,
-                    type:'grp',
-                    grpItems:grouping.samples,
-                    data: (name in groupWiggleCache)?groupWiggleCache[name]:[]
-                });
-
-            });
-
-
-            allWiggles.sort(regularSorting)
-
-            updateVis();
-
-        })
-
-        
-        
-        function regularSorting(a,b){
+        function regularSorting(a, b) {
             var aType = a.type || 'std';
             var bType = b.type || 'std';
-            
-            if (aType == bType){
+
+            if (aType == bType) {
                 return a.sample.localeCompare(b.sample);
-            }else if (aType=='grp'){
+            } else if (aType == 'grp') {
                 return -1;
-            }else{
+            } else {
                 return 1;
             }
 
@@ -592,7 +693,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
         function updateVis() {
             //TODO
-            svg.attr("height", allData.measures.wiggles.length * readsPlot.panels.std.xDiff+readsPlot.y)
+            svg.attr("height", allData.measures.wiggles.length * readsPlot.panels.std.xDiff + readsPlot.y)
 
 
             updateWiggles();
@@ -607,6 +708,9 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
         function dataUpdate() {
 
+            reset();
+
+
             axis = that.data.genomeAxis;
             width = axis.getWidth();
             svg.attr("width", width + margin.left + margin.right + textLabelPadding)
@@ -620,7 +724,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                 console.time("dataLoading");
                 allData = sampleData;
                 allWiggles = allData.measures.wiggles.sort(regularSorting)
-                console.log(allWiggles,'\n-- allWiggles --');
+                console.log(allWiggles, '\n-- allWiggles --');
 
                 var positiveStrand = (sampleData.gene.strand === '+');
 

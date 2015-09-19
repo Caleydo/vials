@@ -1,7 +1,7 @@
 'use strict';
 
 //noinspection Annotator
-define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js-lru', './caleydo-broken-axis', 'jquery','lodash'], function (exports, C, datatypes, d3, LRUCache, brokenAxis, $ , _) {
+define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js-lru', './caleydo-broken-axis', 'jquery', 'lodash'], function (exports, C, datatypes, d3, LRUCache, brokenAxis, $, _) {
 
     exports.GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link', {
         init: function (desc) {
@@ -15,8 +15,8 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
             this.genomeAxis = brokenAxis.create(600, this.options);
             this.localFileName = null;
             this.localFileData = null;
-            this.groupings = {}
-
+            this.groups = {}
+            this.groupRetainCount = {}
         },
 
         useFile: function (fileName) {
@@ -71,8 +71,8 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
 
 
         /**
-        * current format:
-        * {
+         * current format:
+         * {
         *  "hen01": {
         *    "dir": ".//_data/vials_projects/hen01.vials_project",
         *    "info": {
@@ -86,8 +86,8 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
         *    "project_id": "hen01"
         *  }
         *}
-        * @returns {null|*}
-        */
+         * @returns {null|*}
+         */
         getAllProjects: function () {
 
             if (this.localFileName) {
@@ -114,33 +114,60 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
         },
 
         /*
-        *
-        * Status Variables
-        *
-        * */
+         *
+         * Status Variables
+         *
+         * */
 
 
-        setGrouping: function(idList){
+        setGroup: function (idList) {
 
             var groupName = _.uniqueId('group_')
-            this.groupings[groupName] = idList;
+            this.groups[groupName] = idList;
+            this.groupRetainCount[groupName] = 0;
             return groupName;
         },
-        clearGrouping: function(groupName){
-            if (groupName in this.groupings){
-                delete this.groupings[groupName]
-                return true;
+        retainGroup: function (groupName) {
+            this.groupRetainCount[groupName]++;
+        },
+        releaseGroup: function (groupName) {
+            if (groupName in this.groupRetainCount && this.groupRetainCount[groupName] > 1) {
+                this.groupRetainCount[groupName]--;
             }
-            return false;
+            else {
+                if (groupName in this.groups) {
+                    delete this.groups[groupName]
+                    return true;
+                }
+            }
+
         },
-        clearAllGroupings: function () {
-            this.groupings = {}
-        },
-        getGroupings: function(){
-            return _.map(this.groupings,function(v,k){
+        getGroup: function (groupName) {
+            if (groupName in this.groups) {
                 return {
-                    name:k,
-                    samples:v
+                    name: groupName,
+                    samples: this.groups[groupName]
+                }
+            } else {
+                return null;
+            }
+        },
+        //removeGroup: function(groupName){
+        //    if (groupName in this.groupings){
+        //        delete this.groupings[groupName]
+        //        return true;
+        //    }
+        //    return false;
+        //},
+        clearAllGroups: function () {
+            this.groups = {}
+            this.groupRetainCount = {}
+        },
+        getGroups: function () {
+            return _.map(this.groups, function (v, k) {
+                return {
+                    name: k,
+                    samples: v
                 }
             })
         }

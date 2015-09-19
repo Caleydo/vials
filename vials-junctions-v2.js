@@ -189,6 +189,22 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
             });
         });
 
+        function reset() {
+            // data var:
+            allData = {}; // api data
+            triangleData = []; // data to draw triangles
+            allJxns = {}; // juncntion information as map
+            allExons = [];
+            jxnGroups = []; // end positions of jxn groups for connector drawing
+            sampleOrder = {definedSize: 0, order: [], valid: false, sortByKey: null}; // sort order for elements in scatterplot view (abundance)
+
+            groupings = []; // hold grouping information
+            groupingsMeta = [] // separate grouping meta information
+
+            isSelectedIsoForm = false;
+        }
+
+
         function initView() {
 
             // create crosshair
@@ -310,22 +326,29 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
             });
 
             event.on("groupHighlight", function (e, groupID, highlight) {
-                var alldots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
-                alldots.filter(function (d) {
-                    return groupID.samples.indexOf(d.w.sample) > -1
-                }).classed("highlighted", highlight);
+                var groupSamples = _.find(groupings, 'name', groupID)
+                if (groupSamples) {
+                    var alldots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
+
+                    alldots.filter(function (d) {
+                        return _.contains(groupSamples.samples, d.w.sample)
+                    })
+                        .classed("highlighted", highlight)
+                        .attr({r: highlight ? 4 : 2});
+                }
+
             })
 
             event.on('sampleSelect', function (e, sample, isSelected) {
-                var alldots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
+                var allDots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
                 if (isSelected) {
-                    alldots.filter(function (d) {
+                    allDots.filter(function (d) {
                         return d.w.sample == sample;
                     }).style({
                         fill: gui.current.getColorForSelection(sample)
                     })
                 } else {
-                    alldots.filter(function (d) {
+                    allDots.filter(function (d) {
                         return d.w.sample == sample;
                     }).style({
                         fill: null
@@ -333,22 +356,28 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                 }
             })
 
-            event.on("groupSelect", function (e, groupID, isSelected) {
-                var alldots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
-                if (isSelected) {
-                    alldots.filter(function (d) {
-                        return groupID.samples.indexOf(d.w.sample) > -1
-                    }).style({
-                        fill: gui.current.getColorForSelection(JSON.stringify(groupID))
-                    })
-                } else {
-                    alldots.filter(function (d) {
-                        return groupID.samples.indexOf(d.w.sample) > -1
-                    }).style({
-                        fill: null
-                    })
+            var groupSelect = function (e, groupID, isSelected) {
+                var groupSamples = _.find(groupings, 'name', groupID)
+                if (groupSamples) {
+                    var allDots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
+
+                    if (isSelected) {
+                        allDots.filter(function (d) {
+                            return _.contains(groupSamples.samples, d.w.sample);
+                        }).style({
+                            fill: gui.current.getColorForSelection(groupID)
+                        })
+                    } else {
+                        allDots.filter(function (d) {
+                            return _.contains(groupSamples.samples, d.w.sample);
+                        }).style({
+                            fill: null
+                        })
+                    }
                 }
-            })
+
+            };
+            event.on("groupSelect", groupSelect)
 
             event.on("isoFormSelect", function (e, isoInfo) {
                 //{isoform: d.id, index:-1}
@@ -406,7 +435,11 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
             event.on("groupingChanged", function (e, groupName, samples) {
 
+
                 if (samples && samples.length > 0) {
+                    that.data.retainGroup(groupName);
+
+
                     // add grouping
                     groupings.push({
                         name: groupName,
@@ -429,9 +462,12 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                     computeAbundanceLayout();
                     updateAbundanceView();
                 } else {
+                    that.data.releaseGroup(groupName);
+
                     //remove grouping
-                    var index = _.findIndex(groupings,'name',groupName)
+                    var index = _.findIndex(groupings, 'name', groupName)
                     if (index > -1) {
+                        groupSelect(null,groupName,false);
                         groupings.splice(index, 1);
                         groupingsMeta.splice(index, 1);
                     }
@@ -442,8 +478,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                 }
 
 
-
-                console.log(groupingsMeta, '\n-- groupingsMeta --');
+                //console.log(groupingsMeta, '\n-- groupingsMeta --');
 
 
             })
@@ -1030,16 +1065,19 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
                             groupingsMeta.forEach(function (gMeta, gmIndex) {
                                 var gm = gMeta[d.key];
-                                if (gm != null)res.push({
-                                    boxPlot: gm.boxplot,
-                                    state: d.jxn.state,
-                                    x: (groupingOffset + (gmIndex + .5) * groupInc)
-                                });
-                                console.log("xxx", {
-                                    boxPlot: gm.boxplot,
-                                    state: d.jxn.state,
-                                    x: (groupingOffset + (gmIndex + .5) * groupInc)
-                                });
+                                if (gm != null) {
+                                    res.push({
+                                        boxPlot: gm.boxplot,
+                                        state: d.jxn.state,
+                                        x: (groupingOffset + (gmIndex + .5) * groupInc)
+                                    });
+                                    //console.log("xxx", {
+                                    //    boxPlot: gm.boxplot,
+                                    //    state: d.jxn.state,
+                                    //    x: (groupingOffset + (gmIndex + .5) * groupInc)
+                                    //});
+                                }
+
 
                             })
 
@@ -1308,7 +1346,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                     sampleOrder.order = sortedWeights.concat(allNull);
                     sampleOrder.sortByKey = key;
                     sampleOrder.valid = true;
-                    console.log("sampleOrder", sampleOrder);
+                    //console.log("sampleOrder", sampleOrder);
 
                     updateAbundanceView();//TODO: can be done more subtle / only update dots!
                 }
@@ -1318,7 +1356,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
             function switchGroupState(key) {
 
-                console.log(allJxnArray, '\n-- allJxnArray --');
+                //console.log(allJxnArray, '\n-- allJxnArray --');
 
 
                 var jxnList = allJxnArray.filter(function (d) {
@@ -1562,6 +1600,8 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
         function dataUpdate() {
 
+            reset();
+
             axis = that.data.genomeAxis;
             width = axis.getWidth();
             svg.attr("width", width + margin.left + margin.right + textLabelPadding)
@@ -1677,13 +1717,13 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                     return item.loc + item.type
                 })
 
-                console.log(triangleData, '\n-- triangleData --');
+                //console.log(triangleData, '\n-- triangleData --');
 
                 // SORT and REMOVE DUPLICATES
                 allJxnPos.sort();
                 allJxnPos = _.uniq(allJxnPos, true);
 
-                console.log(allJxnPos, '\n-- allJxnPos --');
+                //console.log(allJxnPos, '\n-- allJxnPos --');
 
                 var allSamplesCount = Object.keys(allData.samples).length;
 
