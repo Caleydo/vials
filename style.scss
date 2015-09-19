@@ -220,12 +220,21 @@ path.selectionParco{
 .sampleGroup{
 
   .sampleGraph{
-    fill-opacity: .8;
+    //fill-opacity: .8;
     pointer-events: none;
     stroke:$wes-gray;
     stroke-width: 1px;
     fill:$wes-gray;
   }
+
+  .groupArea{
+    fill-opacity: 1;
+    pointer-events: none;
+    stroke:none;
+
+    fill:$wes-violet;
+  }
+
   .sampleGroupBG, .sampleGroupLabelBG{
     fill: white;
   }
@@ -246,6 +255,10 @@ path.selectionParco{
     fill:$wes-red;
   }
 
+  .groupArea{
+    stroke:none;
+  }
+
   .sampleGroupLabelBG{
     fill: $wes-red;
     fill-opacity: .1;
@@ -256,9 +269,9 @@ path.selectionParco{
 
 .sampleGroup.selected{
   .sampleGroupBG{
-    stroke:$wes-red;
+    stroke:none;
     fill: $wes-red;
-    fill-opacity: .1;
+    fill-opacity: .3;
   }
 }
 

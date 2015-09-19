@@ -60,7 +60,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
             .style({
                 //"top":"10px",
                 "left": "20px",
-                "top": "10px",
+                //"top": "10px",
                 "position": "relative"
 
             })

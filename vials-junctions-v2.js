@@ -28,8 +28,8 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
     }
 
     // GLOBAL VARIABLES & STATUS
-    var margin = {top: 40, right: 150, bottom: 20, left: 150};
-    var fullHeight = 370;
+    var margin = {top: 40, right: 150, bottom: 10, left: 150};
+    var fullHeight = 330;
     var height = fullHeight - margin.top - margin.bottom;
 
     var abundancePlot = {

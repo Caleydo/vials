@@ -50,6 +50,17 @@
           "filter": "caleydo-genome-data-link",
           "file": "vials-read-v2"
         },
+           {
+          "type": "vis",
+          "id": "vials-axis",
+          "name": "Alternative Splicing - Axis",
+          "size": [
+            840,
+            2000
+          ],
+          "filter": "caleydo-genome-data-link",
+          "file": "vials-genome-axis"
+        },
         {
           "type": "app",
           "name": "Vials"

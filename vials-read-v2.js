@@ -271,7 +271,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                 if (ids && ids.length > 0) {
                     that.data.retainGroup(groupName);
 
-                    groupMappedSamples =  _.flatten(_.pluck(groupings, 'samples'));
+                    groupMappedSamples = _.flatten(_.pluck(groupings, 'samples'));
 
                     var groupedData = _.filter(allData.measures.wiggles,
                         function (d) {
@@ -302,9 +302,11 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
                     groupWiggleCache[groupName] = wiggleSummary
                 } else {
-                    groupings = _.filter(groupings,function(d){return d.name != groupName;})
+                    groupings = _.filter(groupings, function (d) {
+                        return d.name != groupName;
+                    })
 
-                    groupMappedSamples =  _.flatten(_.pluck(groupings, 'samples'));
+                    groupMappedSamples = _.flatten(_.pluck(groupings, 'samples'));
 
                     if (groupName in groupWiggleCache) {
                         delete groupWiggleCache[groupName];
@@ -384,7 +386,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
             })
 
             event.on("groupHighlight", function (e, groupID, highlight) {
-                 var allSelected = svgMain.selectAll(".sampleGroup")
+                var allSelected = svgMain.selectAll(".sampleGroup")
                     .filter(function (d) {
                         return d.sample == groupID;
                     })
@@ -392,7 +394,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
             })
 
             event.on("groupSelect", function (e, groupID, isSelected) {
-               var allSelected = svgMain.selectAll(".sampleGroup")
+                var allSelected = svgMain.selectAll(".sampleGroup")
                     .filter(function (d) {
                         return d.sample == groupID;
                     })
@@ -409,8 +411,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                             'fill-opacity': null
                         })
                 }
-
-
 
 
             })
@@ -613,6 +613,9 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
                 }
             })
+                .classed('groupArea', function (d) {
+                    return (d.type && d.type == 'grp');
+                })
 
 
         }
