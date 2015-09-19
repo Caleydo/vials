@@ -2,7 +2,7 @@
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 2/25/15.
  */
 
-define(['exports','d3'],function(exports,d3){
+define(['exports', 'd3'], function (exports, d3) {
 
   function BrokenAxis(width, options) {
     //this.scaleList = [];
@@ -15,10 +15,10 @@ define(['exports','d3'],function(exports,d3){
 
     this.arrayWidth = 2000;
 
-    this.brokenDomain = [0,100];
-    this.brokenRange = [0,100];
-    this.brokenRangeAsc = [0,100];
-    this.brokenRangeDesc = [100,0];
+    this.brokenDomain = [0, 100];
+    this.brokenRange = [0, 100];
+    this.brokenRangeAsc = [0, 100];
+    this.brokenRangeDesc = [100, 0];
 
     this.avrgExonLength = 30;
 
@@ -27,57 +27,57 @@ define(['exports','d3'],function(exports,d3){
 
     var that = this;
 
-    this.scale_arrayPosToScreenPos = d3.scale.linear().domain([0,10000]).range([0,width])
-    this.scale_genePosToScreenPos = d3.scale.linear().domain([0,100]).range([0,width])
-    this.scale_arrayPosToGenePos = d3.scale.linear().domain([0,10000]).range([0,100])
+    this.scale_arrayPosToScreenPos = d3.scale.linear().domain([0, 10000]).range([0, width])
+    this.scale_genePosToScreenPos = d3.scale.linear().domain([0, 100]).range([0, width])
+    this.scale_arrayPosToGenePos = d3.scale.linear().domain([0, 10000]).range([0, 100])
 
-    this.arrayPosToScreenPos = function(x){
+    this.arrayPosToScreenPos = function (x) {
       return that.genePosToScreenPos(that.scale_arrayPosToGenePos(x));
     }
 
-    this.arrayPosToGenePos = function(x){
+    this.arrayPosToGenePos = function (x) {
       return that.scale_arrayPosToGenePos(x);
     }
 
-    this.genePosToScreenPos = function(x){
+    this.genePosToScreenPos = function (x) {
       return that.scale_genePosToScreenPos(x);
     }
 
-    this.screenPosToArrayPos = function(x){
+    this.screenPosToArrayPos = function (x) {
       return Math.floor(that.scale_arrayPosToScreenPos.invert(x));
     }
 
-    this.screenPosToGenePos = function(x){
+    this.screenPosToGenePos = function (x) {
       return Math.floor(that.scale_genePosToScreenPos.invert(x));
     }
 
-    this.setArrayWidth= function(arrayWidth){
-      that.scale_arrayPosToScreenPos.domain([0,arrayWidth])
-      that.scale_arrayPosToGenePos.domain([0,arrayWidth])
-      that.arrayWidth=arrayWidth;
+    this.setArrayWidth = function (arrayWidth) {
+      that.scale_arrayPosToScreenPos.domain([0, arrayWidth])
+      that.scale_arrayPosToGenePos.domain([0, arrayWidth])
+      that.arrayWidth = arrayWidth;
     }
 
-    this.setGeneStartEnd= function(start, end){
-      that.scale_genePosToScreenPos.domain([start,end])
-      that.scale_arrayPosToGenePos.range([start,end])
+    this.setGeneStartEnd = function (start, end) {
+      that.scale_genePosToScreenPos.domain([start, end])
+      that.scale_arrayPosToGenePos.range([start, end])
       that.geneStart = start;
       that.geneEnd = end;
     }
 
-    this.shrinkIntrons = function(shrink){
+    this.shrinkIntrons = function (shrink) {
       that.shrinkIntronsState = shrink;
 
-      if (shrink){
+      if (shrink) {
 
         this.scale_genePosToScreenPos.domain(that.brokenDomain).range(that.brokenRange);
         that.scale_arrayPosToScreenPos.domain(
           that.brokenDomain.map(that.scale_arrayPosToGenePos.invert)
         ).range(that.brokenRange);
 
-      }else{
+      } else {
 
         // unbreak
-        that.scale_arrayPosToScreenPos.domain([0, that.arrayWidth]).range([0,that.width]);
+        that.scale_arrayPosToScreenPos.domain([0, that.arrayWidth]).range([0, that.width]);
         that.scale_genePosToScreenPos.domain([that.geneStart, that.geneEnd]).range([0, that.width]);
         that.scale_arrayPosToGenePos.domain([0, that.arrayWidth]).range([that.geneStart, that.geneEnd]);
         if (!that.ascending) {
@@ -87,11 +87,11 @@ define(['exports','d3'],function(exports,d3){
       }
     }
 
-    this.getWidth= function () {
+    this.getWidth = function () {
       return that.width;
     }
 
-    this.reverse = function() {
+    this.reverse = function () {
       that.ascending = !that.ascending;
       that.brokenRange = that.ascending ? that.brokenRangeAsc : that.brokenRangeDesc;
       reverseRange(that.scale_arrayPosToScreenPos);
@@ -110,34 +110,35 @@ define(['exports','d3'],function(exports,d3){
       scale.range(revRange);
     }
 
-    this.calculateBreakPointsByGenePos= function(ranges){
-      if (ranges.length<1) return;
-
+    this.calculateBreakPointsByGenePos = function (ranges) {
+      if (ranges.length < 1) return;
 
 
       var fixedIntronLength = 10;
 
       var rangeCount = ranges.length;
-      var betweenRanges = rangeCount-1; // Zwischenraeume
-      var allExonLength = ranges.reduce(function(previous, range){
-        return previous +  (range.end-range.start)
-      },0)
-      var rangeToLength = d3.scale.linear().domain([0,allExonLength/rangeCount]).range([0,that.avrgExonLength]); /// TODO magic number
+      var betweenRanges = rangeCount - 1; // Zwischenraeume
+      var allExonLength = ranges.reduce(function (previous, range) {
+        return previous + (range.end - range.start)
+      }, 0)
+      var rangeToLength = d3.scale.linear().domain([0, allExonLength / rangeCount]).range([0, that.avrgExonLength]); /// TODO magic number
 
-      var d3_domain =[];
-      var d3_range =[];
+      var d3_domain = [];
+      var d3_range = [];
 
 
       var xPosAcc = 0;
 
-      ranges.sort(function(a,b){return a.start - b.start});
+      ranges.sort(function (a, b) {
+        return a.start - b.start
+      });
       //console.log(ranges.map(function(d){return d.start}));
 
-      if (ranges[0].start>that.geneStart) {
+      if (ranges[0].start > that.geneStart) {
         d3_domain.push(that.geneStart);
 
         d3_range.push(xPosAcc);
-        xPosAcc+=fixedIntronLength;
+        xPosAcc += fixedIntronLength;
 
         betweenRanges++;
       }
@@ -147,21 +148,20 @@ define(['exports','d3'],function(exports,d3){
         d3_domain.push(range.end);
 
         d3_range.push(xPosAcc);
-        xPosAcc+= rangeToLength(range.end-range.start)
+        xPosAcc += rangeToLength(range.end - range.start)
         d3_range.push(xPosAcc);
-        xPosAcc+=fixedIntronLength
+        xPosAcc += fixedIntronLength
 
 
       });
 
 
-
-      if (ranges[ranges.length-1].end<that.geneEnd) {
+      if (ranges[ranges.length - 1].end < that.geneEnd) {
         d3_domain.push(that.geneEnd);
         d3_range.push(xPosAcc);
         betweenRanges++
-      }else{
-        xPosAcc-=fixedIntronLength;
+      } else {
+        xPosAcc -= fixedIntronLength;
       }
 
 
@@ -170,13 +170,13 @@ define(['exports','d3'],function(exports,d3){
       that.width = xPosAcc;
       that.brokenDomain = d3_domain;
       that.brokenRangeAsc = d3_range;
-      that.brokenRangeDesc = d3_range.map(function(d) {return that.width - d});
+      that.brokenRangeDesc = d3_range.map(function (d) {
+        return that.width - d
+      });
       that.brokenRange = that.ascending ? that.brokenRangeAsc : that.brokenRangeDesc;
 
       that.shrinkIntrons(that.shrinkIntronsState);
     }
-
-
 
 
     //
@@ -292,15 +292,11 @@ define(['exports','d3'],function(exports,d3){
   }
 
 
-
   exports.BrokenAxis = BrokenAxis;
 
-  exports.create = function(width, options){
+  exports.create = function (width, options) {
     return new BrokenAxis(width, options)
   }
-
-
-
 
 
 })

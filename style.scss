@@ -1,34 +1,34 @@
 /**
  * Created by Hendrik Strobelt 10/10/14
  */
-
 @import "../bower_components/font-awesome/css/font-awesome.min.css";
 
 .fa-spin-custom, .glyphicon-spin {
-    -webkit-animation: spin 5000ms infinite linear;
-    animation: spin 5000ms infinite linear;
-}
-@-webkit-keyframes spin {
-    0% {
-        -webkit-transform: rotate(0deg);
-        transform: rotate(0deg);
-    }
-    100% {
-        -webkit-transform: rotate(359deg);
-        transform: rotate(359deg);
-    }
-}
-@keyframes spin {
-    0% {
-        -webkit-transform: rotate(0deg);
-        transform: rotate(0deg);
-    }
-    100% {
-        -webkit-transform: rotate(359deg);
-        transform: rotate(359deg);
-    }
+  -webkit-animation: spin 5000ms infinite linear;
+  animation: spin 5000ms infinite linear;
 }
 
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(359deg);
+    transform: rotate(359deg);
+  }
+}
 
 // Wes Anderson Color Palette from http://wesandersonpalettes.tumblr.com/ - Fantastic Mr. Fox
 $wes-gray: #B9B09F;
@@ -38,11 +38,10 @@ $wes-violet: #433447;
 $wes-red: #D16B54;
 $wes-blue: #0093dd;
 
-
-text.decoration{
+text.decoration {
   font-family: "FontAwesome", serif;
   font-size: 12px;
-  fill:$wes-gray;
+  fill: $wes-gray;
   fill-opacity: .6;
   cursor: pointer;
 
@@ -60,16 +59,13 @@ text.decoration{
 
 text.decoration:hover {
   fill-opacity: 1;
-  fill:$wes-violet;
+  fill: $wes-violet;
 }
 
 text.decoration.selected {
   fill-opacity: 1;
   fill: $wes-blue;
 }
-
-
-
 
 //by convention create a namespace for your own plugin
 .gv {
@@ -92,25 +88,24 @@ text.decoration.selected {
     stroke: #000;
     shape-rendering: crispEdges;
   }
-  .seqText{
+  .seqText {
     font: 10px sans-serif;
   }
-  .seqBox{
+  .seqBox {
     opacity: .5;
   }
 
-  .boxplot, .subboxplot{
+  .boxplot, .subboxplot {
     stroke-width: 1px;
-    stroke:$wes-violet;
+    stroke: $wes-violet;
     //stroke-opacity: 1;
     pointer-events: none;
 
-    .wticks{
+    .wticks {
       stroke-dasharray: 3, 3;
     }
 
   }
-
 
   .crosshairValue, .crosshairGroupValue {
     fill: $wes-violet;
@@ -123,9 +118,9 @@ text.decoration.selected {
   }
 }
 
-.highlight, .highlights{
-  .jxn{
-    fill:$wes-blue;
+.highlight, .highlights {
+  .jxn {
+    fill: $wes-blue;
     //stroke-width: 1px;
     //stroke:$wes-blue;
     fill-opacity: .7;
@@ -133,113 +128,107 @@ text.decoration.selected {
   }
 }
 
-
-
 .isoform {
-  .exon{
+  .exon {
     fill-opacity: .8;
     pointer-events: none;
-    fill:$wes-violet;
+    fill: $wes-violet;
   }
-  .background{
+  .background {
 
-    fill:white;
-    fill-opacity:.001;
+    fill: white;
+    fill-opacity: .001;
 
-  }
-
-
-
-  .selected{
-    stroke:$wes-yellow;
-  }
-  .fixed{
-    fill:$wes-yellow;
-    fill-opacity:.5;
   }
 
-  .sampleDot
-  {
-    fill:$wes-gray;
+  .selected {
+    stroke: $wes-yellow;
+  }
+  .fixed {
+    fill: $wes-yellow;
     fill-opacity: .5;
   }
-  .sampleDot.highlighted{
-    fill:$wes-red;
+
+  .sampleDot {
+    fill: $wes-gray;
+    fill-opacity: .5;
+  }
+  .sampleDot.highlighted {
+    fill: $wes-red;
     fill-opacity: 1;
   }
-  .sampleDot.selected{
+  .sampleDot.selected {
     fill-opacity: 1;
-    stroke:none;
+    stroke: none;
   }
 
-  .dotightBG{
+  .dotightBG {
     pointer-events: none;
   }
 
-.showGroups{
-  font-size:12pt;
-}
-  .showGroups.selected{
+  .showGroups {
+    font-size: 12pt;
+  }
+  .showGroups.selected {
     background-color: #000066;
   }
 
-
 }
-.groupSplitView{
-  .background{
+
+.groupSplitView {
+  .background {
     fill: none;
-    stroke:$wes-gray;
+    stroke: $wes-gray;
   }
-  .tickleftCircle{
-    fill:$wes-gray;
+  .tickleftCircle {
+    fill: $wes-gray;
     opacity: .3;
     pointer-events: none;
   }
-  .sampleDot.highlighted{
-    fill:$wes-red;
+  .sampleDot.highlighted {
+    fill: $wes-red;
     fill-opacity: 1;
   }
-  .sampleDot.selected{
+  .sampleDot.selected {
     fill-opacity: 1;
-    stroke:2;
+    stroke: 2;
   }
 }
 
-
-path.selectionParco{
-  fill:none;
-  stroke:$wes-red;
+path.selectionParco {
+  fill: none;
+  stroke: $wes-red;
   stroke-width: 2px;
   stroke-opacity: .5;
 }
 
-.buttonSelected{
+.buttonSelected {
   background-color: $wes-green !important;
 }
 
-.sampleGroup{
+.sampleGroup {
 
-  .sampleGraph{
+  .sampleGraph {
     //fill-opacity: .8;
     pointer-events: none;
-    stroke:$wes-gray;
+    stroke: $wes-gray;
     stroke-width: 1px;
-    fill:$wes-gray;
+    fill: $wes-gray;
   }
 
-  .groupArea{
+  .groupArea {
     fill-opacity: 1;
     pointer-events: none;
-    stroke:none;
+    stroke: none;
 
-    fill:$wes-violet;
+    fill: $wes-violet;
   }
 
-  .sampleGroupBG, .sampleGroupLabelBG{
+  .sampleGroupBG, .sampleGroupLabelBG {
     fill: white;
   }
 
-  .sampleGroupLabelText{
+  .sampleGroupLabelText {
     pointer-events: none;
     font-size: 14px;
 
@@ -247,19 +236,19 @@ path.selectionParco{
 
 }
 
-.sampleGroup.highlighted{
-  .sampleGraph{
+.sampleGroup.highlighted {
+  .sampleGraph {
     //fill-opacity: .8;
     //pointer-events: none;
-    stroke:$wes-red;
-    fill:$wes-red;
+    stroke: $wes-red;
+    fill: $wes-red;
   }
 
-  .groupArea{
-    stroke:none;
+  .groupArea {
+    stroke: none;
   }
 
-  .sampleGroupLabelBG{
+  .sampleGroupLabelBG {
     fill: $wes-red;
     fill-opacity: .1;
     stroke: $wes-red;
@@ -267,44 +256,43 @@ path.selectionParco{
 
 }
 
-.sampleGroup.selected{
-  .sampleGroupBG{
-    stroke:none;
+.sampleGroup.selected {
+  .sampleGroupBG {
+    stroke: none;
     fill: $wes-red;
     fill-opacity: .3;
   }
 }
 
-
-
-.rangeRect{
-  fill:$wes-gray;
+.rangeRect {
+  fill: $wes-gray;
   fill-opacity: .3;
 }
 
-.isoMenu, .guiButtonBG{
-  fill:$wes-gray;
+.isoMenu, .guiButtonBG {
+  fill: $wes-gray;
   fill-opacity: .3;
   stroke: $wes-gray;
   //stroke-width: 1;
 
 }
-.isoMenu.selected, .guiButtonBG:hover{
-  fill:$wes-gray;
+
+.isoMenu.selected, .guiButtonBG:hover {
+  fill: $wes-gray;
   fill-opacity: 1;
   stroke: $wes-violet;
   stroke-width: 1;
 
 }
 
-.guiButtonLabel{
+.guiButtonLabel {
   font-size: 14px;
-  fill:$wes-violet;
+  fill: $wes-violet;
   pointer-events: none;
 }
 
-.menuDivideLine{
-  stroke:$wes-gray;
+.menuDivideLine {
+  stroke: $wes-gray;
   stroke-width: 1px;
 }
 
@@ -313,9 +301,6 @@ path.selectionParco{
 //    fill: $wes
 //  }
 //}
-
-
-
 
 .strandIndicator {
   .genomeAxisTicks {
@@ -329,7 +314,7 @@ path.selectionParco{
     stroke: none
   }
   .tick text {
-      font-size: 14px
+    font-size: 14px
   }
 }
 
@@ -338,9 +323,9 @@ path.selectionParco{
   pointer-events: visible;
   stroke: $wes-gray
 
-
 }
-.directionToggle.selected{
+
+.directionToggle.selected {
   fill: $wes-green
 }
 
@@ -350,157 +335,156 @@ select.btn-mini {
   height: auto;
   line-height: 25px;
 }
+
 input.btn-mini {
   height: auto;
-  width:auto;
+  width: auto;
   //line-height: 6px;
 }
 
 // ---- JUNCTION VIEW ----
 
-.jxn_heat_group{
-  .exon{
-    fill:$wes-violet;
-    fill-opacity:.1;
+.jxn_heat_group {
+  .exon {
+    fill: $wes-violet;
+    fill-opacity: .1;
   }
 
-  .background{
-    fill:white;
+  .background {
+    fill: white;
     //    fill-opacity: .3;
   }
 
 }
 
-.jxn_con_upper_group{
-  .areaCon{
+.jxn_con_upper_group {
+  .areaCon {
     fill: $wes-gray;
     opacity: .6;
     stroke: none;
   }
-  .areaCon.hiddenCon{
+  .areaCon.hiddenCon {
     opacity: 0.1;
   }
 
-  .areaCon.highlighted{
+  .areaCon.highlighted {
     opacity: 1;
   }
 
-
-  .lineCon{
+  .lineCon {
     stroke: $wes-violet;
     opacity: .5;
     pointer-events: none;
   }
-  .lineCon.hiddenCon{
+  .lineCon.hiddenCon {
     opacity: 0.1;
   }
 
-  .lineCon.highlighted{
+  .lineCon.highlighted {
     opacity: 1;
     stroke-width: 2px;
   }
 ;
 
-
 }
 
-.jxn_weight_panel{
-  .dots{ // TODO: make this the same as sampleDot
-    fill:$wes-gray;
+.jxn_weight_panel {
+  .dots {
+    // TODO: make this the same as sampleDot
+    fill: $wes-gray;
     fill-opacity: .7;
   }
 
-  .dots.highlighted{
-    fill:$wes-red;
+  .dots.highlighted {
+    fill: $wes-red;
     fill-opacity: 1;
   }
 
-  .panelIndicator{
-    fill:$wes-violet;
+  .panelIndicator {
+    fill: $wes-violet;
     stroke: none;
     opacity: .5;
     pointer-events: none;
 
   }
 
-  .sortDivider{
+  .sortDivider {
     stroke-width: 1px;
-    stroke:$wes-violet;
+    stroke: $wes-violet;
     stroke-opacity: .3;
-    stroke-dasharray: 7, 1 ;
+    stroke-dasharray: 7, 1;
     pointer-events: none;
   }
 
-  .inIsoformIndicator{
-    fill:$wes-yellow;//TODO: get from isoform
+  .inIsoformIndicator {
+    fill: $wes-yellow; //TODO: get from isoform
     stroke: $wes-violet;
     stroke-opacity: 1;
-
 
   }
 }
 
-.jxn_con_lower.con{
+.jxn_con_lower.con {
   stroke: $wes-violet;
   fill: none;
-  opacity:.5;
+  opacity: .5;
 }
-.jxn_con_lower.con.highlighted{
+
+.jxn_con_lower.con.highlighted {
   stroke-width: 2px;
-  opacity:1;
+  opacity: 1;
 }
 
-
-.jxn_con_triangle.donor{
+.jxn_con_triangle.donor {
   fill: $wes-gray;
   opacity: 1;
   stroke: $wes-violet;
 
 }
-.jxn_con_triangle.donor.highlighted{
+
+.jxn_con_triangle.donor.highlighted {
   opacity: 1;
   stroke: $wes-blue;
   stroke-width: 2px;
 }
 
-.jxn_con_triangle.receptor{
+.jxn_con_triangle.receptor {
   fill: white;
   opacity: 1;
   stroke: $wes-violet;
 }
+
 .jxn_con_triangle.receptor.highlighted {
   stroke: $wes-blue;
   stroke-width: 2px;
-  opacity:1;
+  opacity: 1;
 }
 
-.jxn_weight_group{
-    .panelBG{
-      fill: $wes-gray;
-      fill-opacity: .6;
-      stroke: none;
-    }
-    .panelBG.scatter{
-      //stroke:1px;
-      stroke:$wes-gray;
-      fill-opacity: .1;
-      //rx:8;
-    }
-  .panelBG.highlighted{
+.jxn_weight_group {
+  .panelBG {
+    fill: $wes-gray;
+    fill-opacity: .6;
+    stroke: none;
+  }
+  .panelBG.scatter {
+    //stroke:1px;
+    stroke: $wes-gray;
+    fill-opacity: .1;
+    //rx:8;
+  }
+  .panelBG.highlighted {
     fill-opacity: .2;
-    stroke:$wes-gray;
+    stroke: $wes-gray;
     stroke-opacity: .6;
   }
 
 }
 
-
-
-
 .edgeAnchor {
   fill: $wes-violet;
   fill-opacity: 1;
-  stroke: none}
+  stroke: none
+}
 
 .edgeConnector[type=donor] {
   stroke: $wes-violet
@@ -510,9 +494,9 @@ input.btn-mini {
   stroke: $wes-violet
 }
 
-path.stdDev{
+path.stdDev {
   fill: #48443D;
-  stroke:none;
+  stroke: none;
   //fill-opacity: .6;
   //stroke:$wes-gray;
   //stroke-width: 1px;
@@ -523,41 +507,40 @@ path.stdDev{
   stroke-dasharray: 10, 5;
 }
 
-.isoOptions{
-  color:$wes-violet;
+.isoOptions {
+  color: $wes-violet;
   opacity: .8;
 }
 
-
-
-.strandIndicator{
+.strandIndicator {
   //color:$wes-red;
-  fill:$wes-violet;
+  fill: $wes-violet;
   opacity: .8;
-  line{
-    stroke:$wes-violet;
+  line {
+    stroke: $wes-violet;
     opacity: .8;
   }
   .strandIndicatorBg {
-    fill:$wes-violet;
-    fill-opacity:.1;
+    fill: $wes-violet;
+    fill-opacity: .1;
   }
 
 }
 
-.viewLabelBg{
-  fill:$wes-gray;
+.viewLabelBg {
+  fill: $wes-gray;
   opacity: .5;
 }
-.viewLabelText{
-  fill:$wes-violet;
+
+.viewLabelText {
+  fill: $wes-violet;
   font-size: 14px;
 }
 
 // ===> here for html <===
-#visReads{
-//  max-height:300px;
-//  overflow-y: auto;
-//  overflow-x: visible;
-//  overflow-x: hidden;
+#visReads {
+  //  max-height:300px;
+  //  overflow-y: auto;
+  //  overflow-x: visible;
+  //  overflow-x: hidden;
 }
