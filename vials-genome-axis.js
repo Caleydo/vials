@@ -28,7 +28,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
     }
 
     // GLOBAL VARIABLES & STATUS
-    var margin = {top: 5, right: 150, bottom: 20, left: 150};
+    var margin = {top: 5, right: 150, bottom: 5, left: 150};
     var fullHeight = 30;
     var height = fullHeight - margin.top - margin.bottom;
 
@@ -94,6 +94,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       var that = this;
       var axis = that.data.genomeAxis;
       var width = axis.getWidth();
+      var genomeCoord = null;
 
 
       var textLabelPadding = 0
@@ -118,7 +119,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
       //--  create a group offset by the label
       var svgMain = svg.append("g").attr({
-        "class": "readsMain",
+        "class": "axisMain",
         "transform": "translate(" + textLabelPadding + ",0)"
       });
 
@@ -149,6 +150,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
           "pointer-events": "none"
         });
 
+        //crosshairGroup.append("text").attr("class", "crosshairPosBG")
         crosshairGroup.append("text").attr("class", "crosshairPos")
 
         var currentX = 0;
@@ -192,10 +194,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         // *****************
 
 
-        /*
-         ================= DRAW METHODS =====================
-         */
-
         function updateCrosshair(event, x) {
           var visible = (x < 0 || x > axis.getWidth()) ? "hidden" : "visible";
 
@@ -205,42 +203,157 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
             "visibility": visible
           })
 
-          d3.selectAll(".crosshairPos")
+          //crosshairGroup.selectAll(".crosshairPosBG")
+          //  .text(function (d) {
+          //    return axis.screenPosToGenePos(x)
+          //  }).attr({
+          //      "x": x + 9,
+          //      "y": 14,
+          //      "visibility": visible
+          //    });
+
+          crosshairGroup.selectAll(".crosshairPos")
             .text(function (d) {
               return axis.screenPosToGenePos(x)
-            })
-            .each(function () {
-              var self = d3.select(this),
-                bb = self.node().getBBox();
-              self.attr({
+            }).attr({
                 "x": x + 10,
-                "y": 0,//fullHeight - heatmapPlot.y - bb.height / 2,
+                "y": 15,
                 "visibility": visible
               });
-            })
+            //.each(function () {
+            //  var self = d3.select(this),
+            //    //bb = self.node().getBBox();
+            //  self.attr({
+            //    "x": x + 10,
+            //    "y": 15,
+            //    "visibility": visible
+            //  });
+            //})
         }
 
+      }
 
-        function drawAxis() {
-          var ticks = svgMain.selectAll(".ticks").data(d3.range(0, 100));
+      /*
+       ================= DRAW METHODS =====================
+       */
+
+      function updateAxis() {
+        console.log(genomeCoord, '\n-- genomeCoord --');
+        if (genomeCoord) {
+
+          //var diff = genomeCoord.end - genomeCoord.start;
+          var scale = d3.scale.linear().domain([0, 100]).range([genomeCoord.start, genomeCoord.end]);
+          var stepSize = (genomeCoord.end - genomeCoord.start) / 100
+
+
+          var ticks = svgMain.selectAll(".ticks").data(d3.range(0, 101));
           ticks.exit().remove();
 
+          //// --- adding Element to class ticks
+          //var ticksEnter = ticks.enter().append("line").attr({
+          //  "class": "ticks"
+          //})
+          //
+          //// --- changing nodes for ticks
+          //ticks.transition().attr({
+          //  x1: function (d) {
+          //    return axis.genePosToScreenPos(scale(d));
+          //  },
+          //  x2: function (d) {
+          //    return axis.genePosToScreenPos(scale(d));
+          //  },
+          //  y1: 0,
+          //  y2: height
+          //})
+
+
           // --- adding Element to class ticks
-          var ticksEnter = ticks.enter().append("circle").attr({
+          var ticksEnter = ticks.enter().append("polygon").attr({
             "class": "ticks"
           })
 
           // --- changing nodes for ticks
-          ticks.attr({
-            cx: function (d) {
-              return d * 10;
-            },
-            cy: height / 2,
-            r: 3
+          ticks.transition().attr({
+            points: function (d) {
+              if (genomeCoord.strand == '+') {
+                return axis.genePosToScreenPos(scale(d)) + ',0 ' +
+                  ((d != 100) ? axis.genePosToScreenPos(scale(d) + stepSize) + ',' + height / 2 + ' ' : '') +
+                  axis.genePosToScreenPos(scale(d)) + ',' + height;
+              } else {
+                return axis.genePosToScreenPos(scale(d)) + ',0 ' +
+                  ((d != 0) ? axis.genePosToScreenPos(scale(d) - stepSize) + ',' + height / 2 + ' ' : '') +
+                  axis.genePosToScreenPos(scale(d)) + ',' + height;
+
+
+              }
+            }
+
           })
 
+
+          // // --- adding Element to class ticks
+          //var ticksEnter = ticks.enter().append("rect").attr({
+          //  "class": "ticks"
+          //})
+          //
+          //// --- changing nodes for ticks
+          //ticks.transition().attr({
+          //  class:function(d){return d%2==0?'ticks even':'ticks odd';},
+          //  x: function (d) {
+          //    return axis.genePosToScreenPos(scale(d));
+          //  },
+          //  width: function (d) {
+          //    return axis.genePosToScreenPos(scale(d)+stepSize)-axis.genePosToScreenPos(scale(d));
+          //  },
+          //  y: 0,
+          //  height: height
+          //})
+
         }
+
+
       }
+
+      function updateReverseButton() {
+        var directionToggleGroup = svgMain.selectAll(".directionToggleGroup").data([1])
+        var directionToggleGroupEnter = directionToggleGroup.enter().append("g").attr({
+          "class": "directionToggleGroup"
+        })
+        directionToggleGroupEnter.append("rect").attr({
+          "class": "directionToggle",
+          "width": 125,
+          "height": 20,
+          "rx": 10,
+          "ry": 10
+        }).on("click", function () {
+          axis.reverse();
+          d3.select(this).classed("selected", !axis.ascending);
+          event.fire("axisChange");
+        })
+
+        directionToggleGroupEnter.append("line").attr({
+          "x1": 20,
+          "x2": 50,
+          "y1": 10,
+          "y2": 10,
+          //"stroke": "black",
+          "stroke-width": 5,
+          "marker-end": "url(\#scaleArrow)",
+          "marker-start": "url(\#scaleArrow)",
+        }).style("pointer-events", "none");
+        var directionToggleText = directionToggleGroupEnter.append("text").attr({}).text("reverse");
+        directionToggleText.attr("transform", "translate(65, 14)");
+        directionToggleText.style("pointer-events", "none");
+
+        directionToggleGroup.attr({
+          "transform": "translate(" + (axis.width + 10) + ",0)"
+        });
+
+
+      }
+
+
+
 
       /*
        ================= LAYOUT METHODS =====================
@@ -251,45 +364,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
        ================= HELPERMETHODS =====================
        */
 
-      /**
-       * a centralized method to decide if a flag is pointing left based on conditions
-       * @param type - the site type (donor or receptor)
-       * @param positiveStrand - boolean if on a positive strand
-       * @returns {boolean}
-       */
 
-      //var drawButton = function (d3sel, options) {
-      //    //x, y, w, h, label, event
-      //    var buttonG = d3sel.append("g").attr('class', 'guiButton')
-      //    buttonG.attr({
-      //        "transform": "translate(" + options.x + "," + options.y + ")"
-      //    });
-      //
-      //
-      //    buttonG.append('rect').attr({
-      //        class: 'guiButtonBG',
-      //        width: options.w,
-      //        height: options.h,
-      //        rx: 3,
-      //        ry: 3
-      //    }).on({
-      //        'click': function () {
-      //            event.fire(options.event)
-      //        }
-      //    });
-      //
-      //    var buttonLabel = buttonG.append('text').text(options.label)
-      //    var bb = buttonLabel.node().getBBox();
-      //
-      //
-      //    buttonLabel.attr({
-      //        class: 'guiButtonLabel',
-      //        x: (options.w - bb.width) / 2,
-      //        y: options.h - (options.h - bb.height) / 2 - 3
-      //    })
-      //
-      //
-      //}
 
       /*
        ================= GENERAL METHODS =====================
@@ -302,6 +377,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       function updateVis() {
         //TODO
         updateAxis();
+        updateReverseButton();
 
 
       }
@@ -316,10 +392,19 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         var curProject = gui.current.getSelectedProject();
 
         that.data.getGeneData(curProject, curGene).then(function (sampleData) {
+
           reset();
           axis = that.data.genomeAxis;
           width = axis.getWidth();
-          svg.attr("width", width + margin.left + margin.right + textLabelPadding);
+          svg.attr("width", axis.getWidth() + margin.left + margin.right + textLabelPadding);
+          genomeCoord = {
+            start: sampleData.gene.start,
+            end: sampleData.gene.end,
+            strand: sampleData.gene.strand
+          };
+
+          updateVis();
+          console.log(genomeCoord, '\n-- genomeCoord --');
         });
 
 

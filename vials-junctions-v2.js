@@ -29,13 +29,49 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
   // GLOBAL VARIABLES & STATUS
   var margin = {top: 40, right: 150, bottom: 10, left: 150};
-  var fullHeight = 330;
+  var fullHeight = 350;
   var height = fullHeight - margin.top - margin.bottom;
+
+
+  //icon: "\uf012",
+  //  icon
+  //:
+  //"\uf24d",
+  //  icon
+  //:
+  //"\uf259"
+
+  var guiHead = {
+    y: 5,
+    height: 17,
+    title: 'on click open:',
+    options: [
+      {
+        name: 'dotplot',
+        icon: "\uf012",
+        id:'scatter',
+        x:0,
+        w:80,
+        action:function(){guiHead.defaultOption = 'scatter'; }
+      },
+      {
+        name: 'group comparison',
+        icon: "\uf24d",
+        id:'groupX',
+        x:81,
+        w:150,
+        action:function(){guiHead.defaultOption = 'groupX'; }
+      }
+
+
+    ],
+    defaultOption:'scatter'
+  }
 
   var abundancePlot = {
     height: 200,
     prefix: "jxn_weight",
-    y: 0,
+    y: 30,
     panels: {
       panelGapsize: 4,
       prefix: "jxn_weight_panel",
@@ -76,7 +112,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
   var connectorPlot = {
     height: 100,
     prefix: "jxn_con",
-    y: abundancePlot.height,
+    y: abundancePlot.height + abundancePlot.y,
     frozenHighlight: null, // dynamic
     upperConnectors: {
       height: 60,
@@ -99,7 +135,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
   var heatmapPlot = {
     height: 15,
     prefix: "jxn_heat",
-    y: abundancePlot.height + connectorPlot.height
+    y: connectorPlot.y + connectorPlot.height
   }
 
 
@@ -161,6 +197,11 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       "transform": "translate(" + textLabelPadding + ",0)"
     });
 
+    guiHead.g = svgMain.append('g').attr({
+      "transform": "translate(" + 0 + "," + guiHead.y + ")",
+      "class": "guiHead_group"
+    })
+
     abundancePlot.g = svgMain.append("g").attr({
       "transform": "translate(" + 0 + "," + abundancePlot.y + ")",
       "class": abundancePlot.prefix + "_group"
@@ -220,7 +261,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         "pointer-events": "none"
       });
 
-      crosshairGroup.append("text").attr("class", "crosshairPos")
+      //crosshairGroup.append("text").attr("class", "crosshairPos")
 
       var currentX = 0;
       heatmapPlot.g.on("mousemove", function () {
@@ -228,6 +269,52 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         event.fire("crosshair", currentX);
 
       })
+
+      var ghTitle = guiHead.g.append('text').text(guiHead.title).attr({
+        y:guiHead.height-3
+      })
+      var bb = ghTitle.node().getBBox();
+
+      var guiHeadOption = guiHead.g.selectAll(".guiHeadOption").data(guiHead.options);
+      guiHeadOption.exit().remove();
+
+      // --- adding Element to class guiHeadOption
+      var guiHeadOptionEnter = guiHeadOption.enter().append("g").attr({
+          "class":"guiHeadOption",
+          "transform":function(d,i) {return "translate("+(d.x+bb.width+5)+","+0+")";}
+
+      }).classed('selected', function(dd){return dd.id== guiHead.defaultOption});
+
+      guiHeadOptionEnter.append('rect').attr({
+        class:"guiButtonBG",
+        width:function(d){return d.w;},
+        height:guiHead.height
+      }).on({
+        'click':function(d){
+          guiHeadOption.classed('selected', function(dd){return dd.id== d.id});
+          d.action();
+          updateVis();
+
+        }
+      })
+
+      guiHeadOptionEnter.append('text').attr({
+        class: "guiButtonLabel",
+        x: 3,
+        y: guiHead.height-3
+      }).text(function(d){return d.name;});
+
+      guiHeadOptionEnter.append('text').attr({
+        class: "decoration",
+        y: guiHead.height-3,
+        x: function(d){return d.w-20;}
+      }).text(function(d){return d.icon;});
+
+
+
+
+
+
 
 
       initEventHandlers();
@@ -407,7 +494,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
               var match = allJxns[lastExon.end + ':' + exon.start];
               if (match != null) {
-                match.state = 'scatter' // TODO: modify default behavior
+                match.state = guiHead.defaultOption // TODO: modify default behavior
                 match.selectedIsoform = true; // needed for decoration
                 //matchingJxn.push(match);
               }
@@ -500,19 +587,19 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         "visibility": visible
       })
 
-      d3.selectAll(".crosshairPos")
-        .text(function (d) {
-          return axis.screenPosToGenePos(x)
-        })
-        .each(function () {
-          var self = d3.select(this),
-            bb = self.node().getBBox();
-          self.attr({
-            "x": x + 10,
-            "y": fullHeight - heatmapPlot.y - bb.height / 2,
-            "visibility": visible
-          });
-        })
+      //d3.selectAll(".crosshairPos")
+      //  .text(function (d) {
+      //    return axis.screenPosToGenePos(x)
+      //  })
+      //  .each(function () {
+      //    var self = d3.select(this),
+      //      bb = self.node().getBBox();
+      //    self.attr({
+      //      "x": x + 10,
+      //      "y": fullHeight - heatmapPlot.y - bb.height / 2,
+      //      "visibility": visible
+      //    });
+      //  })
     }
 
     // -- HEATMAP PLOT --
@@ -543,47 +630,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
           return axis.genePosToScreenPos(d[endField]) - axis.genePosToScreenPos(d[startField]);
         }
       })
-
-
-      function updateReverseButton() {
-        var directionToggleGroup = heatMapGroup.selectAll(".directionToggleGroup").data([1])
-        var directionToggleGroupEnter = directionToggleGroup.enter().append("g").attr({
-          "class": "directionToggleGroup"
-        })
-        directionToggleGroupEnter.append("rect").attr({
-          "class": "directionToggle",
-          "width": 125,
-          "height": 20,
-          "rx": 10,
-          "ry": 10
-        }).on("click", function () {
-          axis.reverse();
-          d3.select(this).classed("selected", !axis.ascending);
-          event.fire("axisChange");
-        })
-
-        directionToggleGroupEnter.append("line").attr({
-          "x1": 20,
-          "x2": 50,
-          "y1": 10,
-          "y2": 10,
-          //"stroke": "black",
-          "stroke-width": 5,
-          "marker-end": "url(\#scaleArrow)",
-          "marker-start": "url(\#scaleArrow)",
-        }).style("pointer-events", "none");
-        var directionToggleText = directionToggleGroupEnter.append("text").attr({}).text("reverse");
-        directionToggleText.attr("transform", "translate(65, 14)");
-        directionToggleText.style("pointer-events", "none");
-
-        directionToggleGroup.attr({
-          "transform": "translate(" + (axis.width + 10) + ",0)"
-        });
-
-
-      }
-
-      updateReverseButton();
 
 
     }
@@ -832,7 +878,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         height: abundancePlot.height
       }).on({
         "click": function (d) {
-          if (d.jxn.state == 'std') d.jxn.state = 'scatter';
+          if (d.jxn.state == 'std') d.jxn.state = guiHead.defaultOption;
           else d.jxn.state = 'std';
           event.fire("updateVis")
         },

@@ -116,6 +116,16 @@ text.decoration.selected {
     stroke: white;
     stroke-width: 5px;
   }
+  //.crosshairPos{
+  //  fill:white;
+  //  font-weight: 100;
+  //}
+  // .crosshairPosBG{
+  //  font-weight: 900;
+  //   fill:blue;
+  //   fill-opacity: 1;
+  //}
+  
 }
 
 .highlight, .highlights {
@@ -263,6 +273,44 @@ path.selectionParco {
     fill-opacity: .3;
   }
 }
+
+
+.axisMain{
+  .ticks{
+    fill: $wes-violet;
+    fill-opacity: .3;
+  }
+
+
+}
+
+.guiHeadOption{
+  text{
+    pointer-events: none;
+  }
+
+}
+.guiHeadOption:hover{
+  text{
+    fill-opacity: 1;
+  fill: $wes-violet;
+  }
+}
+
+.guiHeadOption.selected{
+
+  text{
+    fill-opacity: 1;
+  fill: $wes-violet;
+  }
+
+  .guiButtonBG{
+    @extend .guiButtonBG:hover
+  }
+
+}
+
+
 
 .rangeRect {
   fill: $wes-gray;

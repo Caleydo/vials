@@ -170,7 +170,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         "pointer-events": "none"
       });
 
-      crosshairGroup.append("text").attr("class", "crosshairPos")
+      //crosshairGroup.append("text").attr("class", "crosshairPos")
 
       var currentX = 0;
       svg.on("mousemove", function () {
@@ -436,19 +436,19 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         "visibility": visible
       })
 
-      d3.selectAll(".crosshairPos")
-        .text(function (d) {
-          return axis.screenPosToGenePos(x)
-        })
-        .each(function () {
-          var self = d3.select(this),
-            bb = self.node().getBBox();
-          self.attr({
-            "x": x + 10,
-            "y": 0,//fullHeight - heatmapPlot.y - bb.height / 2,
-            "visibility": visible
-          });
-        })
+      //d3.selectAll(".crosshairPos")
+      //  .text(function (d) {
+      //    return axis.screenPosToGenePos(x)
+      //  })
+      //  .each(function () {
+      //    var self = d3.select(this),
+      //      bb = self.node().getBBox();
+      //    self.attr({
+      //      "x": x + 10,
+      //      "y": 0,//fullHeight - heatmapPlot.y - bb.height / 2,
+      //      "visibility": visible
+      //    });
+      //  })
     }
 
 
