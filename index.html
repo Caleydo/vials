@@ -41,8 +41,8 @@
     <div class="container-fluid">
 
         <div class="navbar-header">
-            <a class="navbar-brand" href="#" style="padding:5px; height: 35px;">
-                <img alt="Brand" src="img/logo_vials.png" style="padding: 5px; width: 40px;">
+            <a class="navbar-brand" href="." style="padding:5px; height: 35px;">
+                <img alt="Vials" src="img/logo_vials.png" style="padding: 5px; width: 40px;">
             </a>
         </div>
 
@@ -78,23 +78,49 @@
         </div>
 
 
+        <div class="navbar-text navbar-right">
+
+            <!--<i class="fa fa-external-link" title='export link for gene' style="font-size: 18px; padding-right: 10px;text-decoration: none;"></i>-->
+            <a class="fa fa-info-circle menuRight"
+               title='project info page' style="font-size: 18px; padding-right: 10px;padding-left: 10px"
+                    href="http://vcglab.org/vials" target="_blank"></a>
+
+        </div>
+
     </div>
 
     </div>
 </nav>
 
 <div id="vis_canvas" style="overflow-y: auto;opacity:0 ">
-    <div id="startScreen" style="position: relative; top: 30%;left: 50%;
-         margin-left: -162px;margin-top: -162px; width:324px;">
-        <img src="img/logo_vials_large.png"/>
+    <!--<div id="startScreen">-->
+    <div style="position: relative; top: 30%;left: 50%;
+         margin-left: -300px; width:600px;" class="startScreen">
+        <p style="text-align: center;">
+        <img id='vialsLogo' src="img/logo_vials_large.png" width="200"/>
+</p>
 
-        <p id="startScreenText" style="text-align: center">
-            <!--<span class="glyphicon glyphicon-refresh glyphicon-spin" ></span>-->
-            <span style="font-size: 18pt; font-weight: bold;">
-                Vials 1.5
-            </span>
+        <p style="text-align: center;font-size: 18pt; font-weight: bold;">
+            Vials 1.5
         </p>
+        <p style="text-align: center;">
+            <b>Vi</b>sualizing <b>Al</b>ternative <b>S</b>plicing<br/>
+            more information <a href="http://vcglab.org/vials">here</a> 
+        </p>
+
+          <p id="startScreenText" style="text-align: center; padding-top: 20px; font-weight: bold;">
+
+          </p>
+
     </div>
+        <div style="position: fixed; bottom: 20px; left:50%; width:600px; margin-left:-300px " class="startScreen">
+            <p style="text-align: center">
+                <img src="img/logo_seas.png" style='padding-right: 20px;' width="150"> <img src="img/logo_utah.png" width="150" style='padding-right: 20px;'> <img src="img/calweb.png" width="150" style='padding-right: 20px;'> TU Wien and Novartis
+
+            </p>
+        </div>
+
+<!--</div>-->
 
     <div id="vials_vis" style="opacity: .0001">
         <!--<div id="geneSelector" class="selectivity-input navbar-form navbar-left" style="width: 200px; "></div>-->

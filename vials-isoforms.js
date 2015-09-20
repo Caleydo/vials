@@ -251,7 +251,9 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
           //console.log("mout", d3.event.target)
           d3.select(this).select(".background rect").classed("selected", false);
         }
-      })
+      }).append("title").text(function (d) {
+          return d.id;
+        })
 
 
       /*
@@ -692,7 +694,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
           }
         }).append("title").text(function (d) {
-          return d.sample;
+          return d.sample +'\n'+ d.weight;
         })
 
 

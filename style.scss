@@ -75,6 +75,18 @@ text.decoration.selected {
   fill: $wes-blue;
 }
 
+.menuRight{
+  color: $wes-violet;
+  opacity: .8;
+  text-decoration: none;
+}
+
+.menuRight:hover{
+  color: $wes-violet;
+  opacity: 1;
+  text-decoration: none;
+}
+
 //by convention create a namespace for your own plugin
 .gv {
   //  textarea{
@@ -237,7 +249,8 @@ path.selectionParco {
   .groupArea {
     fill-opacity: 1;
     pointer-events: none;
-    stroke: none;
+    stroke: $wes-violet;
+    stroke-width: .5px;
 
     fill: $wes-violet;
   }
@@ -263,7 +276,7 @@ path.selectionParco {
   }
 
   .groupArea {
-    stroke: none;
+    //stroke: none;
   }
 
   .sampleGroupLabelBG {

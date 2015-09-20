@@ -895,7 +895,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         "click": function (d) {
           if (d.jxn.state == 'std') d.jxn.state = guiHead.defaultOption;
           else d.jxn.state = 'std';
-          event.fire("updateVis")
+          updateVis();
         },
         "mouseover": function (d) {
           event.fire("highlightJxn", d.key, true);
@@ -1050,6 +1050,8 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
           }
 
+        }).append("title").text(function (d) {
+          return d.w.sample +'\n'+ d.w.weight;
         })
 
         alldots.transition().attr({

@@ -122,7 +122,8 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
 
     setGroup: function (idList) {
 
-      var groupName = _.uniqueId('group_')
+      var grpID = idList.map(function(d){return _.slice(d,0,2).join('')}).join('_')
+      var groupName = _.uniqueId('grp_'+grpID+'-')
       this.groups[groupName] = idList;
       this.groupRetainCount[groupName] = 0;
       return groupName;

@@ -49,17 +49,17 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         event: 'buttonUnGroupSelected'
 
       },
-      {
-        w: 150,
-        label: 'unselect all',
-        event: 'buttonUnselectAll'
-
-      },
-      {
-        w: 150,
-        label: 'group by attribute',
-        event: 'buttonGroupByAttribute'
-      }
+      //{
+      //  w: 150,
+      //  label: 'unselect all',
+      //  event: 'buttonUnselectAll'
+      //
+      //},
+      //{
+      //  w: 150,
+      //  label: 'group by attribute',
+      //  event: 'buttonGroupByAttribute'
+      //}
     ]
 
 
@@ -558,7 +558,14 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
           }
 
         }
-      })
+      }).append("title").text(function (d) {
+          if (d.type && d.type == 'grp') {
+            return d.grpItems.join('\n');
+          } else {
+            return d.sample;
+          }
+
+        })
 
       sampleGroupEnter.append("text").attr({
         "class": "sampleGroupLabelText",
@@ -698,8 +705,13 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
     function updateVis() {
       //TODO
-      svg.attr("height", allData.measures.wiggles.length * readsPlot.panels.std.xDiff + readsPlot.y)
+      fullHeight = allData.measures.wiggles.length * readsPlot.panels.std.xDiff + readsPlot.y
+      svg.attr("height", fullHeight)
         .attr("width", axis.getWidth() + margin.left + margin.right )
+
+      crosshairGroup.select('.crosshair').attr({
+        "y2": fullHeight
+      })
 
       updateWiggles();
 

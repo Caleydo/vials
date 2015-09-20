@@ -2,7 +2,7 @@
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 2/25/15.
  */
 
-define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], function (exports, d3, $, event, selectivity) {
+define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs', 'lodash'], function (exports, d3, $, event, selectivity, _) {
 
   //'../bower_components/selectivity/dist/selectivity-full.js'
   function VialsGUI() {
@@ -34,9 +34,18 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
     this.isoForm = null;
 
     this.mappedColors = d3.map();
-    this.availableColors = d3.scale.category10().range().map(function (d) {
-      return d
-    }).reverse();
+    //this.availableColors = d3.scale.category10().range().map(function (d) {
+    //  if (d!='#d62728') return d;
+    //  else return '#aabbcc'
+    //}).reverse();
+
+    //google colors (http://bl.ocks.org/aaizemberg/78bd3dade9593896a59d) witout red ( "#dc3912", "#dd4477","#b82e2e",)
+    this.availableColors =
+      ["#3366cc", "#ff9900", "#109618", "#990099", "#0099c6",
+        "#66aa00",  "#316395", "#994499", "#22aa99", "#aaaa11",
+        "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6",
+        "#3b3eac"].reverse();
+
 
     this.getColorForSelection = function (name) {
       if (!(that.mappedColors.has(name))) {
@@ -145,7 +154,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
               '<i class="fa fa-remove"></i>' +
               '</a>'
                 : '') +
-              escape(options.text) + ' (' + options.id +
+              options.text + ' (' + options.id +
               ')</span>'
             );
           },
@@ -167,17 +176,22 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
     this.populateGeneData = function (projectIDitem, geneID) {
       $('#startScreenText')
         .html(' Loading.. ') //<span class="glyphicon glyphicon-refresh glyphicon-spin" ></span>
-      $('#startScreen').find('img').addClass('fa-spin-custom')
+      $('#vialsLogo').addClass('fa-spin-custom')
+
+      $(that.chromIDDiv.node()).val('-');
+      $(that.startPosDiv.node()).val('---');
+      $(that.strandDiv.node()).val('?');
+      history.pushState({project: projectIDitem.id, gene:geneID},'Title',location.pathname+'?projectID='+projectIDitem.id+'&geneID='+geneID)
 
       $('#vials_vis').fadeOut(function () {
-        $('#startScreen').fadeIn(
+        $('.startScreen').fadeIn(
           loadData
         )
       })
 
       function loadData() {
         that.genomeDataLink.getGeneData(projectIDitem['id'], geneID).then(function (geneData) {
-          $('#startScreen').fadeOut('fast',function () {
+          $('.startScreen').fadeOut('fast', function () {
             $('#vials_vis').fadeTo('fast', 1)
           })
 
@@ -232,9 +246,16 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
     }
 
 
+    this.currentGeneSelectorCall = function () {
+
+    };
+
+
     function updateGeneSelector(projectIDitem, selectedGene) {
+      console.log(projectIDitem, '\n-- projectIDitem --');
       var ajax = that.getAjaxConfiguration(projectIDitem['id'])
       $geneSelector.selectivity('setOptions', {ajax: ajax})
+      $geneSelector.off('change', that.currentGeneSelectorCall)
 
 
       if (selectedGene) {
@@ -243,24 +264,34 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
             var selGeneInfo = selGeneInfoArray[0];
             var geneIDitem = {
               id: selGeneInfo.id,
-              text: selGeneInfo.name ? selGeneInfo.name : '---' + " (" + selGeneInfo.id + ") "
+              text: (selGeneInfo.name ? selGeneInfo.name : '---') + " (" + selGeneInfo.id + ") "
             }
             $geneSelector.selectivity('data', geneIDitem)
             that.populateGeneData(projectIDitem, selGeneInfo.id)
           }
-          $geneSelector.on('change', function (event) {
-            that.populateGeneData(projectIDitem, event.value)
-          })
 
         })
       } else {
+        $geneSelector.selectivity('data', null);
+        $(that.chromIDDiv.node()).val('-');
+        $(that.startPosDiv.node()).val('---');
+        $(that.strandDiv.node()).val('?');
+        $('#startScreenText')
+        .html(' please select a gene ') //<span class="glyphicon glyphicon-refresh glyphicon-spin" ></span>
+        $('#vialsLogo').removeClass('fa-spin-custom')
+        $('#vials_vis').fadeOut(function () {
+          $('.startScreen').fadeIn(
 
-        $geneSelector.on('change', function (event) {
-          //console.log(projectIDitem,'\n-- projectIDitem --');
-          //console.log(event,'\n-- event --');
-          that.populateGeneData(projectIDitem, event.value)
+          )
         })
+
       }
+
+
+      that.currentGeneSelectorCall = function (event) {
+        that.populateGeneData(projectIDitem, event.value)
+      }
+      $geneSelector.on('change', that.currentGeneSelectorCall)
 
 
     }
@@ -295,7 +326,9 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
         }
 
         $projectSelector.on('change', function (event) {
-          updateGeneSelector(event.value);
+          console.log(event, '\n-- event --');
+          updateGeneSelector({id: event.value}, null);
+
         });
 
 
