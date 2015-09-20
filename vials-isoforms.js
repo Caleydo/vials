@@ -35,6 +35,13 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
   var currentlySelectedIsoform = null;
 
+
+  var isoformPlot={
+      scatterWidth : 200,
+      extraLabel : 100
+  }
+
+
   var sortByMean = function (a, b) {
     return b.mean - a.mean;
   };
@@ -45,6 +52,12 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
     var that = this;
     that.axis = that.data.genomeAxis;
     that.dotsJittered = true;
+
+    // sytem wide vars
+
+    var isoformList = []
+    var minMaxValues = [];
+    var metaInfo = {};
 
 
     var head = $parent.append("div").attr({
@@ -167,11 +180,12 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
       return x * (exonHeight + 3)
     };
 
-    function drawIsoforms(isoformList, minMaxValues, metaInfo) {
-      console.log("list", isoformList);
-
-      var scatterWidth = 200;
-      var extraLabel = 100;
+    function drawIsoforms( ) {
+      if (isoformList.length<1) return;
+      //console.log("list", isoformList);
+      //{"isoform_unit": sampleData.measures["isoform_unit"]}
+      var scatterWidth = isoformPlot.scatterWidth;
+      var extraLabel = isoformPlot.extraLabel;
       var axisOffset = that.axis.getWidth() + 10;
       var noIsoforms = isoformList.length;
       var scaleYSpace = 25;
@@ -186,7 +200,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
       drawViewLabel(height);
 
-      console.log(minMaxValues);
+      //console.log(minMaxValues);
       var scaleXScatter = d3.scale.linear().domain([0, minMaxValues[1]]).range([axisOffset, axisOffset + scatterWidth])
 
 
@@ -278,17 +292,32 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
        * =========================
        * */
 
-      var boxPlotGroup = bg.append("g").attr("class", "boxplot");
-      boxPlotGroup.selectAll(".vticks").data(function (d) {
+      //var boxPlotGroup = bg.append("g").attr("class", "boxplot");
+
+
+      var boxPlotGroup = isoform.select('.background').selectAll(".boxplot").data(function(d){return [d]});
+      boxPlotGroup.exit().remove();
+
+      // --- adding Element to class boxplot
+      var boxplotEnter = boxPlotGroup.enter().append("g").attr({
+          "class":"boxplot"
+      })
+
+
+
+      var bp_vticks = boxPlotGroup.selectAll(".vticks").data(function (d) {
         return [
           d.boxPlot.whiskerDown,
           d.boxPlot.Q[1],
           d.boxPlot.Q[2],
           d.boxPlot.Q[3],
           d.boxPlot.whiskerTop]
-      }).enter().append("line").attr({
-        class: "vticks",
-        x1: function (d) {
+      })
+      bp_vticks.enter().append("line").attr({
+        class: "vticks"
+      })
+      bp_vticks.attr({
+          x1: function (d) {
           return scaleXScatter(d);
         },
         x2: scaleXScatter,
@@ -296,13 +325,18 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
         y2: exonHeight - 2
       })
 
-      boxPlotGroup.selectAll(".hticks").data(function (d) {
+
+
+      var bp_hticks = boxPlotGroup.selectAll(".hticks").data(function (d) {
         return [
           [1, d.boxPlot.Q[1], d.boxPlot.Q[3]],
           [exonHeight - 2, d.boxPlot.Q[1], d.boxPlot.Q[3]]
         ];
-      }).enter().append("line").attr({
-        class: "hticks",
+      })
+      bp_hticks.enter().append("line").attr({
+        class: "hticks"
+      })
+      bp_hticks.attr({
         x1: function (d) {
           return scaleXScatter(d[1]);
         },
@@ -317,14 +351,19 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
         }
       })
 
-      boxPlotGroup.selectAll(".wticks").data(function (d) {
+
+      var bp_wticks = boxPlotGroup.selectAll(".wticks").data(function (d) {
         return [
           [d.boxPlot.whiskerDown, d.boxPlot.Q[1]],
           [d.boxPlot.Q[3], d.boxPlot.whiskerTop]
         ];
-      }).enter().append("line").attr({
-        class: "wticks",
+      })
+      bp_wticks.enter().append("line").attr({
+        class: "wticks"
+      })
+      bp_wticks.attr({
         x1: function (d) {
+          console.log('wtick_update', d);
           return scaleXScatter(d[0]);
         },
         x2: function (d) {
@@ -631,9 +670,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
         // --- adding Element to class sampleDot
         var sampleDotEnter = sampleDot.enter().append("circle").attr({
-          "class": function (d) {
-            return "sampleDot sample" + cleanSelectors(d.sample);
-          },
+
           r: 3
         }).on({
           "mouseover": function (d) {
@@ -661,6 +698,9 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
         // --- changing nodes for sampleDot
         sampleDot.attr({
+          "class": function (d) {
+            return "sampleDot sample" + cleanSelectors(d.sample);
+          },
           cx: function (d) {
             return scaleXScatter(d.weight)
           },
@@ -669,6 +709,22 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
             else return exonHeight / 2;
           } // TODO: remove scatter
         })
+
+
+        isoform.select('.highlight').selectAll('.sampleDot').attr({
+          "class": function (d) {
+            return "sampleDot sample" + cleanSelectors(d.sample);
+          },
+          cx: function (d) {
+            return scaleXScatter(d.weight)
+          },
+          cy: function () {
+            if (that.dotsJittered) return exonHeight / 4 + Math.random() * exonHeight / 2;
+            else return exonHeight / 2;
+          } // TODO: remove scatter
+        })
+
+
       }
 
       drawSampleDots();
@@ -815,11 +871,11 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
           })
 
 
-          // console.log(allDots);
-          allDots.each(function (d, i) {
-
-            //console.log(d, d3.select(this).style("fill"));
-          })
+          //// console.log(allDots);
+          //allDots.each(function (d, i) {
+          //
+          //  //console.log(d, d3.select(this).style("fill"));
+          //})
 
 
         } else {
@@ -870,10 +926,11 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
       })
 
-      //// --- changing nodes for showGroups
-      //showGroups.attr({
-      //
-      //})
+      // --- changing nodes for showGroups
+      showGroups.attr({
+       "x": scaleXScatter.range()[1] + 10,
+        "y": exonHeight - 4
+      })
 
 
     }
@@ -1109,6 +1166,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
     function axisUpdate() {
 
+      width = that.axis.getWidth() + 2 * isoformPlot.scatterWidth + isoformPlot.extraLabel;
       svg.attr("height", height + margin.top + margin.bottom)
         .attr("width", width + margin.left + margin.right);
 
@@ -1242,7 +1300,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
         mergedRanges = sampleData.gene['merged_ranges'];
 
-        var minMax = d3.extent(sampleData.measures.isoforms, function (d) {
+        minMaxValues = d3.extent(sampleData.measures.isoforms, function (d) {
           return +d.weight;
         })
 
@@ -1259,7 +1317,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
         //var allExons = sampleData.gene.exons;
 
 
-        var usedIsoformsList = []
+        isoformList = []
         Object.keys(usedIsoforms).map(function (isokey) {
 
           if (isokey in allIsoforms) {
@@ -1298,7 +1356,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
             })
             res.mean = d3.mean(allWeights)
             res.boxPlot = computeBoxPlot(allWeights)
-            usedIsoformsList.push(res)
+            isoformList.push(res)
           } else {
             console.log("isoform measured but no meta: ", isokey);
           }
@@ -1311,12 +1369,13 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
         // update the map between sample and a unique css-save selectorName
         sampleSelectorMap = {};
-        usedIsoformsList[0].weights.forEach(function (d, i) {
+        isoformList[0].weights.forEach(function (d, i) {
           sampleSelectorMap[d.sample] = i;
         })
 
+        metaInfo = {"isoform_unit": sampleData.measures["isoform_unit"]}
 
-        drawIsoforms(usedIsoformsList, minMax, {"isoform_unit": sampleData.measures["isoform_unit"]});
+        drawIsoforms();
 
       })
 
@@ -1362,6 +1421,8 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
     event.on("newDataLoaded", updateData)
 
     event.on("axisChange", axisUpdate)
+
+    event.on('updateVis', drawIsoforms)
 
 
     return head.node();

@@ -16,6 +16,8 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
 
     this.toggleIntrons = d3.select("#toggleIntrons");
 
+    //this.increaseSize = d3.select('#increaseSize');
+
 
     this.baseWidthInputDiv = d3.select("#baseWidth").attr({
       type: "text",
@@ -84,19 +86,19 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
       });
 
 
-      d3.select("#decreaseWidth").on("click", function () {
+      d3.select("#decreaseSize").on("click", function () {
         that.genomeDataLink.getGeneData(that.getSelectedProject(), that.getSelectedGene()).then(function (geneData) {
           that.genomeDataLink.genomeAxis.avrgExonLength = Math.max(that.genomeDataLink.genomeAxis.avrgExonLength - 10, 10);
           that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"]);
-          event.fire("redrawAllVis");
+          event.fire("updateVis");
         })
       });
 
-      d3.select("#increaseWidth").on("click", function () {
+      d3.select("#increaseSize").on("click", function () {
         that.genomeDataLink.getGeneData(that.getSelectedProject(), that.getSelectedGene()).then(function (geneData) {
           that.genomeDataLink.genomeAxis.avrgExonLength = that.genomeDataLink.genomeAxis.avrgExonLength + 10;
           that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"]);
-          event.fire("redrawAllVis");
+          event.fire("updateVis");
         })
       });
 
@@ -175,9 +177,10 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
 
       function loadData() {
         that.genomeDataLink.getGeneData(projectIDitem['id'], geneID).then(function (geneData) {
-          $('#startScreen').fadeOut(function () {
+          $('#startScreen').fadeOut('fast',function () {
             $('#vials_vis').fadeTo('fast', 1)
           })
+
           //$('#startScreen').find('img').removeClass('fa-spin-custom')
 
 
@@ -185,6 +188,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs'], fu
           $(that.startPosDiv.node()).val(geneData.gene.start + "-" + geneData.gene.end);
           $(that.strandDiv.node()).val(geneData.gene.strand);
 
+          that.genomeDataLink.genomeAxis.avrgExonLength = 30;
           that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start, geneData.gene.end);
           that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"]);
           that.genomeDataLink.genomeAxis.shrinkIntrons(true);

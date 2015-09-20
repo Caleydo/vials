@@ -49,23 +49,23 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       {
         name: 'dotplot',
         icon: "\uf012",
-        id:'scatter',
-        x:0,
-        w:80,
-        action:function(){guiHead.defaultOption = 'scatter'; }
+        id: 'scatter',
+        x: 0,
+        w: 80,
+
       },
       {
         name: 'group comparison',
         icon: "\uf24d",
-        id:'groupX',
-        x:81,
-        w:150,
-        action:function(){guiHead.defaultOption = 'groupX'; }
+        id: 'groupX',
+        x: 81,
+        w: 150,
+
       }
 
 
     ],
-    defaultOption:'scatter'
+    defaultOption: 'scatter'
   }
 
   var abundancePlot = {
@@ -271,7 +271,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       })
 
       var ghTitle = guiHead.g.append('text').text(guiHead.title).attr({
-        y:guiHead.height-3
+        y: guiHead.height - 3
       })
       var bb = ghTitle.node().getBBox();
 
@@ -280,19 +280,34 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
       // --- adding Element to class guiHeadOption
       var guiHeadOptionEnter = guiHeadOption.enter().append("g").attr({
-          "class":"guiHeadOption",
-          "transform":function(d,i) {return "translate("+(d.x+bb.width+5)+","+0+")";}
+        "class": "guiHeadOption",
+        "transform": function (d, i) {
+          return "translate(" + (d.x + bb.width + 5) + "," + 0 + ")";
+        }
 
-      }).classed('selected', function(dd){return dd.id== guiHead.defaultOption});
+      }).classed('selected', function (dd) {
+        return dd.id == guiHead.defaultOption
+      });
 
       guiHeadOptionEnter.append('rect').attr({
-        class:"guiButtonBG",
-        width:function(d){return d.w;},
-        height:guiHead.height
+        class: "guiButtonBG",
+        width: function (d) {
+          return d.w;
+        },
+        height: guiHead.height
       }).on({
-        'click':function(d){
-          guiHeadOption.classed('selected', function(dd){return dd.id== d.id});
-          d.action();
+        'click': function (d) {
+          guiHeadOption.classed('selected', function (dd) {
+            return dd.id == d.id
+          });
+          _.each(allJxns, function (jxn) {
+            if (jxn.state == guiHead.defaultOption) {
+              jxn.state = d.id;
+            }
+          })
+
+          guiHead.defaultOption = d.id;
+
           updateVis();
 
         }
@@ -301,20 +316,20 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       guiHeadOptionEnter.append('text').attr({
         class: "guiButtonLabel",
         x: 3,
-        y: guiHead.height-3
-      }).text(function(d){return d.name;});
+        y: guiHead.height - 3
+      }).text(function (d) {
+        return d.name;
+      });
 
       guiHeadOptionEnter.append('text').attr({
         class: "decoration",
-        y: guiHead.height-3,
-        x: function(d){return d.w-20;}
-      }).text(function(d){return d.icon;});
-
-
-
-
-
-
+        y: guiHead.height - 3,
+        x: function (d) {
+          return d.w - 20;
+        }
+      }).text(function (d) {
+        return d.icon;
+      });
 
 
       initEventHandlers();
@@ -1528,7 +1543,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       });
 
 
-      var elementWidth = Math.floor(Math.max(w / allJXNsorted.length, abundancePlot.panels.std.minWidth));
+      var elementWidth = abundancePlot.panels.std.minWidth;//Math.floor(Math.max(w / (1.5*allJXNsorted.length), abundancePlot.panels.std.minWidth));
       abundancePlot.panels.std.currentWidth = elementWidth;
 
 
@@ -1603,7 +1618,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       });
 
       //TODO: find better solution for that
-      svg.transition().attr("width", currentXPos + 300);
+      svg.transition().attr("width", Math.max(currentXPos + 300,axis.getWidth()));
 
       endOfPanels = currentXPos
 

@@ -375,7 +375,12 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
 
       function updateVis() {
-        //TODO
+
+        width = axis.getWidth()+margin.left + margin.right
+        svg.attr({
+          width:width
+        })
+
         updateAxis();
         updateReverseButton();
 

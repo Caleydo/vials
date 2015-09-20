@@ -8,6 +8,14 @@
   animation: spin 5000ms infinite linear;
 }
 
+.fa-rotate-45 {
+    -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    -o-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
 @-webkit-keyframes spin {
   0% {
     -webkit-transform: rotate(0deg);
@@ -125,7 +133,7 @@ text.decoration.selected {
   //   fill:blue;
   //   fill-opacity: 1;
   //}
-  
+
 }
 
 .highlight, .highlights {
@@ -274,43 +282,49 @@ path.selectionParco {
   }
 }
 
-
-.axisMain{
-  .ticks{
+.axisMain {
+  .ticks {
     fill: $wes-violet;
     fill-opacity: .3;
   }
 
-
 }
 
-.guiHeadOption{
-  text{
+.guiHeadOption {
+  text {
     pointer-events: none;
   }
+  .guiButtonBG {
+    stroke: none;
+  }
 
 }
-.guiHeadOption:hover{
-  text{
+
+.guiHeadOption:hover {
+  text {
     fill-opacity: 1;
-  fill: $wes-violet;
+    fill: $wes-violet;
+  }
+  .guiButtonBG {
+    stroke: none;
   }
 }
 
-.guiHeadOption.selected{
+.guiHeadOption.selected {
 
-  text{
+  text {
     fill-opacity: 1;
-  fill: $wes-violet;
+    fill: $wes-violet;
   }
 
-  .guiButtonBG{
-    @extend .guiButtonBG:hover
+  .guiButtonBG {
+    fill: $wes-gray;
+    fill-opacity: 1;
+    stroke: none;
+
   }
 
 }
-
-
 
 .rangeRect {
   fill: $wes-gray;

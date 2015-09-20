@@ -562,7 +562,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
       sampleGroupEnter.append("text").attr({
         "class": "sampleGroupLabelText",
-        x: axis.getWidth() + 5,
         y: readsPlot.panels.std.height - (readsPlot.panels.std.height - 14) / 2
       }).text(function (d) {
         return d.sample;
@@ -582,6 +581,9 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
       sampleGroup.select(".sampleGroupLabelBG").attr({
         x: axis.getWidth()
+      })
+      sampleGroup.select(".sampleGroupLabelText").attr({
+          x: axis.getWidth() + 5
       })
 
 
@@ -697,7 +699,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
     function updateVis() {
       //TODO
       svg.attr("height", allData.measures.wiggles.length * readsPlot.panels.std.xDiff + readsPlot.y)
-
+        .attr("width", axis.getWidth() + margin.left + margin.right )
 
       updateWiggles();
 
