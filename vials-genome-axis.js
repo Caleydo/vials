@@ -216,19 +216,19 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
             .text(function (d) {
               return axis.screenPosToGenePos(x)
             }).attr({
-                "x": x + 10,
-                "y": 15,
-                "visibility": visible
-              });
-            //.each(function () {
-            //  var self = d3.select(this),
-            //    //bb = self.node().getBBox();
-            //  self.attr({
-            //    "x": x + 10,
-            //    "y": 15,
-            //    "visibility": visible
-            //  });
-            //})
+              "x": x + 10,
+              "y": 15,
+              "visibility": visible
+            });
+          //.each(function () {
+          //  var self = d3.select(this),
+          //    //bb = self.node().getBBox();
+          //  self.attr({
+          //    "x": x + 10,
+          //    "y": 15,
+          //    "visibility": visible
+          //  });
+          //})
         }
 
       }
@@ -238,7 +238,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
        */
 
       function updateAxis() {
-        console.log(genomeCoord, '\n-- genomeCoord --');
+
         if (genomeCoord) {
 
           //var diff = genomeCoord.end - genomeCoord.start;
@@ -353,8 +353,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       }
 
 
-
-
       /*
        ================= LAYOUT METHODS =====================
        */
@@ -363,7 +361,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       /*
        ================= HELPERMETHODS =====================
        */
-
 
 
       /*
@@ -376,9 +373,9 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
       function updateVis() {
 
-        width = axis.getWidth()+margin.left + margin.right
+        width = axis.getWidth() + margin.left + margin.right
         svg.attr({
-          width:width
+          width: width
         })
 
         updateAxis();
@@ -387,10 +384,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
       }
 
-      function cleanVis() {
-        //console.log(readsPlot.g,readsPlot.g.selectAll(""),'\n-- readsPlot.g,readsPlot.g.selectAll("") --');
-        readsPlot.g.selectAll("*").remove();
-      }
 
       function dataUpdate() {
         var curGene = gui.current.getSelectedGene();
@@ -409,7 +402,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
           };
 
           updateVis();
-          console.log(genomeCoord, '\n-- genomeCoord --');
+
         });
 
 

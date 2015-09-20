@@ -182,7 +182,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
     function drawIsoforms( ) {
       if (isoformList.length<1) return;
-      //console.log("list", isoformList);
+
       //{"isoform_unit": sampleData.measures["isoform_unit"]}
       var scatterWidth = isoformPlot.scatterWidth;
       var extraLabel = isoformPlot.extraLabel;
@@ -200,7 +200,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
       drawViewLabel(height);
 
-      //console.log(minMaxValues);
       var scaleXScatter = d3.scale.linear().domain([0, minMaxValues[1]]).range([axisOffset, axisOffset + scatterWidth])
 
 
@@ -244,11 +243,11 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
         }
       }).on({
         "mouseover": function () {
-          //console.log("min", d3.event.target
+
           d3.select(this).select(".background rect").classed("selected", true);
         },
         "mouseout": function () {
-          //console.log("mout", d3.event.target)
+
           d3.select(this).select(".background rect").classed("selected", false);
         }
       }).append("title").text(function (d) {
@@ -267,7 +266,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
         //"mouseover": function(){d3.select(this).classed("selected", true);},
         //"mouseout": function(){d3.select(this).classed("selected", false);},
         "click": function (d, i) {
-          console.log(d, i);
+
           var el = d3.select(this);
           if (el.classed("fixed")) {
             el.classed("fixed", false);
@@ -365,7 +364,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
       })
       bp_wticks.attr({
         x1: function (d) {
-          console.log('wtick_update', d);
+
           return scaleXScatter(d[0]);
         },
         x2: function (d) {
@@ -429,7 +428,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
       })
 
 
-      //console.log("mergedRanges", mergedRanges);
+
       var mRangeSorter = gExonRanges.selectAll(".rangeMenu").data(mergedRanges);
       mRangeSorter.exit().remove();
 
@@ -608,7 +607,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
        * ===============
        * */
 
-      //console.log(that.axis);
+
 
 
       // menu first
@@ -732,7 +731,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
       drawSampleDots();
 
       event.on("dotsJittering", function (e, dotsJittered) {
-        //console.log("dotsJittered", dotsJittered);
+
         that.dotsJittered = dotsJittered;
         var sampleDot = isoform.selectAll(".sampleDot")
 
@@ -805,7 +804,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
 
       function showGroupSplits(data, index, parent, show) {
-        // console.log(data,index, parent);
+
 
         var allDots = d3.select(parent).selectAll(".isoform .sampleDot")
 
@@ -821,7 +820,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
           }
         })
 
-        // console.log(colors);
+
 
         if (show) {
 
@@ -834,7 +833,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
           //    "r":5
           //})
 
-          // console.log("index:",index);
+
           splitG.attr({
             "transform": "translate(" + (scaleXScatter.range()[1] + 25) + "," + groupScale(index) + ")"
           })
@@ -871,13 +870,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
               return d.color
             }
           })
-
-
-          //// console.log(allDots);
-          //allDots.each(function (d, i) {
-          //
-          //  //console.log(d, d3.select(this).style("fill"));
-          //})
 
 
         } else {
@@ -952,8 +944,7 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
         highlightSel.each(function () {
           var trans = d3.transform(d3.select(this.parentNode.parentNode).attr("transform")).translate
           var me = d3.select(this)
-          //console.log(trans);
-          // console.log("me", me.attr("cx"),me);
+
           lineCoord.push({
             "x": +me.attr("cx") + trans[0],
             "y": +me.attr("cy") + trans[1]
@@ -969,9 +960,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
             return d.y
           });
 
-        //console.log(lineCoord, line(lineCoord));
-
-        //console.log(lineCoord.map(function(d){return d.x+" "+ d.y}));
 
         var selectionParco = gHighlight.selectAll(".selectionParco").data([lineCoord]);
         selectionParco.exit().remove();
@@ -1004,8 +992,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
     // event handling for highlights
     function selectSample(event, sample, selected) {
-      //console.log("select", sample, selected, gui.current.getColorForSelection(sample));
-
 
       if (selected) {
         var allX = gIso.selectAll(".foreground .sample" + cleanSelectors(sample))
@@ -1219,8 +1205,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
       })
 
       return function (a, b) {
-        //console.log("compare",a,b,validNames);
-        //console.log(a.id, b.id, validNames.indexOf(a.id)>-1,validNames.indexOf(b.id)>-1, validNames);
         var aMap = d3.nest().key(function (d, i) {
           return d.id
         }).map(a.ranges, d3.map)
@@ -1250,11 +1234,9 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
           } else {
             return aStart - bStart;
           }
-          //console.log("VALID:",aValid[0].start, bValid[0].start, a, b);
 
 
         } else if (!aValid && !bValid) {
-          //console.log("INVALID:",aValid, bValid);
           return b.mean - a.mean;
         } else {
           return bValid ? 1 : -1;
@@ -1265,11 +1247,9 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
     function resortIsoforms(_, sortingMethod, parameter) {
 
-      //console.log("RESORT:",sortingMethod,parameter, sortingMethod === "mean_sorting");
 
       if (sortingMethod === "mean_sorting") {
         currentSortFunction = sortByMean;
-        //console.log(currentSortFunction);
 
       } else if (sortingMethod === "byExon") {
         currentSortFunction = createSortByExon(parameter)
@@ -1313,7 +1293,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
           .map(sampleData.measures.isoforms);
 
 
-        console.log(sampleData.measures.isoforms, usedIsoforms, '\n-- sampleData.measures.isoforms,usedIsoforms --');
 
         var allIsoforms = sampleData.gene.isoforms;
         //var allExons = sampleData.gene.exons;
@@ -1330,8 +1309,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
             var exonEnds = isoform.exonEnds.split('_');
             var exonStarts = isoform.exonStarts.split('_');
 
-            //console.log(isoform,'\n-- isoform --');
-            //console.log(exonNames, exonEnds, exonStarts,'\n-- exon --');
             var exons = []
             if ((exonNames.length == exonEnds.length) && (exonNames.length == exonStarts.length)) {
 
@@ -1366,7 +1343,6 @@ define(['exports', 'd3', './vials-gui', '../caleydo_core/event'], function (expo
 
         })
 
-        //console.log("used iso:",usedIsoforms, minMax);
 
 
         // update the map between sample and a unique css-save selectorName

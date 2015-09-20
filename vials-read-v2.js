@@ -463,7 +463,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         })
         .y0(readsPlot.panels.std.height)
         .y1(function (d) {
-          //console.log(areaScale(d))
           return areaScale(d);
         })
 
@@ -472,11 +471,9 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
           return axis.arrayPosToScreenPos(i)
         })
         .y0(function (d) {
-          //console.log(areaScale(d))
           return areaScale(d.low);
         })
         .y1(function (d) {
-          //console.log(areaScale(d))
           return areaScale(d.high);
         })
 
@@ -719,7 +716,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
     }
 
     function cleanVis() {
-      //console.log(readsPlot.g,readsPlot.g.selectAll(""),'\n-- readsPlot.g,readsPlot.g.selectAll("") --');
       readsPlot.g.selectAll("*").remove();
     }
 
@@ -741,7 +737,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         console.time("dataLoading");
         allData = sampleData;
         allWiggles = allData.measures.wiggles.sort(regularSorting)
-        console.log(allWiggles, '\n-- allWiggles --');
 
         var positiveStrand = (sampleData.gene.strand === '+');
 

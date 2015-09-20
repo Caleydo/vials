@@ -26,7 +26,6 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
 
 
     getGeneData: function (projectID, geneName) {
-      console.log("getGeneData", projectID, geneName);
       var cacheID = projectID + "==>" + geneName;
 
       var res = this.geneCache.get(cacheID);
@@ -122,8 +121,10 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
 
     setGroup: function (idList) {
 
-      var grpID = idList.map(function(d){return _.slice(d,0,2).join('')}).join('_')
-      var groupName = _.uniqueId('grp_'+grpID+'-')
+      var grpID = idList.map(function (d) {
+        return _.slice(d, 0, 2).join('')
+      }).join('_')
+      var groupName = _.uniqueId('grp_' + grpID + '-')
       this.groups[groupName] = idList;
       this.groupRetainCount[groupName] = 0;
       return groupName;

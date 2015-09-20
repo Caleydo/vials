@@ -42,7 +42,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs', 'lo
     //google colors (http://bl.ocks.org/aaizemberg/78bd3dade9593896a59d) witout red ( "#dc3912", "#dd4477","#b82e2e",)
     this.availableColors =
       ["#3366cc", "#ff9900", "#109618", "#990099", "#0099c6",
-        "#66aa00",  "#316395", "#994499", "#22aa99", "#aaaa11",
+        "#66aa00", "#316395", "#994499", "#22aa99", "#aaaa11",
         "#6633cc", "#e67300", "#8b0707", "#651067", "#329262", "#5574a6",
         "#3b3eac"].reverse();
 
@@ -181,7 +181,10 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs', 'lo
       $(that.chromIDDiv.node()).val('-');
       $(that.startPosDiv.node()).val('---');
       $(that.strandDiv.node()).val('?');
-      history.pushState({project: projectIDitem.id, gene:geneID},'Title',location.pathname+'?projectID='+projectIDitem.id+'&geneID='+geneID)
+      history.pushState({
+        project: projectIDitem.id,
+        gene: geneID
+      }, 'Title', location.pathname + '?projectID=' + projectIDitem.id + '&geneID=' + geneID)
 
       $('#vials_vis').fadeOut(function () {
         $('.startScreen').fadeIn(
@@ -232,7 +235,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs', 'lo
           }
         },
         results: function (data, offset) {
-          //console.log(data);
+
           return {
             results: data,
             more: false
@@ -252,7 +255,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs', 'lo
 
 
     function updateGeneSelector(projectIDitem, selectedGene) {
-      console.log(projectIDitem, '\n-- projectIDitem --');
+
       var ajax = that.getAjaxConfiguration(projectIDitem['id'])
       $geneSelector.selectivity('setOptions', {ajax: ajax})
       $geneSelector.off('change', that.currentGeneSelectorCall)
@@ -277,7 +280,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs', 'lo
         $(that.startPosDiv.node()).val('---');
         $(that.strandDiv.node()).val('?');
         $('#startScreenText')
-        .html(' please select a gene ') //<span class="glyphicon glyphicon-refresh glyphicon-spin" ></span>
+          .html(' please select a gene ') //<span class="glyphicon glyphicon-refresh glyphicon-spin" ></span>
         $('#vialsLogo').removeClass('fa-spin-custom')
         $('#vials_vis').fadeOut(function () {
           $('.startScreen').fadeIn(
@@ -299,7 +302,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs', 'lo
     this.start = function (selectedProjectID, selectedGene, exonLength) {
       that.genomeDataLink.genomeAxis.avrgExonLength = +exonLength || 30;
       that.genomeDataLink.getAllProjects().then(function (projects) {
-        //console.log("allProjects", projects);
+
 
         var selectedProjectID = selectedProjectID || Object.keys(projects)[0];
         var selectedProjectItem = null;
@@ -326,7 +329,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs', 'lo
         }
 
         $projectSelector.on('change', function (event) {
-          console.log(event, '\n-- event --');
+
           updateGeneSelector({id: event.value}, null);
 
         });

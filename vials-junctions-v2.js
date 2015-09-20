@@ -402,7 +402,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
       // -- hover over a flag
       event.on("highlightFlag", function (e, loc, highlight) {
-        //console.log("allJxns",allJxns);
 
         _.keys(allJxns).forEach(function (key) {
           var obj = allJxns[key];
@@ -578,10 +577,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
           updateAbundanceView();
 
         }
-
-
-        //console.log(groupingsMeta, '\n-- groupingsMeta --');
-
 
       })
 
@@ -1030,7 +1025,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         }).on({
           "mouseover": function (d) {
             event.fire("sampleHighlight", d.w.sample, true);
-            //console.log(d3.select(this.parentNode).data()[0].key);
             event.fire("highlightJxn", d3.select(this.parentNode).data()[0].key, true);
           },
           "mouseout": function (d) {
@@ -1101,9 +1095,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
 
       function updateBoxPlots() {
-        //console.log("allData",allData);
-        //console.log(allJxns,'-- allJxns --');
-
 
         //TODO: copied from isoforms.. maybe externalizing ?!
 
@@ -1134,11 +1125,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                     state: d.jxn.state,
                     x: (groupingOffset + (gmIndex + .5) * groupInc)
                   });
-                  //console.log("xxx", {
-                  //    boxPlot: gm.boxplot,
-                  //    state: d.jxn.state,
-                  //    x: (groupingOffset + (gmIndex + .5) * groupInc)
-                  //});
                 }
 
 
@@ -1184,7 +1170,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         );
         //boxPlotGroup.attr({"transform":"rotate(90)"});
         boxPlotGroup.selectAll(".vticks").data(function (d) {
-          //console.log(d,'-- d --');
+
           return [
             d.boxPlot.whiskerDown,
             d.boxPlot.Q[1],
@@ -1383,9 +1369,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
 
 
       function sortByJxn(key) {
-        //console.log("key",key);
-        //console.log("allData",allData);
-        //console.log("allJxns",allJxns);
 
         var allKeys = Object.keys(allData.samples)
 
@@ -1409,7 +1392,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
           sampleOrder.order = sortedWeights.concat(allNull);
           sampleOrder.sortByKey = key;
           sampleOrder.valid = true;
-          //console.log("sampleOrder", sampleOrder);
 
           updateAbundanceView();//TODO: can be done more subtle / only update dots!
         }
@@ -1418,8 +1400,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
       }
 
       function switchGroupState(key) {
-
-        //console.log(allJxnArray, '\n-- allJxnArray --');
 
 
         var jxnList = allJxnArray.filter(function (d) {
@@ -1685,8 +1665,6 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
           var exonEnds = isoform.exonEnds.split('_');
           var exonStarts = isoform.exonStarts.split('_');
 
-          //console.log(isoform,'\n-- isoform --');
-          //console.log(exonNames, exonEnds, exonStarts,'\n-- exon --');
 
           if ((exonNames.length == exonEnds.length) && (exonNames.length == exonStarts.length)) {
 
@@ -1780,13 +1758,10 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
           return item.loc + item.type
         })
 
-        //console.log(triangleData, '\n-- triangleData --');
 
         // SORT and REMOVE DUPLICATES
         allJxnPos.sort();
         allJxnPos = _.uniq(allJxnPos, true);
-
-        //console.log(allJxnPos, '\n-- allJxnPos --');
 
         var allSamplesCount = Object.keys(allData.samples).length;
 
