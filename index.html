@@ -153,6 +153,7 @@
             m.parentNode.insertBefore(a, m)
         })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
 
+        console.log('tracking', location);
         ga('create', 'UA-45998043-2', 'auto');
         ga('send', 'pageview');
     }
