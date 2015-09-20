@@ -2,6 +2,10 @@ define(['../caleydo_core/main', '../caleydo_core/data', '../caleydo_core/vis', '
   'use strict';
   var vis;
 
+  window.GoogleAnalyticsObject = 'ga';
+  window.ga = { q: [['create', 'UA-45998043-2', 'vials.io'], ['send', 'pageview']], l: Date.now() };
+  require(['http://www.google-analytics.com/analytics.js']);
+
   // d3 extension
   d3.selection.prototype.moveToFront = function () {
     return this.each(function () {
