@@ -1264,10 +1264,10 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
                 switchGroupState(d.key);
               }, description: "compare groups", d: d, isSelected: (d.jxn.state == 'groupX')
               },
-              {
-                icon: "\uf259", callOnClick: function () {
-              }, description: "Live long and prosper.", d: d, isSelected: false
-              }
+              //{
+              //  icon: "\uf259", callOnClick: function () {
+              //}, description: "Live long and prosper.", d: d, isSelected: false
+              //}
             ]
           } else {
             return []
@@ -1355,7 +1355,7 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
         decoRight.transition().attr({
           "transform": function (d, i) {
             var w = d.d.jxn.state == 'std' ? abundancePlot.panels.std.currentWidth : abundancePlot.panels.scatter.currentWidth;
-            return "translate(" + (w - 15 - 2 - (i * 15)) + "," + 15 + ")";
+            return "translate(" + (w - 10 - 2 - (i * 15)) + "," + 15 + ")";
           }
         })
         decoRight.classed("selected", function (d) {

@@ -215,20 +215,23 @@ define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vial
           crosshairGroup.selectAll(".crosshairPos")
             .text(function (d) {
               return axis.screenPosToGenePos(x)
-            }).attr({
-              "x": x + 10,
+            })
+            //.attr({
+            //  "x": x + 10,
+            //  "y": 15,
+            //  "visibility": visible
+            //});
+          .each(function () {
+            var self = d3.select(this);
+            var xoffset = x>width/2?-10-self.node().getBBox().width:10;
+
+
+            self.attr({
+              "x": x + xoffset,
               "y": 15,
               "visibility": visible
             });
-          //.each(function () {
-          //  var self = d3.select(this),
-          //    //bb = self.node().getBBox();
-          //  self.attr({
-          //    "x": x + 10,
-          //    "y": 15,
-          //    "visibility": visible
-          //  });
-          //})
+          })
         }
 
       }
