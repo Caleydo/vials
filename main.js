@@ -32,6 +32,11 @@ define(['../caleydo_core/main', '../caleydo_core/data', '../caleydo_core/vis', '
 
     }
 
+    if (options.headless){
+      d3.select('#navbar').attr({hidden:true})
+    }
+
+
 
     var vis1Loaded = new Promise(function (resolve, reject) {
       if (!options.mode || options.mode.indexOf('jxn') > -1) {
@@ -110,13 +115,14 @@ define(['../caleydo_core/main', '../caleydo_core/data', '../caleydo_core/vis', '
     $(window).resize(function () {
       event.fire('resizeCanvas',
         $(window).width(),
-        $(window).height() - $('#navbar').height() - 5)
+        $(window).height() - ($('#navbar').attr('hidden')?0:+$('#navbar').height()) - 5)
 
     });
 
+    //console.log($('#navbar').attr('hidden'),'\n-- $(.css("opacity") --');
     event.fire('resizeCanvas',
       $(window).width(),
-      $(window).height() - $('#navbar').height() - 5)
+      $(window).height() - ($('#navbar').attr('hidden')?0:+$('#navbar').height()) - 5)
 
 
     // ==============

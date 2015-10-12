@@ -205,7 +205,7 @@ define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs', 'lo
           $(that.startPosDiv.node()).val(geneData.gene.start + "-" + geneData.gene.end);
           $(that.strandDiv.node()).val(geneData.gene.strand);
 
-          that.genomeDataLink.genomeAxis.avrgExonLength = 30;
+          //that.genomeDataLink.genomeAxis.avrgExonLength = 30;
           that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start, geneData.gene.end);
           that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene["merged_ranges"]);
           that.genomeDataLink.genomeAxis.shrinkIntrons(true);
