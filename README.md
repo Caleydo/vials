@@ -1,6 +1,6 @@
 # Caleydo Vials
 
-Vials visualizes alternative splicing based on mRNAseq data. You can try out vials at [http://vcglab.org/vials/](http://vcglab.org/vials/).
+Vials visualizes alternative splicing based on mRNAseq data. You can try out vials at http://vials.io/.
 
 Vials uses [Caleydo Web](https://github.com/Caleydo/caleydo-web/) as the underlying visualization framework. This repository contains the client-side Caleydo Web plugin. 
 
