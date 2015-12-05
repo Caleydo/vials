@@ -6,6 +6,8 @@ Vials uses [Caleydo Web](https://github.com/Caleydo/caleydo-web/) as the underly
 
 ## Running Vials
 
+*Note:* We are currently working on a Docker based build ot simplify the deployment process. In the meanwhile create the dev environment
+
 ### Pre-conditions: 
 #### Dev-Environment:
  * Install [caleydo_web_container](https://github.com/Caleydo/caleydo_web_container). This will set up a virtual machine that you can run through Vagrant. For details see documentation of the repository.
