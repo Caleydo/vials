@@ -10,14 +10,16 @@ Vials uses [Caleydo Web](https://github.com/Caleydo/caleydo-web/) as the underly
 #### Dev-Environment:
  * Install [caleydo_web_container](https://github.com/Caleydo/caleydo_web_container). This will set up a virtual machine that you can run through Vagrant. For details see documentation of the repository.
  * Execute within a bash: 
-   ```
+
+  ```bash
 ./manage.sh clone vials
 ./manage.sh clone vials_server
   ```
   This will install the vials client and server plugin. 
  * Launch the vm using `vagrant up` and connect via ssh `vagrant ssh`
  * **Within the VM** execute: 
-   ```
+ 
+   ```bash
 ./manage.sh resolve
   ```
   to resolve external dependencies. This will take a while.
