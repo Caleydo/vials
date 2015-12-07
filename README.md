@@ -28,8 +28,8 @@ Vials uses [Caleydo Web](https://github.com/Caleydo/caleydo-web/) as the underly
   
 #### Data
  * Get in touch with us: @HendrikStrobelt, @sgratzl we can provide with the data. 
- * Create a directory within the caleydo_web_container called `_data`
- * Once you get the data copy them in this newly created directory
+ * Create a directory within the caleydo_web_container called `_data/vials_projects/`
+ * Once you get the data (e.g. `bodymap.vials_project` directory) copy them in this newly created directory
 
 ### Running vials
 * Go to caleydo_web_container directory and run `vagrant up`
