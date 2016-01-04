@@ -10,32 +10,48 @@ Vials uses [Caleydo Web](https://github.com/Caleydo/caleydo-web/) as the underly
 
 ### Pre-conditions: 
 #### Dev-Environment:
- * Install [caleydo_web_container](https://github.com/Caleydo/caleydo_web_container). This will set up a virtual machine that you can run through Vagrant. For details see documentation of the repository.
- * Execute within a bash: 
-
-  ```bash
-./manage.sh clone vials
-./manage.sh clone vials_server
-  ```
-  This will install the vials client and server plugin. 
- * Launch the vm using `vagrant up` and connect via ssh `vagrant ssh`
- * **Within the VM** execute: 
- 
-   ```bash
-./manage.sh resolve
-  ```
-  to resolve external dependencies. This will take a while.
-  
-#### Data
- * Get in touch with us: @HendrikStrobelt, @sgratzl we can provide with the data. 
- * Create a directory within the caleydo_web_container called `_data/vials_projects/`
- * Once you get the data (e.g. `bodymap.vials_project` directory) copy them in this newly created directory
+- install vagrant and virtualbox and follow instructions: https://github.com/Caleydo/caleydo_web_container:
+    - `git clone https://github.com/Caleydo/caleydo_web_container`
+    - `cd caleydo_web_container`
+    - `vagrant up` - start the vagrant machine (might take a while - get a coffee :))
+    - `vagrant ssh` - login to the vagrant box
+- within vagrant use the caleydo manager tool to install vials and all dependencies:
+    - `./manage.sh clone https://github.com/Caleydo/vials` 
+    - `./manage.sh clone https://github.com/Caleydo/vials_server`
+    - `./manage.sh resolve`
+- within vagrant create the data structure for the demo application:
+    - `mkdir _data`
+    - `cd _data`
+    - `mkdir vials_projects`
+    - `cd vials_projects`
+    - download & unzip bodymap data: https://www.dropbox.com/s/xrbs250tjafjvpd/bodymap.vials_project.zip?dl=0
+    - `cd ..`
+    - download & unzip ref_genomes: https://www.dropbox.com/s/zoqnihdrhony4bh/reference_genomes.zip?dl=0
+    - resulting folder structure (excerpt):
+```
+/vagrant (or ‘caleydo_web_container’)
+	_data
+		reference_genomes
+      hg19_broad
+    vials_projects
+      bodymap.vials_project
+  plugins
+    vials
+    vials_server
+    … (many others)
+	….
+```
+- start server:
+    - `cd /vagrant`
+    - `./manage server`
 
 ### Running vials
-* Go to caleydo_web_container directory and run `vagrant up`
-* SSH into vagrant using `vagrant ssh`
-* Execute: `./manage.sh server`
 * Access it using your web browser: http://localhost:9000/vials/
+
+  
+#### Questions ?
+ * Get in touch with us: @HendrikStrobelt or @sgratzl .
+ 
 
 
 
