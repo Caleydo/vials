@@ -4,7 +4,7 @@
  */
 
 
-define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', 'vials-helper'], function (exports, d3, _, gui, event, helper) {
+define(['exports', 'd3', 'lodash', './vials-gui', '../caleydo_core/event', './vials-helper'], function (exports, d3, _, gui, event, helper) {
     /**
      * a simple template class of a visualization. Up to now there is no additional logic required.
      * @param data
