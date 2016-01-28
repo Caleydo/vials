@@ -82,14 +82,14 @@
     "requirejs-config": {
       "paths": {
         "js-lru": "${baseUrl}/js-lru/lru",
-        "selectivityjs":"${baseUrl}/selectivity/dist/selectivity-full.min"
+        "selectivity":"${baseUrl}/selectivity/dist/selectivity-full.min"
       },
       "shim": {
         "js-lru": {
           "exports": "LRUCache"
 
         },
-        "selectivityjs":{
+        "selectivity":{
           "deps":["jquery"],
           "exports":"selectivity"
 

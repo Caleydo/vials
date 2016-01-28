@@ -2,7 +2,7 @@
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 2/25/15.
  */
 
-define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivityjs', 'lodash'], function (exports, d3, $, event, selectivity, _) {
+define(['exports', 'd3', 'jquery', '../caleydo_core/event', 'selectivity', 'lodash'], function (exports, d3, $, event, selectivity, _) {
 
   //'../bower_components/selectivity/dist/selectivity-full.js'
   function VialsGUI() {
