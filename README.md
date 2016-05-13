@@ -43,7 +43,7 @@ Vials uses [Caleydo Web](https://github.com/Caleydo/caleydo-web/) as the underly
 ```
 - start server:
     - `cd /vagrant`
-    - `./manage server`
+    - `./manage.sh server`
 
 ### Running vials
 * Access it using your web browser: http://localhost:9000/vials/
