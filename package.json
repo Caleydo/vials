@@ -1,7 +1,6 @@
 {
   "name": "vials",
-  "title": "VIALS",
-  "description": "Vials visualizes alternative splicing based on mRNAseq data.",
+  "description": "Vials is a Caleydo Web application for visualizing alternative splicing based on mRNAseq data.",
   "version": "0.1.5",
   "license" : "SEE LICENSE IN LICENSE",
   "repository": "Caleydo/vials",
