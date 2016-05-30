@@ -1,15 +1,14 @@
-# Caleydo Vials
+## Caleydo Vials ![Caleydo Web Application](https://img.shields.io/badge/Caleydo%20Web-Application-4daf4a.svg)
 
 Vials visualizes alternative splicing based on mRNAseq data. You can try out vials at http://vials.io/.
 
-Vials uses [Caleydo Web](https://github.com/Caleydo/caleydo-web/) as the underlying visualization framework. This repository contains the client-side Caleydo Web plugin. 
-
-## Running Vials
+### Running Vials
 
 *Note:* We are currently working on a Docker based build ot simplify the deployment process. In the meanwhile create the dev environment
 
-### Pre-conditions: 
-#### Dev-Environment:
+#### Pre-conditions
+
+##### Dev-Environment
 - install vagrant and virtualbox and follow instructions: https://github.com/Caleydo/caleydo_web_container:
     - `git clone https://github.com/Caleydo/caleydo_web_container`
     - `cd caleydo_web_container`
@@ -45,13 +44,9 @@ Vials uses [Caleydo Web](https://github.com/Caleydo/caleydo-web/) as the underly
     - `cd /vagrant`
     - `./manage server`
 
-### Running vials
+#### Running Vials
 * Access it using your web browser: http://localhost:9000/vials/
 
-  
-#### Questions ?
+### Questions ?
  * Get in touch with us: @HendrikStrobelt or @sgratzl .
- 
-
-
 
