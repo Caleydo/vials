@@ -42,7 +42,7 @@ Vials visualizes alternative splicing based on mRNAseq data. You can try out via
 ```
 - start server:
     - `cd /vagrant`
-    - `./manage server`
+    - `./manage.sh server`
 
 #### Running Vials
 * Access it using your web browser: http://localhost:9000/vials/
