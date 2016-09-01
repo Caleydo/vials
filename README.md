@@ -6,7 +6,7 @@ Vials visualizes alternative splicing based on mRNAseq data. You can try out via
 Installation
 ------------
 
-*Note:* We are currently working on a Docker based build ot simplify the deployment process. In the meanwhile create the dev environment
+*Note:* We are currently working on a Docker based build ot simplify the deployment process. In the meanwhile create the development environment as described in following.
 
 [Set up a virtual machine using Vagrant](http://www.caleydo.org/documentation/vagrant/) and run these commands inside the virtual machine:
 
