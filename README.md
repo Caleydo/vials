@@ -3,6 +3,8 @@ Caleydo Vials ![Caleydo Web Application](https://img.shields.io/badge/Caleydo%20
 
 Vials visualizes alternative splicing based on mRNAseq data. You can try out vials at http://vials.io/.
 
+A [demonstration](http://playground.caleydo.org/vials/) is available in the Caleydo Playground.
+
 Installation
 ------------
 
