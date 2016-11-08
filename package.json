@@ -1,5 +1,4 @@
 {
-  "main": "build/vials.js",
   "files": [
     "src",
     "index.js",
@@ -63,15 +62,19 @@
     "webpack-dev-server": "^2.1.0-beta.10"
   },
   "dependencies": {
-    "phovea_d3": "github:phovea/phovea_d3",
-    "phovea_core": "github:phovea/phovea_core",
-    "@types/d3": "^3.5.36",
-    "d3": "^3.5.17",
     "@types/bootstrap": "^3.3.32",
-    "bootstrap-sass": "^3.3.7",
-    "font-awesome": "^4.6.3",
+    "@types/d3": "^3.5.36",
     "@types/jquery": "^2.0.33",
-    "jquery": "^3.1.1"
+    "@types/lodash": "^4.14.38",
+    "bootstrap-sass": "^3.3.7",
+    "d3": "^3.5.17",
+    "font-awesome": "^4.6.3",
+    "jquery": "^3.1.1",
+    "lodash": "^4.16.6",
+    "lru-fast": "^0.1.0",
+    "phovea_core": "github:phovea/phovea_core",
+    "phovea_d3": "github:phovea/phovea_d3",
+    "selectivity": "^3.0.0"
   },
   "name": "vials",
   "description": "Vials is a Phovea application for visualizing alternative splicing based on mRNAseq data.",
@@ -89,5 +92,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/phovea/vials.git"
-  }
+  },
+  "main": "build/vials.js"
 }

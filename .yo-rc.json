@@ -81,7 +81,10 @@
       "d3",
       "bootstrap",
       "font-awesome",
-      "jquery"
+      "jquery",
+      "lodash",
+      "lru-fast",
+      "selectivity"
     ],
     "unknown": {
       "requirements": [],
@@ -101,6 +104,9 @@
       "bootstrap-sass",
       "font-awesome",
       "jquery",
+      "lodash",
+      "lru-fast",
+      "selectivity",
       "d3"
     ],
     "ignores": [],
