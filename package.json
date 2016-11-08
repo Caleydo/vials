@@ -71,7 +71,7 @@
     "font-awesome": "^4.6.3",
     "jquery": "^3.1.1",
     "lodash": "^4.16.6",
-    "lru-fast": "^0.1.0",
+    "lru-fast": "github:sgratzl/js-lru",
     "phovea_core": "github:phovea/phovea_core",
     "phovea_d3": "github:phovea/phovea_d3",
     "selectivity": "^3.0.0"
