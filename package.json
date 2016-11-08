@@ -1,100 +1,93 @@
 {
-  "name": "vials",
-  "description": "Vials is a Caleydo Web application for visualizing alternative splicing based on mRNAseq data.",
-  "version": "0.1.5",
-  "license" : "SEE LICENSE IN LICENSE",
-  "repository": "Caleydo/vials",
-  "homepage": "http://vials.io",
+  "main": "build/vials.js",
+  "files": [
+    "src",
+    "index.js",
+    "phovea.js",
+    "phovea_registry.js",
+    "build"
+  ],
+  "engines": {
+    "npm": ">= 3",
+    "node": ">= 6",
+    "iojs": ">= 3"
+  },
+  "scripts": {
+    "compile": "tsc",
+    "lint": "tslint -c tslint.json src/**.ts tests/**.ts",
+    "docs": "typedoc --options typedoc.json src/**.ts",
+    "prebuild": "npm run test",
+    "pretest": "npm run compile",
+    "test": "karma start",
+    "posttest": "npm run lint",
+    "test:watch": "karma start --autoWatch=true --singleRun=false",
+    "build:dev": "webpack",
+    "build": "webpack --env prod",
+    "start": "webpack-dev-server --inline",
+    "start:hot": "webpack-dev-server --inline --hot",
+    "watch": "webpack --watch",
+    "release:major": "npm version major && npm publish && git push --follow-tags",
+    "release:minor": "npm version minor && npm publish && git push --follow-tags",
+    "release:patch": "npm version patch && npm publish && git push --follow-tags",
+    "predist": "npm run build",
+    "dist": "mkdirp dist && cd build && tar cvzf ../dist/vials.tar.gz *"
+  },
+  "devDependencies": {
+    "@types/jasmine": "^2.5.35",
+    "awesome-typescript-loader": "^2.2.4",
+    "css-loader": "^0.25.0",
+    "extract-text-webpack-plugin": "^2.0.0-beta.4",
+    "file-loader": "^0.9.0",
+    "html-loader": "^0.4.4",
+    "imports-loader": "^0.6.5",
+    "jasmine": "^2.5.2",
+    "json-loader": "^0.5.4",
+    "karma": "^1.3.0",
+    "karma-chrome-launcher": "^2.0.0",
+    "karma-firefox-launcher": "^1.0.0",
+    "karma-jasmine": "^1.0.2",
+    "karma-junit-reporter": "^1.1.0",
+    "karma-sourcemap-loader": "^0.3.7",
+    "karma-webpack": "^1.8.0",
+    "mkdirp": "^0.5.1",
+    "node-sass": "^3.10.0",
+    "null-loader": "^0.1.1",
+    "raw-loader": "^0.5.1",
+    "sass-loader": "^4.0.2",
+    "style-loader": "^0.13.1",
+    "tslint": "^3.15.1",
+    "typedoc": "^0.5.1",
+    "typescript": "^2.0.6",
+    "url-loader": "^0.5.7",
+    "webpack": "^2.1.0-beta.25",
+    "webpack-dev-server": "^2.1.0-beta.10"
+  },
   "dependencies": {
+    "phovea_d3": "github:phovea/phovea_d3",
+    "phovea_core": "github:phovea/phovea_core",
+    "@types/d3": "^3.5.36",
+    "d3": "^3.5.17",
+    "@types/bootstrap": "^3.3.32",
+    "bootstrap-sass": "^3.3.7",
+    "font-awesome": "^4.6.3",
+    "@types/jquery": "^2.0.33",
+    "jquery": "^3.1.1"
   },
-  "peerDependencies": {
-    "caleydo_d3":"*",
-    "caleydo_core": "*"
+  "name": "vials",
+  "description": "Vials is a Phovea application for visualizing alternative splicing based on mRNAseq data.",
+  "homepage": "http://vials.io",
+  "version": "0.0.1",
+  "author": {
+    "name": "The Caleydo Team",
+    "email": "contact@caleydo.org",
+    "url": "https://caleydo.org"
   },
-  "caleydo": {
-    "type": "app",
-    "plugins": {
-      "web": [
-        {
-          "type": "datatype",
-          "id": "caleydo-genome-data-link",
-          "file": "caleydo-genome-data-link"
-        },
-        {
-          "type": "vis",
-          "id": "vials-isoforms",
-          "name": "Alternative Splicing - IsoForms",
-          "size": [
-            840,
-            300
-          ],
-          "filter": "caleydo-genome-data-link",
-          "file": "vials-isoforms"
-        },
-        {
-          "type": "vis",
-          "id": "vials-junctions",
-          "name": "Alternative Splicing - Junctions",
-          "size": [
-            840,
-            2000
-          ],
-          "filter": "caleydo-genome-data-link",
-          "file": "vials-junctions-v2"
-        },
-        {
-          "type": "vis",
-          "id": "vials-reads",
-          "name": "Alternative Splicing - Read Abundance",
-          "size": [
-            840,
-            2000
-          ],
-          "filter": "caleydo-genome-data-link",
-          "file": "vials-read-v2"
-        },
-           {
-          "type": "vis",
-          "id": "vials-axis",
-          "name": "Alternative Splicing - Axis",
-          "size": [
-            840,
-            2000
-          ],
-          "filter": "caleydo-genome-data-link",
-          "file": "vials-genome-axis"
-        },
-        {
-          "type": "app",
-          "name": "Vials"
-        }
-      ]
-    },
-    "dependencies": {
-      "web": {
-        "d3": "~3.5.5",
-        "js-lru": "http://github.com/rsms/js-lru.git",
-        "bootstrap": "~3",
-        "underscore":"~1.8",
-        "lodash":">=3.10",
-        "font-awesome":">=4.3.0",
-        "jquery":">=1.11.0",
-        "selectivity":">=2.0"
-      }
-    },
-    "requirejs-config": {
-      "paths": {
-        "js-lru": "${baseUrl}/js-lru/lru"
-      },
-      "shim": {
-        "js-lru": {
-          "exports": "LRUCache"
-
-        }
-      }
-    }
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/phovea/vials/issues"
   },
-  "publishConfig": {
-    "registry": "http://registry.caleydo.org/"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phovea/vials.git"
   }
 }

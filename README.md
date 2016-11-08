@@ -1,5 +1,5 @@
-Caleydo Vials ![Caleydo Web Application](https://img.shields.io/badge/Caleydo%20Web-Application-1BA64E.svg)
-===================
+vials [![Phovea][phovea-image]][phovea-url] [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-image]][daviddm-url]
+=====================
 
 Vials visualizes alternative splicing based on mRNAseq data. You can try out vials at http://vials.io/.
 
@@ -8,55 +8,39 @@ A [demonstration](http://playground.caleydo.org/vials/) is available in the Cale
 Installation
 ------------
 
-*Note:* We are currently working on a Docker based build ot simplify the deployment process. In the meanwhile create the development environment as described in following.
-
-[Set up a virtual machine using Vagrant](http://www.caleydo.org/documentation/vagrant/) and run these commands inside the virtual machine:
-
-```bash
-./manage.sh clone Caleydo/vials
-./manage.sh clone Caleydo/vials_server
-./manage.sh resolve
+```
+git clone https://github.com/phovea/vials.git
+cd vials
+npm install
 ```
 
-Within vagrant create the data structure for the demo application:
+Testing
+-------
 
-- `mkdir _data`
-- `cd _data`
-- `mkdir vials_projects`
-- `cd vials_projects`
-- download & unzip bodymap data: https://www.dropbox.com/s/xrbs250tjafjvpd/bodymap.vials_project.zip?dl=0
-- `cd ..`
-- download & unzip ref_genomes: https://www.dropbox.com/s/zoqnihdrhony4bh/reference_genomes.zip?dl=0
-- resulting folder structure (excerpt):
-    
 ```
-/vagrant (or ‘caleydo_web_container’)
-	_data
-		reference_genomes
-      hg19_broad
-    vials_projects
-      bodymap.vials_project
-  plugins
-    vials
-    vials_server
-    … (many others)
-	….
+npm run test
 ```
 
-Start server:
-- `cd /vagrant`
-- `./manage server`
+Building
+--------
 
-Access it using your web browser: http://localhost:9000/vials/
+```
+npm run build
+```
 
-
-Contact
-------------
-
-Get in touch with us: @HendrikStrobelt or @sgratzl .
 
 
 ***
 
 <a href="https://caleydo.org"><img src="http://caleydo.org/assets/images/logos/caleydo.svg" align="left" width="200px" hspace="10" vspace="6"></a>
-This repository is part of **[Caleydo Web](http://caleydo.org/)**, a platform for developing web-based visualization applications. For tutorials, API docs, and more information about the build and deployment process, see the [documentation page](http://caleydo.org/documentation/).
+This repository is part of **[Phovea](http://phovea.caleydo.org/)**, a platform for developing web-based visualization applications. For tutorials, API docs, and more information about the build and deployment process, see the [documentation page](http://caleydo.org/documentation/).
+
+
+[phovea-image]: https://img.shields.io/badge/Phovea-Application-1BA64E.svg
+[phovea-url]: https://phovea.caleydo.org
+[npm-image]: https://badge.fury.io/js/vials.svg
+[npm-url]: https://npmjs.org/package/vials
+[travis-image]: https://travis-ci.org/phovea/vials.svg?branch=master
+[travis-url]: https://travis-ci.org/phovea/vials
+[daviddm-image]: https://david-dm.org/phovea/vials.svg?theme=shields.io
+[daviddm-url]: https://david-dm.org/phovea/vials

@@ -1,0 +1,109 @@
+{
+  "generator-phovea": {
+    "type": "app",
+    "name": "vials",
+    "author": "The Caleydo Team",
+    "githubAccount": "phovea",
+    "modules": [
+      "phovea_d3",
+      "phovea_core"
+    ],
+    "extensions": [
+      {
+        "type": "datatype",
+        "id": "caleydo-genome-data-link",
+        "module": "caleydo-genome-data-link",
+        "extras": {}
+      },
+      {
+        "type": "vis",
+        "id": "vials-isoforms",
+        "module": "vials-isoforms",
+        "extras": {
+          "name": "Alternative Splicing - IsoForms",
+          "size": [
+            840,
+            300
+          ],
+          "filter": "caleydo-genome-data-link"
+        }
+      },
+      {
+        "type": "vis",
+        "id": "vials-junctions",
+        "module": "vials-junctions-v2",
+        "extras": {
+          "name": "Alternative Splicing - Junctions",
+          "size": [
+            840,
+            2000
+          ],
+          "filter": "caleydo-genome-data-link"
+        }
+      },
+      {
+        "type": "vis",
+        "id": "vials-reads",
+        "module": "vials-read-v2",
+        "extras": {
+          "name": "Alternative Splicing - Read Abundance",
+          "size": [
+            840,
+            2000
+          ],
+          "filter": "caleydo-genome-data-link"
+        }
+      },
+      {
+        "type": "vis",
+        "id": "vials-axis",
+        "module": "vials-genome-axis",
+        "extras": {
+          "name": "Alternative Splicing - Axis",
+          "size": [
+            840,
+            2000
+          ],
+          "filter": "caleydo-genome-data-link"
+        }
+      },
+      {
+        "type": "app",
+        "id": "vials",
+        "module": "",
+        "extras": {
+          "name": "Vials"
+        }
+      }
+    ],
+    "sextensions": [],
+    "libraries": [
+      "d3",
+      "bootstrap",
+      "font-awesome",
+      "jquery"
+    ],
+    "unknown": {
+      "requirements": [],
+      "debianPackages": [],
+      "redhatPackages": []
+    },
+    "app": "",
+    "entries": {
+      "app": "./src/index.ts"
+    },
+    "libraryAliases": {
+      "d3": "d3/d3"
+    },
+    "libraryExternals": [
+      "d3",
+      "bootstrap",
+      "bootstrap-sass",
+      "font-awesome",
+      "jquery",
+      "d3"
+    ],
+    "ignores": [],
+    "today": "Tue, 08 Nov 2016 12:13:12 GMT"
+  }
+}
