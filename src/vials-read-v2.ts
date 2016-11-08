@@ -283,11 +283,11 @@ VialsReadVis.prototype.build = function ($parent) {
       if (ids && ids.length > 0) {
         that.data.retainGroup(groupName);
 
-        groupMappedSamples = _.flatten(_.pluck(groupings, 'samples'));
+        groupMappedSamples = _.flatten(_.map(groupings, 'samples'));
 
         var groupedData = _.filter(allData.measures.wiggles,
           function (d:any) {
-            return _.contains(groupMappedSamples, d.sample)
+            return _.includes(groupMappedSamples, d.sample)
           })
 
         var sampleLength = groupedData[0].data.length
@@ -318,7 +318,7 @@ VialsReadVis.prototype.build = function ($parent) {
           return d.name != groupName;
         })
 
-        groupMappedSamples = _.flatten(_.pluck(groupings, 'samples'));
+        groupMappedSamples = _.flatten(_.map(groupings, 'samples'));
 
         if (groupName in groupWiggleCache) {
           delete groupWiggleCache[groupName];
@@ -332,7 +332,7 @@ VialsReadVis.prototype.build = function ($parent) {
 
       allWiggles = _.filter(allData.measures.wiggles,
         function (d:any) {
-          return !_.contains(groupMappedSamples, d.sample)
+          return !_.includes(groupMappedSamples, d.sample)
         })
 
       _.each(groupings, function (grouping) {

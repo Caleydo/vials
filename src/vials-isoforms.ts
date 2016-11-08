@@ -513,8 +513,8 @@ IsoFormVis.prototype.build = function ($parent) {
     function updateJxn() {
 
       var l = collectedJunctions.length;
-      var allJxnStarts = _.pluck(collectedJunctions, 'start');
-      var allJxnEnds = _.pluck(collectedJunctions, 'end');
+      var allJxnStarts = _.map(collectedJunctions, 'start');
+      var allJxnEnds = _.map(collectedJunctions, 'end');
       var startIndex = -1;
 
       var jxn = isoform.select(".highlight").selectAll(".jxn").data(function (d) {
@@ -1067,7 +1067,7 @@ IsoFormVis.prototype.build = function ($parent) {
 
     if (groupInfo) {
       var hl = svg.selectAll(".sampleDot").filter(function (d) {
-        return _.contains(groupInfo.samples, d.sample)
+        return _.includes(groupInfo.samples, d.sample)
       }).classed("highlighted", isHighlighted)
       if (isHighlighted)  hl.moveToFront();
 
@@ -1081,7 +1081,7 @@ IsoFormVis.prototype.build = function ($parent) {
       if (isSelected) {
 
         var allX = gIso.selectAll(".foreground").selectAll(".sampleDot").filter(function (d) {
-          return _.contains(groupInfo.samples, d.sample)
+          return _.includes(groupInfo.samples, d.sample)
         })
 
         allX.classed("selected", true);
@@ -1111,7 +1111,7 @@ IsoFormVis.prototype.build = function ($parent) {
         gui.current.releaseColorForSelection(groupID);
 
         var allX = gIso.selectAll(".highlight").selectAll('.sampleDot').filter(function (d) {
-          return _.contains(groupInfo.samples, d.sample)
+          return _.includes(groupInfo.samples, d.sample)
         })
         allX.classed("selected", null);
 

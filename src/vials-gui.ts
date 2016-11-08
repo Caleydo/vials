@@ -152,7 +152,7 @@ export function VialsGUI() {
         singleSelectedItem: function (options) {
           return (
             '<span class="selectivity-single-selected-item" ' +
-            'data-item-id="' + escape(options.id) + '">' +
+            'data-item-id="' + _.escape(options.id) + '">' +
             (options.removable ? '<a class="selectivity-single-selected-item-remove">' +
             '<i class="fa fa-remove"></i>' +
             '</a>'

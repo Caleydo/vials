@@ -443,7 +443,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
         var alldots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
 
         alldots.filter(function (d) {
-          return _.contains(groupSamples.samples, d.w.sample)
+          return _.includes(groupSamples.samples, d.w.sample)
         })
           .classed("highlighted", highlight)
           .attr({r: highlight ? 4 : 2});
@@ -475,13 +475,13 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
         if (isSelected) {
           allDots.filter(function (d) {
-            return _.contains(groupSamples.samples, d.w.sample);
+            return _.includes(groupSamples.samples, d.w.sample);
           }).style({
             fill: gui.current.getColorForSelection(groupID)
           })
         } else {
           allDots.filter(function (d) {
-            return _.contains(groupSamples.samples, d.w.sample);
+            return _.includes(groupSamples.samples, d.w.sample);
           }).style({
             fill: null
           })
@@ -563,8 +563,8 @@ VialsJunctionVis.prototype.build = function ($parent) {
           var jxn = allJxns[jkey];
 
 
-          var allWeights = _.pluck(jxn.weights.filter(function (d) {
-            return _.contains(samples, d.sample);
+          var allWeights = _.map(jxn.weights.filter(function (d) {
+            return _.includes(samples, d.sample);
           }), 'weight');
           if (allWeights.length > 2) allBoxPlots[jkey] = {boxplot: helper.computeBoxPlot(allWeights)};
         })
@@ -577,7 +577,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
         that.data.releaseGroup(groupName);
 
         //remove grouping
-        var index = _.findIndex(groupings, 'name', groupName)
+        var index = _.findIndex(groupings, (d:any) => d.name === groupName)
         if (index > -1) {
           groupSelect(null, groupName, false);
           groupings.splice(index, 1);
@@ -1386,7 +1386,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
       if (key in allJxns) {
 
         var sortedWeights =
-          _.pluck(
+          _.map(
             _.sortBy(
               allJxns[key].weights
                 .filter(function (d) {
@@ -1765,14 +1765,14 @@ VialsJunctionVis.prototype.build = function ($parent) {
       triangleData.sort(function (a, b) {
         return a.loc < b.loc ? -1 : a.loc == b.loc ? 0 : 1
       });
-      triangleData = _.uniq(triangleData, function (item) {
+      triangleData = _.uniqBy(triangleData, function (item) {
         return item.loc + item.type
       })
 
 
       // SORT and REMOVE DUPLICATES
       allJxnPos.sort();
-      allJxnPos = _.uniq(allJxnPos, true);
+      allJxnPos = _.uniq(allJxnPos); //TODO no idea what: `, true);` should do
 
       var allSamplesCount = Object.keys(allData.samples).length;
 
@@ -1790,11 +1790,11 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
         if (zerocount > 0) { // add zerocount times 0 at the end
           jxn.boxPlotData = helper.computeBoxPlot(
-            _.pluck(jxn.weights, 'weight')
+            _.map(jxn.weights, 'weight')
               .concat(Array.apply(null, Array(zerocount)).map(Number.prototype.valueOf, 0)));
 
         } else {
-          jxn.boxPlotData = helper.computeBoxPlot(_.pluck(jxn.weights, 'weight'));
+          jxn.boxPlotData = helper.computeBoxPlot(_.map(jxn.weights, 'weight'));
         }
       })
 
