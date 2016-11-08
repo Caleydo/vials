@@ -230,25 +230,21 @@ export function VialsGUI() {
       params: function (term, offset) {
         return {projectID: projectID, selectFilter: term}
       },
-      processItem: function (item) {
-        return {
-          id: item.id,
-          text: item.name || '---',
-          description: item.desc || '---'
-        }
-      },
-      results: function (data, offset) {
-
-        return {
-          results: data,
-          more: false
-
-
-        }
+      fetch: function(url, init, queryOptions) {
+          return $.ajax(url).then((data: any[]) => {
+              return {
+                  results: data.map((item)=> {
+                      return {
+                        id: item.id,
+                        text: item.name || '---',
+                        description: item.desc || '---'
+                      }
+                  }),
+                  more: false
+              };
+          });
       }
     }
-
-
   }
 
 
