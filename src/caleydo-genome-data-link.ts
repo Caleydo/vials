@@ -1,77 +1,84 @@
 'use strict';
 
+import * as C from 'phovea_core/src/index';
+import * as datatypes from 'phovea_core/src/datatype';
+import * as LRUCache from 'lru-fast';
+import * as $ from 'jquery';
+import * as brokenAxis from './caleydo-broken-axis';
+import * as _ from 'lodash';
+import * as d3 from 'd3';
+
 //noinspection Annotator
-define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js-lru', './caleydo-broken-axis', 'jquery', 'lodash'], function (exports, C, datatypes, d3, LRUCache, brokenAxis, $, _) {
 
-  exports.GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link', {
-    init: function (desc) {
-      this.serveradress = desc.serveradress;
-      this.sampleCache = new LRUCache(5); // create a cache of size 5
-      this.geneCache = new LRUCache(5); // create a cache of size 5
-      this.allGenes = null;
-      this.bamHeader = null;
-      this.allProjects = null;
-      this.options = {"showIntrons": true};
-      this.genomeAxis = brokenAxis.create(600, this.options);
-      this.localFileName = null;
-      this.localFileData = null;
-      this.groups = {}
-      this.groupRetainCount = {}
-    },
+export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link', {
+  init: function (desc) {
+    this.serveradress = desc.serveradress;
+    this.sampleCache = new LRUCache(5); // create a cache of size 5
+    this.geneCache = new LRUCache(5); // create a cache of size 5
+    this.allGenes = null;
+    this.bamHeader = null;
+    this.allProjects = null;
+    this.options = {"showIntrons": true};
+    this.genomeAxis = brokenAxis.create(600, this.options);
+    this.localFileName = null;
+    this.localFileData = null;
+    this.groups = {}
+    this.groupRetainCount = {}
+  },
 
-    useFile: function (fileName) {
-      this.localFileName = fileName;
-      this.localFileData = $.getJSON(fileName);
-    },
+  useFile: function (fileName) {
+    this.localFileName = fileName;
+    this.localFileData = $.getJSON(fileName);
+  },
 
 
-    getGeneData: function (projectID, geneName) {
-      var cacheID = projectID + "==>" + geneName;
+  getGeneData: function (projectID, geneName) {
+    var cacheID = projectID + "==>" + geneName;
 
-      var res = this.geneCache.get(cacheID);
+    var res = this.geneCache.get(cacheID);
 
-      if (!res) {
+    if (!res) {
 
-        if (this.localFileName) {
-          // -- localFile handling
-          var that = this;
+      if (this.localFileName) {
+        // -- localFile handling
+        var that = this;
 
-          res = C.promised(function (resolve, reject) {
-            that.localFileData.then(function (localData) {
+        res = new Promise(function (resolve, reject) {
+          that.localFileData.then(function (localData) {
 
-              var res = {
-                "gene": localData.gene,
-                "measures": localData.measures,
-                "samples": localData.samples
-              }
+            var res = {
+              "gene": localData.gene,
+              "measures": localData.measures,
+              "samples": localData.samples
+            }
 
-              resolve(res)
+            resolve(res)
 
-            })
           })
+        })
 
-        } else {
-          // regular server handling
-          var parameters = [];
-          parameters.push("geneID=" + encodeURIComponent(geneName));
-          parameters.push("projectID=" + encodeURIComponent(projectID));
-          // if (startPos) parameters.push("pos="+encodeURIComponent(startPos));
-          // if (baseWidth) parameters.push("baseWidth="+encodeURIComponent(baseWidth))
+      } else {
+        // regular server handling
+        var parameters = [];
+        parameters.push("geneID=" + encodeURIComponent(geneName));
+        parameters.push("projectID=" + encodeURIComponent(projectID));
+        // if (startPos) parameters.push("pos="+encodeURIComponent(startPos));
+        // if (baseWidth) parameters.push("baseWidth="+encodeURIComponent(baseWidth))
 
-          res = $.getJSON(this.serveradress + "/geneinfo?" + parameters.join("&"));
-        }
-
-        this.geneCache.put(cacheID, res);
-
+        res = $.getJSON(this.serveradress + "/geneinfo?" + parameters.join("&"));
       }
 
-      return res;
-    },
+      this.geneCache.put(cacheID, res);
+
+    }
+
+    return res;
+  },
 
 
-    /**
-     * current format:
-     * {
+  /**
+   * current format:
+   * {
         *  "hen01": {
         *    "dir": ".//_data/vials_projects/hen01.vials_project",
         *    "info": {
@@ -85,102 +92,99 @@ define(['exports', '../caleydo_core/main', '../caleydo_core/datatype', 'd3', 'js
         *    "project_id": "hen01"
         *  }
         *}
-     * @returns {null|*}
-     */
-    getAllProjects: function () {
+   * @returns {null|*}
+   */
+  getAllProjects: function () {
 
-      if (this.localFileName) {
-        // -- localFile handling
+    if (this.localFileName) {
+      // -- localFile handling
 
-        var projects = {};
-        projects[this.localFileName] = {"data": [{"data_type": "file"}]}
+      var projects = {};
+      projects[this.localFileName] = {"data": [{"data_type": "file"}]}
 
-        if (this.allProjects === null)
-          this.allProjects = C.promised(function (resolve, reject) {
-            resolve(projects)
-          })
-      } else {
-        // -- server handling
-        if (this.allProjects === null)
-          this.allProjects = $.getJSON(this.serveradress + "/projects");
-      }
-
-      return this.allProjects;
-    },
-
-    getAllGeneNames: function (projectID, geneDescriptor) {
-      return $.getJSON(this.serveradress + "/geneselect?projectID=" + projectID + "&selectFilter=" + geneDescriptor + "&exactMatch=True")
-    },
-
-    /*
-     *
-     * Status Variables
-     *
-     * */
-
-
-    setGroup: function (idList) {
-
-      var grpID = idList.map(function (d) {
-        return _.slice(d, 0, 2).join('')
-      }).join('_')
-      var groupName = _.uniqueId('grp_' + grpID + '-')
-      this.groups[groupName] = idList;
-      this.groupRetainCount[groupName] = 0;
-      return groupName;
-    },
-    retainGroup: function (groupName) {
-      this.groupRetainCount[groupName]++;
-    },
-    releaseGroup: function (groupName) {
-      if (groupName in this.groupRetainCount && this.groupRetainCount[groupName] > 1) {
-        this.groupRetainCount[groupName]--;
-      }
-      else {
-        if (groupName in this.groups) {
-          delete this.groups[groupName]
-          return true;
-        }
-      }
-
-    },
-    getGroup: function (groupName) {
-      if (groupName in this.groups) {
-        return {
-          name: groupName,
-          samples: this.groups[groupName]
-        }
-      } else {
-        return null;
-      }
-    },
-    //removeGroup: function(groupName){
-    //    if (groupName in this.groupings){
-    //        delete this.groupings[groupName]
-    //        return true;
-    //    }
-    //    return false;
-    //},
-    clearAllGroups: function () {
-      this.groups = {}
-      this.groupRetainCount = {}
-    },
-    getGroups: function () {
-      return _.map(this.groups, function (v, k) {
-        return {
-          name: k,
-          samples: v
-        }
-      })
+      if (this.allProjects === null)
+        this.allProjects = Promise.resolve(projects);
+    } else {
+      // -- server handling
+      if (this.allProjects === null)
+        this.allProjects = $.getJSON(this.serveradress + "/projects");
     }
 
+    return this.allProjects;
+  },
 
-  });
+  getAllGeneNames: function (projectID, geneDescriptor) {
+    return $.getJSON(this.serveradress + "/geneselect?projectID=" + projectID + "&selectFilter=" + geneDescriptor + "&exactMatch=True")
+  },
 
-  exports.create = function (desc) {
-    return new exports.GenomeDataLink(desc);
-  };
+  /*
+   *
+   * Status Variables
+   *
+   * */
+
+
+  setGroup: function (idList) {
+
+    var grpID = idList.map(function (d) {
+      return _.slice(d, 0, 2).join('')
+    }).join('_')
+    var groupName = _.uniqueId('grp_' + grpID + '-')
+    this.groups[groupName] = idList;
+    this.groupRetainCount[groupName] = 0;
+    return groupName;
+  },
+  retainGroup: function (groupName) {
+    this.groupRetainCount[groupName]++;
+  },
+  releaseGroup: function (groupName) {
+    if (groupName in this.groupRetainCount && this.groupRetainCount[groupName] > 1) {
+      this.groupRetainCount[groupName]--;
+    }
+    else {
+      if (groupName in this.groups) {
+        delete this.groups[groupName]
+        return true;
+      }
+    }
+
+  },
+  getGroup: function (groupName) {
+    if (groupName in this.groups) {
+      return {
+        name: groupName,
+        samples: this.groups[groupName]
+      }
+    } else {
+      return null;
+    }
+  },
+  //removeGroup: function(groupName){
+  //    if (groupName in this.groupings){
+  //        delete this.groupings[groupName]
+  //        return true;
+  //    }
+  //    return false;
+  //},
+  clearAllGroups: function () {
+    this.groups = {}
+    this.groupRetainCount = {}
+  },
+  getGroups: function () {
+    return _.map(this.groups, function (v, k) {
+      return {
+        name: k,
+        samples: v
+      }
+    })
+  }
+
+
 });
+
+export function create(desc) {
+  return new GenomeDataLink(desc);
+}
 
 /*
  !! this file makes use of the js-lru implementation from https://github.com/rsms/js-lru
