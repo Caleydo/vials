@@ -3,6 +3,7 @@ import 'file?name=404.html!./404.html';
 import 'file?name=robots.txt!./robots.txt';
 import 'font-awesome/scss/font-awesome.scss';
 import 'bootstrap-sass/assets/stylesheets/_bootstrap.scss';
+import './style.scss';
 
 import * as C from 'phovea_core/src/index';
 import * as data from 'phovea_core/src/data';
