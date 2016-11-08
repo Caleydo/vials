@@ -38,16 +38,23 @@ var height = fullHeight - margin.top - margin.bottom;
 
 
 var guiPanel = {
+  g: null,
   buttonHeight: 20,
   buttonPadding: 5,
   y: 5,
   buttons: [
     {
+      x: 0,
+      y: 0,
+      h: 0,
       w: 150,
       label: 'group selected',
       event: 'buttonGroupSelected'
     },
     {
+      x: 0,
+      y: 0,
+      h: 0,
       w: 150,
       label: 'ungroup selected',
       event: 'buttonUnGroupSelected'
@@ -70,6 +77,7 @@ var guiPanel = {
 }
 
 var readsPlot = {
+  g: null,
   height: 200,
   prefix: "readsPlot",
   y: guiPanel.buttonHeight + guiPanel.y + 5,
@@ -101,10 +109,10 @@ VialsReadVis.prototype.build = function ($parent) {
   var width = axis.getWidth();
 
   // data var:
-  var allData = {}; // api data
+  var allData :any = {}; // api data
   var dataExtent = [0, 1]; // data extent
   var allWiggles = [];
-  var groupWiggleCache = {};
+  var groupWiggleCache :any = {};
 
 
   var textLabelPadding = 0
@@ -216,7 +224,7 @@ VialsReadVis.prototype.build = function ($parent) {
       var allSelected = svgMain.selectAll(".sampleGroup.selected")
       var ids = _.map(
         _.filter(allSelected.data(), // only the non-groups !!
-          function (d) {
+          function (d:any) {
             return !(d.type && d.type == 'grp')
           })
         , 'sample')
@@ -245,7 +253,7 @@ VialsReadVis.prototype.build = function ($parent) {
 
       var ids = _.map(
         _.filter(allSelected.data(), // only groups !!
-          function (d) {
+          function (d:any) {
             return (d.type && d.type == 'grp')
           })
         , 'sample');
@@ -278,7 +286,7 @@ VialsReadVis.prototype.build = function ($parent) {
         groupMappedSamples = _.flatten(_.pluck(groupings, 'samples'));
 
         var groupedData = _.filter(allData.measures.wiggles,
-          function (d) {
+          function (d:any) {
             return _.contains(groupMappedSamples, d.sample)
           })
 
@@ -296,7 +304,7 @@ VialsReadVis.prototype.build = function ($parent) {
           })
         })
 
-        _.each(wiggleSummary, function (wi) {
+        _.each(wiggleSummary, function (wi:any) {
           wi.low = _.min(wi.all);
           wi.high = _.max(wi.all);
           wi.median = d3.median(wi.all);
@@ -306,7 +314,7 @@ VialsReadVis.prototype.build = function ($parent) {
 
         groupWiggleCache[groupName] = wiggleSummary
       } else {
-        groupings = _.filter(groupings, function (d) {
+        groupings = _.filter(groupings, function (d:any) {
           return d.name != groupName;
         })
 
@@ -323,7 +331,7 @@ VialsReadVis.prototype.build = function ($parent) {
 
 
       allWiggles = _.filter(allData.measures.wiggles,
-        function (d) {
+        function (d:any) {
           return !_.contains(groupMappedSamples, d.sample)
         })
 
@@ -461,7 +469,7 @@ VialsReadVis.prototype.build = function ($parent) {
 
     var areaScale = d3.scale.linear().domain([0, dataExtent[1]]).clamp(true).range([readsPlot.panels.std.height, 0])
 
-    var area = d3.svg.area()
+    var area = d3.svg.area<any>()
       .x(function (d, i) {
         return axis.arrayPosToScreenPos(i)
       })
@@ -470,7 +478,7 @@ VialsReadVis.prototype.build = function ($parent) {
         return areaScale(d);
       })
 
-    var areaGrp = d3.svg.area()
+    var areaGrp = d3.svg.area<any>()
       .x(function (d, i) {
         return axis.arrayPosToScreenPos(i)
       })
@@ -747,7 +755,7 @@ VialsReadVis.prototype.build = function ($parent) {
 
       var extents = []
       sampleData.measures.wiggles.forEach(function (wig) {
-        extentX = d3.extent(wig.data);
+        let extentX = d3.extent(wig.data);
         extents.push(extentX[0]);
         extents.push(extentX[1]);
       })

@@ -229,7 +229,7 @@ VialsGenomeAxis.prototype.build = function ($parent) {
         //});
         .each(function () {
           var self = d3.select(this);
-          var xoffset = x > width / 2 ? -10 - self.node().getBBox().width : 10;
+          var xoffset = x > width / 2 ? -10 - (<any>self.node()).getBBox().width : 10;
 
 
           self.attr({

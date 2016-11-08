@@ -82,8 +82,7 @@ export function VialsGUI() {
 
   this.init = function (genomeDataLink) {
     that.genomeDataLink = genomeDataLink;
-    d3.select("#toggleIntrons").on({
-      click: function () {
+    d3.select("#toggleIntrons").on('click', function () {
         var el = d3.select(this);
         if (el.classed("buttonSelected")) {
           // de-activate
@@ -96,8 +95,7 @@ export function VialsGUI() {
           that.genomeDataLink.genomeAxis.shrinkIntrons(true);
           event.fire("axisChange");
         }
-      }
-    });
+      });
 
 
     d3.select("#decreaseSize").on("click", function () {
@@ -335,7 +333,7 @@ export function VialsGUI() {
 
       $projectSelector.on('change', function (event) {
 
-        updateGeneSelector({id: event.value}, null);
+        updateGeneSelector({id: (<any>event).value}, null);
 
       });
 
@@ -369,7 +367,7 @@ export function VialsGUI() {
 
 var globalGUI = new VialsGUI();
 
-exports const current = globalGUI;
+export const current = globalGUI;
 
 
 //exports.geneSelector = globalGUI.geneSelector;

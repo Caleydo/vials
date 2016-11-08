@@ -46,6 +46,7 @@ var height = fullHeight - margin.top - margin.bottom;
 //"\uf259"
 
 var guiHead = {
+  g: null,
   y: 5,
   height: 17,
   title: 'on click open:',
@@ -73,6 +74,7 @@ var guiHead = {
 }
 
 var abundancePlot = {
+  g: null,
   height: 200,
   prefix: "jxn_weight",
   y: 30,
@@ -114,22 +116,26 @@ var abundancePlot = {
 }
 
 var connectorPlot = {
+  g: null,
   height: 100,
   prefix: "jxn_con",
   y: abundancePlot.height + abundancePlot.y,
   frozenHighlight: null, // dynamic
   upperConnectors: {
+    g: null,
     height: 60,
     prefix: "jxn_con_upper",
     y: 0
   },
   triangles: {
+    g: null,
     height: 8,
     y: 60,
     prefix: "jxn_con_triangle"
   }
   ,
   lowerConnectors: {
+    g: null,
     height: 100 - (60 + 8),
     prefix: "jxn_con_lower",
     y: 60 + 8
@@ -137,6 +143,7 @@ var connectorPlot = {
 }
 
 var heatmapPlot = {
+  g: null,
   height: 15,
   prefix: "jxn_heat",
   y: connectorPlot.y + connectorPlot.height
@@ -161,7 +168,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
   var width = axis.getWidth();
 
   // data var:
-  var allData = {}; // api data
+  var allData : any= {}; // api data
   var triangleData = []; // data to draw triangles
   var allJxns = {}; // juncntion information as map
   var allExons = [];
@@ -304,7 +311,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
         guiHeadOption.classed('selected', function (dd) {
           return dd.id == d.id
         });
-        _.each(allJxns, function (jxn) {
+        _.each(allJxns, function (jxn: any) {
           if (jxn.state == guiHead.defaultOption) {
             jxn.state = d.id;
           }
@@ -496,7 +503,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
 
         // all JXNs to std:
-        _.values(allJxns).forEach(function (jxn) {
+        _.values(allJxns).forEach(function (jxn:any) {
           jxn.state = 'mini';
           jxn.selectedIsoform = false;
         })
@@ -526,7 +533,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
       } else {
         isSelectedIsoForm = false;
         // all JXNs to std:
-        _.values(allJxns).forEach(function (jxn) {
+        _.values(allJxns).forEach(function (jxn: any) {
           jxn.state = 'std';
           jxn.selectedIsoform = false;
         })
@@ -920,7 +927,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
         return "translate(" + d.jxn.x + "," + 0 + ")";
       }
     })
-    panelBG = panels.select(".panelBG")
+    let panelBG = panels.select(".panelBG")
     panelBG.transition().attr({
       width: function (d) {
         return d.jxn.w;
@@ -1494,7 +1501,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
       while (shift < 0 && ind > 0 && (bucketsCopy[ind].xStart < bucketsCopy[ind - 1].xEnd + sitePadding)) {
         var firstInd = bucketsCopy[ind - 1].firstGroupBucket;
         var overlap = bucketsCopy[ind - 1].xEnd + sitePadding - bucketsCopy[ind].xStart;
-        for (var j = ind; j <= i; ++j) {
+        for (let j = ind; j <= i; ++j) {
           bucketsCopy[j].xStart += overlap
           bucketsCopy[j].xEnd += overlap
           bucketsCopy[j].firstGroupBucket = firstInd
@@ -1504,7 +1511,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
         shift = (leftGap - rightGap) / 2;
         shift = Math.min(shift, axis.getWidth() - bucketsCopy[i].xStart)
         shift = Math.max(shift, -bucketsCopy[firstInd].xStart)
-        for (var j = firstInd; j <= i; ++j) {
+        for (let j = firstInd; j <= i; ++j) {
           bucketsCopy[j].xStart += shift
           bucketsCopy[j].xEnd += shift
         }
@@ -1664,7 +1671,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
       var positiveStrand = (sampleData.gene.strand === '+');
 
       allExons = [];
-      _.values(sampleData.gene.isoforms).forEach(function (isoform) {
+      _.values(sampleData.gene.isoforms).forEach(function (isoform: any) {
         var exonNames = isoform.exonNames.split('_');
         var exonEnds = isoform.exonEnds.split('_');
         var exonStarts = isoform.exonStarts.split('_');

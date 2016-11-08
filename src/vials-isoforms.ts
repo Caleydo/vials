@@ -5,6 +5,7 @@
 import * as event from 'phovea_core/src/event';
 import * as d3 from 'd3';
 import * as gui from './vials-gui';
+import * as _ from 'lodash';
 
 /**
  * a simple template class of a visualization. Up to now there is no additional logic required.
@@ -518,7 +519,7 @@ IsoFormVis.prototype.build = function ($parent) {
 
       var jxn = isoform.select(".highlight").selectAll(".jxn").data(function (d) {
 
-        var ranges = _.sortBy(d.ranges, 'start');
+        var ranges : any[] = _.sortBy(d.ranges, 'start');
         var rangesLength = ranges.length;
 
         var relevantJunction = null;
@@ -949,7 +950,7 @@ IsoFormVis.prototype.build = function ($parent) {
         })
       })
 
-      var line = d3.svg.line()
+      var line = d3.svg.line<any>()
         .interpolate("linear")
         .x(function (d) {
           return d.x
@@ -1203,11 +1204,11 @@ IsoFormVis.prototype.build = function ($parent) {
     })
 
     return function (a, b) {
-      var aMap = d3.nest().key(function (d, i) {
-        return d.id
+      var aMap = d3.nest().key(function (d: any) {
+        return String(d.id)
       }).map(a.ranges, d3.map)
-      var bMap = d3.nest().key(function (d, i) {
-        return d.id
+      var bMap = d3.nest().key(function (d: any) {
+        return String(d.id)
       }).map(b.ranges, d3.map)
       var aValid = null;
       var bValid = null;
@@ -1280,12 +1281,12 @@ IsoFormVis.prototype.build = function ($parent) {
 
       mergedRanges = sampleData.gene['merged_ranges'];
 
-      minMaxValues = d3.extent(sampleData.measures.isoforms, function (d) {
+      minMaxValues = d3.extent(sampleData.measures.isoforms, function (d: any) {
         return +d.weight;
       })
 
       var usedIsoforms = d3.nest()
-        .key(function (measure) {
+        .key(function (measure: any) {
           return measure.id
         })
         .map(sampleData.measures.isoforms);
@@ -1299,7 +1300,7 @@ IsoFormVis.prototype.build = function ($parent) {
       Object.keys(usedIsoforms).map(function (isokey) {
 
         if (isokey in allIsoforms) {
-          var res = {weights: usedIsoforms[isokey], id: isokey}
+          var res : any= {weights: usedIsoforms[isokey], id: isokey}
 
           var isoform = allIsoforms[isokey];
           var exonNames = isoform.exonNames.split('_');

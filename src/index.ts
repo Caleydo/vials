@@ -16,12 +16,12 @@ import * as d3 from 'd3';
 'use strict';
 var vis;
 
-window.GoogleAnalyticsObject = 'ga';
-window.ga = {q: [['create', 'UA-45998043-2', 'vials.io'], ['send', 'pageview']], l: Date.now()};
-require(['http://www.google-analytics.com/analytics.js']);
+(<any>window).GoogleAnalyticsObject = 'ga';
+(<any>window).ga = {q: [['create', 'UA-45998043-2', 'vials.io'], ['send', 'pageview']], l: Date.now()};
+System.import('http://www.google-analytics.com/analytics.js');
 
 // d3 extension
-d3.selection.prototype.moveToFront = function () {
+(<any>(d3.selection.prototype)).moveToFront = function () {
   return this.each(function () {
     this.parentNode.appendChild(this);
   });
@@ -42,7 +42,7 @@ data.create({
   var options = getJsonFromUrl();
 
   if (options.file) {
-    genomeDataLink.useFile(options.file);
+    (<any>genomeDataLink).useFile(options.file);
 
   }
 
@@ -120,7 +120,7 @@ data.create({
       width: w,
       height: h
     })
-    if ($visCanvas.css("opacity") == 0) {
+    if (+$visCanvas.css("opacity") === 0) {
       $visCanvas.fadeTo('fast', 1);
     }
   })
@@ -144,7 +144,7 @@ data.create({
 
   function getJsonFromUrl() {
     var query = location.search.substr(1);
-    var result = {};
+    var result : any = {};
     query.split("&").forEach(function (part) {
       var item = part.split("=");
       result[item[0]] = decodeURIComponent(item[1]);

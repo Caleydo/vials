@@ -32,3 +32,7 @@ interface ISystem {
   import(module: string): Promise<any>;
 }
 declare const System: ISystem;
+
+interface JQuery {
+  selectivity(...args: any[]): any;
+}
