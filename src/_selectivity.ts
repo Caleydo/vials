@@ -3,5 +3,5 @@
  */
 
 
-import 'selectivity/dist/selectivity-full.css'
-import 'imports?jQuery=jquery!selectivity';
+import 'style!css!selectivity/styles/selectivity.css'
+import 'selectivity/jquery';

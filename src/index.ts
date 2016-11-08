@@ -1,14 +1,15 @@
-import 'file?name=index.html!./index.html';
+import 'file?name=index.html!extract!html!./index.html';
 import 'file?name=404.html!./404.html';
 import 'file?name=robots.txt!./robots.txt';
-import 'phovea_bootstrap_fontawesome/src/_bootstrap';
-import './style.scss';
+import 'font-awesome/scss/font-awesome.scss';
+import 'bootstrap-sass/assets/stylesheets/_bootstrap.scss';
 
 import * as C from 'phovea_core/src/index';
 import * as data from 'phovea_core/src/data';
 import * as visPlugins from 'phovea_core/src/vis';
 import * as event from 'phovea_core/src/event';
 import * as gui from './vials-gui';
+import 'imports?jQuery=jquery!bootstrap-sass/assets/javascripts/bootstrap.js';
 import * as $ from 'jquery';
 import * as d3 from 'd3';
 
@@ -18,7 +19,11 @@ var vis;
 
 (<any>window).GoogleAnalyticsObject = 'ga';
 (<any>window).ga = {q: [['create', 'UA-45998043-2', 'vials.io'], ['send', 'pageview']], l: Date.now()};
-System.import('http://www.google-analytics.com/analytics.js');
+{
+  let s = document.createElement('script');
+  s.src = 'http://www.google-analytics.com/analytics.js';
+  document.head.appendChild(s);
+}
 
 // d3 extension
 (<any>(d3.selection.prototype)).moveToFront = function () {
