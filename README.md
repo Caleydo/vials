@@ -9,7 +9,7 @@ Installation
 ------------
 
 ```
-git clone https://github.com/phovea/vials.git
+git clone https://github.com/caleydo/vials.git
 cd vials
 npm install
 ```
@@ -40,7 +40,7 @@ This repository is part of **[Phovea](http://phovea.caleydo.org/)**, a platform 
 [phovea-url]: https://phovea.caleydo.org
 [npm-image]: https://badge.fury.io/js/vials.svg
 [npm-url]: https://npmjs.org/package/vials
-[travis-image]: https://travis-ci.org/phovea/vials.svg?branch=master
-[travis-url]: https://travis-ci.org/phovea/vials
-[daviddm-image]: https://david-dm.org/phovea/vials.svg?theme=shields.io
-[daviddm-url]: https://david-dm.org/phovea/vials
+[travis-image]: https://travis-ci.org/caleydo/vials.svg?branch=master
+[travis-url]: https://travis-ci.org/caleydo/vials
+[daviddm-image]: https://david-dm.org/caleydo/vials.svg?theme=shields.io
+[daviddm-url]: https://david-dm.org/caleydo/vials

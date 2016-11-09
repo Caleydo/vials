@@ -276,7 +276,7 @@ function generateWebpackConfig(env) {
   } else if (type === 'app') { //isProduction app
     return generateWebpack(Object.assign({}, base, {
         min: true,
-        nosuffix: true
+        nosuffix: true,
       }));
   } else { //isProduction
     return [

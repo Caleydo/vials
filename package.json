@@ -88,11 +88,11 @@
   },
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/phovea/vials/issues"
+    "url": "https://github.com/caleydo/vials/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/phovea/vials.git"
+    "url": "https://github.com/caleydo/vials.git"
   },
   "main": "build/vials.js"
 }
