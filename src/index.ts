@@ -1,6 +1,6 @@
-import 'file?name=index.html!extract!html!./index.html';
-import 'file?name=404.html!./404.html';
-import 'file?name=robots.txt!./robots.txt';
+import 'file-loader?name=index.html!extract-loader!html-loader!./index.html';
+import 'file-loader?name=404.html!./404.html';
+import 'file-loader?name=robots.txt!./robots.txt';
 import 'font-awesome/scss/font-awesome.scss';
 import 'bootstrap-sass/assets/stylesheets/_bootstrap.scss';
 import './style.scss';

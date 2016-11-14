@@ -20,7 +20,7 @@ const banner = '/*! ' + (pkg.title || pkg.name) + ' - v' + pkg.version + ' - ' +
 
 //list of loaders and their mappings
 const webpackloaders = [
-  {test: /\.scss$/, loader: 'style!css!sass'},
+  {test: /\.scss$/, loader: 'style-loader!css-loader!sass-loader'},
   {test: /\.tsx?$/, loader: 'awesome-typescript-loader'},
   {test: /\.json$/, loader: 'json-loader'},
   {
@@ -83,7 +83,8 @@ function testPhoveaModules(modules) {
 }
 
 // use ueber registry file if available
-const registryFile = exists(resolve(__dirname, '..', 'phovea_registry.js')) ? '../phovea_registry.js' : './phovea_registry.js';
+const isUeberContext = exists(resolve(__dirname, '..', 'phovea_registry.js'));
+const registryFile = isUeberContext ? '../phovea_registry.js' : './phovea_registry.js';
 
 /**
  * inject the registry to be included
@@ -118,11 +119,11 @@ function generateWebpack(options) {
       // Add `.ts` and `.tsx` as a resolvable extension.
       extensions: ['.webpack.js', '.web.js', '.ts', '.tsx', '.js'],
       alias: Object.assign({}, options.libs || {}),
-      //fallback to the directory above if they are siblings
-      modules: [
+      //fallback to the directory above if they are siblings just in the ueber context
+      modules: isUeberContext ? [
         resolve(__dirname, '../'),
         'node_modules'
-      ]
+      ] : ['node_modules']
     },
     plugins: [
       new webpack.BannerPlugin({
@@ -190,20 +191,20 @@ function generateWebpack(options) {
 
     //ignore extra modules
     (options.ignore || []).forEach(function (d) {
-      base.module.loaders.push({test: new RegExp(d), loader: 'null'}); //use null loader
+      base.module.loaders.push({test: new RegExp(d), loader: 'null-loader'}); //use null loader
     });
     //ingore phovea module registry calls
     (options.modules || []).forEach(function (m) {
-      base.module.loaders.push({test: new RegExp('.*[\\\\/]' + m + '[\\\\/]phovea_registry.js'), loader: 'null'}); //use null loader
+      base.module.loaders.push({test: new RegExp('.*[\\\\/]' + m + '[\\\\/]phovea_registry.js'), loader: 'null-loader'}); //use null loader
     });
   }
   if (!options.bundle || options.extractCss) {
     //extract the included css file to own file
-    var p = new ExtractTextPlugin('style' + (options.min ? '.min' : '') + '.css');
+    var p = new ExtractTextPlugin('style' + (options.min && !options.nosuffix ? '.min' : '') + '.css');
     base.plugins.push(p);
     base.module.loaders[0] = {
       test: /\.scss$/,
-      loader: p.extract(['css', 'sass'])
+      loader: p.extract(['css-loader', 'sass-loader'])
     };
   }
   if (options.commons) {
@@ -276,7 +277,7 @@ function generateWebpackConfig(env) {
   } else if (type === 'app') { //isProduction app
     return generateWebpack(Object.assign({}, base, {
         min: true,
-        nosuffix: true,
+        nosuffix: true
       }));
   } else { //isProduction
     return [
