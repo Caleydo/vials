@@ -106,10 +106,10 @@
       "jquery",
       "lodash",
       "lru-fast",
-      "selectivity",
-      "d3"
+      "selectivity"
     ],
     "ignores": [],
-    "today": "Tue, 08 Nov 2016 12:13:12 GMT"
+    "today": "Tue, 08 Nov 2016 12:13:12 GMT",
+    "clientOnly": false
   }
 }
