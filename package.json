@@ -1,4 +1,22 @@
 {
+  "name": "vials",
+  "description": "Vials is a Phovea application for visualizing alternative splicing based on mRNAseq data.",
+  "homepage": "http://vials.io",
+  "version": "1.5.1",
+  "author": {
+    "name": "The Caleydo Team",
+    "email": "contact@caleydo.org",
+    "url": "https://caleydo.org"
+  },
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/caleydo/vials/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/caleydo/vials.git"
+  },
+  "private": true,
   "files": [
     "src",
     "index.js",
@@ -28,10 +46,25 @@
     "release:major": "npm version major && npm publish && git push --follow-tags",
     "release:minor": "npm version minor && npm publish && git push --follow-tags",
     "release:patch": "npm version patch && npm publish && git push --follow-tags",
-    "predist": "npm run build && npm run docs",
+    "predist": "npm run build",
     "dist": "mkdirp dist && cd build && tar cvzf ../dist/vials.tar.gz *",
     "predocker": "npm run build",
     "docker": "docker build -t vials -f deploy/Dockerfile ."
+  },
+  "dependencies": {
+    "@types/bootstrap": "3.3.32",
+    "@types/d3": "3.5.36",
+    "@types/jquery": "2.0.33",
+    "@types/lodash": "4.14.38",
+    "bootstrap-sass": "3.3.7",
+    "d3": "3.5.17",
+    "font-awesome": "4.6.3",
+    "jquery": "3.1.1",
+    "lodash": "4.16.6",
+    "lru-fast": "github:sgratzl/js-lru",
+    "phovea_core": "github:phovea/phovea_core#v0.0.5",
+    "phovea_d3": "github:phovea/phovea_d3#v0.0.5",
+    "selectivity": "3.0.0"
   },
   "devDependencies": {
     "@types/jasmine": "2.5.35",
@@ -63,38 +96,5 @@
     "url-loader": "0.5.7",
     "webpack": "2.1.0-beta.26",
     "webpack-dev-server": "2.1.0-beta.10"
-  },
-  "dependencies": {
-    "@types/bootstrap": "3.3.32",
-    "@types/d3": "3.5.36",
-    "@types/jquery": "2.0.33",
-    "@types/lodash": "4.14.38",
-    "bootstrap-sass": "3.3.7",
-    "d3": "3.5.17",
-    "font-awesome": "4.6.3",
-    "jquery": "3.1.1",
-    "lodash": "4.16.6",
-    "lru-fast": "github:sgratzl/js-lru",
-    "phovea_core": "github:phovea/phovea_core#v0.0.5",
-    "phovea_d3": "github:phovea/phovea_d3#v0.0.5",
-    "selectivity": "3.0.0"
-  },
-  "name": "vials",
-  "description": "Vials is a Phovea application for visualizing alternative splicing based on mRNAseq data.",
-  "homepage": "http://vials.io",
-  "version": "1.5.1",
-  "author": {
-    "name": "The Caleydo Team",
-    "email": "contact@caleydo.org",
-    "url": "https://caleydo.org"
-  },
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/caleydo/vials/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/caleydo/vials.git"
-  },
-  "private": true
+  }
 }
