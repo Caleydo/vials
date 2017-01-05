@@ -5,7 +5,6 @@ import 'font-awesome/scss/font-awesome.scss';
 import 'bootstrap-sass/assets/stylesheets/_bootstrap.scss';
 import './style.scss';
 
-import * as C from 'phovea_core/src/index';
 import * as data from 'phovea_core/src/data';
 import * as visPlugins from 'phovea_core/src/vis';
 import * as event from 'phovea_core/src/event';
@@ -15,8 +14,7 @@ import * as $ from 'jquery';
 import * as d3 from 'd3';
 
 
-'use strict';
-var vis;
+let vis;
 
 (<any>window).GoogleAnalyticsObject = 'ga';
 (<any>window).ga = {q: [['create', 'UA-45998043-2', 'vials.io'], ['send', 'pageview']], l: Date.now()};
@@ -41,11 +39,11 @@ data.create({
 
   gui.current.init(genomeDataLink);
 
-  var visses = visPlugins.list(genomeDataLink);
+  const visses = visPlugins.list(genomeDataLink);
 
   //console.log(document.location.search.substring(1))
 
-  var options = getJsonFromUrl();
+  const options = getJsonFromUrl();
 
   if (options.file) {
     (<any>genomeDataLink).useFile(options.file);
@@ -53,31 +51,31 @@ data.create({
   }
 
   if (options.headless) {
-    d3.select('#navbar').attr({hidden: true})
+    d3.select('#navbar').attr({hidden: true});
   }
 
 
-  var vis1Loaded = new Promise(function (resolve, reject) {
+  const vis1Loaded = new Promise(function (resolve, reject) {
     if (!options.mode || options.mode.indexOf('jxn') > -1) {
-      var junctionVis = visses.filter(function (vis) {
-        return vis.id === 'vials-junctions'
+      const junctionVis = visses.filter(function (vis) {
+        return vis.id === 'vials-junctions';
       })[0];
       junctionVis.load().then(function (plugin) {
-        vis = plugin.factory(genomeDataLink, document.querySelector("#visJxns"));
+        vis = plugin.factory(genomeDataLink, document.querySelector('#visJxns'));
         resolve();
       });
     } else {
       resolve();
     }
-  })
+  });
 
-  var vis2Loaded = new Promise(function (resolve, reject) {
+   const vis2Loaded = new Promise(function (resolve, reject) {
     if (!options.mode || options.mode.indexOf('reads') > -1) {
-      var readVis = visses.filter(function (vis) {
-        return vis.id === 'vials-reads'
+      const readVis = visses.filter(function (vis) {
+        return vis.id === 'vials-reads';
       })[0];
       readVis.load().then(function (plugin) {
-        vis = plugin.factory(genomeDataLink, document.querySelector("#visReads"));
+        vis = plugin.factory(genomeDataLink, document.querySelector('#visReads'));
         resolve();
       });
     } else {
@@ -85,13 +83,13 @@ data.create({
     }
   });
 
-  var vis3Loaded = new Promise(function (resolve, reject) {
+  const vis3Loaded = new Promise(function (resolve, reject) {
     if (!options.mode || options.mode.indexOf('iso') > -1) {
-      var readVis = visses.filter(function (vis) {
-        return vis.id === 'vials-isoforms'
+      const readVis = visses.filter(function (vis) {
+        return vis.id === 'vials-isoforms';
       })[0];
       readVis.load().then(function (plugin) {
-        vis = plugin.factory(genomeDataLink, document.querySelector("#visIso"));
+        vis = plugin.factory(genomeDataLink, document.querySelector('#visIso'));
         resolve();
       });
     } else {
@@ -99,13 +97,13 @@ data.create({
     }
   });
 
-  var vis4Loaded = new Promise(function (resolve, reject) {
+  const vis4Loaded = new Promise(function (resolve, reject) {
     if (!options.mode || options.mode.indexOf('axis') > -1) {
-      var readVis = visses.filter(function (vis) {
-        return vis.id === 'vials-axis'
+      const readVis = visses.filter(function (vis) {
+        return vis.id === 'vials-axis';
       })[0];
       readVis.load().then(function (plugin) {
-        vis = plugin.factory(genomeDataLink, document.querySelector("#visAxis"));
+        vis = plugin.factory(genomeDataLink, document.querySelector('#visAxis'));
         resolve();
       });
     } else {
@@ -117,31 +115,31 @@ data.create({
   // start here !!
   Promise.all([vis1Loaded, vis2Loaded, vis3Loaded, vis4Loaded]).then(function () {
     gui.current.start(options.projectID, options.geneID, options.exonLength);
-  })
+  });
 
 
   event.on('resizeCanvas', function (event, w, h) {
-    var $visCanvas = $('#vis_canvas');
+    const $visCanvas = $('#vis_canvas');
     $visCanvas.css({
       width: w,
       height: h
-    })
-    if (+$visCanvas.css("opacity") === 0) {
+    });
+    if (+$visCanvas.css('opacity') === 0) {
       $visCanvas.fadeTo('fast', 1);
     }
-  })
+  });
 
   $(window).resize(function () {
     event.fire('resizeCanvas',
       $(window).width(),
-      $(window).height() - ($('#navbar').attr('hidden') ? 0 : +$('#navbar').height()) - 5)
+      $(window).height() - ($('#navbar').attr('hidden') ? 0 : +$('#navbar').height()) - 5);
 
   });
 
-  //console.log($('#navbar').attr('hidden'),'\n-- $(.css("opacity") --');
+  //console.log($('#navbar').attr('hidden'),'\n-- $(.css('opacity') --');
   event.fire('resizeCanvas',
     $(window).width(),
-    $(window).height() - ($('#navbar').attr('hidden') ? 0 : +$('#navbar').height()) - 5)
+    $(window).height() - ($('#navbar').attr('hidden') ? 0 : +$('#navbar').height()) - 5);
 
 
   // ==============
@@ -149,10 +147,10 @@ data.create({
   // ==============
 
   function getJsonFromUrl() {
-    var query = location.search.substr(1);
-    var result : any = {};
-    query.split("&").forEach(function (part) {
-      var item = part.split("=");
+    const query = location.search.substr(1);
+    const result : any = {};
+    query.split('&').forEach(function (part) {
+      const item = part.split('=');
       result[item[0]] = decodeURIComponent(item[1]);
     });
     return result;

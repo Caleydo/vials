@@ -1,12 +1,10 @@
 'use strict';
 
-import * as C from 'phovea_core/src/index';
 import * as datatypes from 'phovea_core/src/datatype';
 import * as LRUCache from 'lru-fast';
 import * as $ from 'jquery';
 import * as brokenAxis from './caleydo-broken-axis';
 import * as _ from 'lodash';
-import * as d3 from 'd3';
 
 //noinspection Annotator
 
@@ -18,12 +16,12 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
     this.allGenes = null;
     this.bamHeader = null;
     this.allProjects = null;
-    this.options = {"showIntrons": true};
+    this.options = {showIntrons: true};
     this.genomeAxis = brokenAxis.create(600, this.options);
     this.localFileName = null;
     this.localFileData = null;
-    this.groups = {}
-    this.groupRetainCount = {}
+    this.groups = {};
+    this.groupRetainCount = {};
   },
 
   useFile: function (fileName) {
@@ -33,39 +31,39 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
 
 
   getGeneData: function (projectID, geneName) {
-    var cacheID = projectID + "==>" + geneName;
+    const cacheID = projectID + '==>' + geneName;
 
-    var res = this.geneCache.get(cacheID);
+    let res = this.geneCache.get(cacheID);
 
     if (!res) {
 
       if (this.localFileName) {
         // -- localFile handling
-        var that = this;
+        const that = this;
 
         res = new Promise(function (resolve, reject) {
           that.localFileData.then(function (localData) {
 
-            var res = {
-              "gene": localData.gene,
-              "measures": localData.measures,
-              "samples": localData.samples
-            }
+            const res = {
+              'gene': localData.gene,
+              'measures': localData.measures,
+              'samples': localData.samples
+            };
 
-            resolve(res)
+            resolve(res);
 
-          })
-        })
+          });
+        });
 
       } else {
         // regular server handling
-        var parameters = [];
-        parameters.push("geneID=" + encodeURIComponent(geneName));
-        parameters.push("projectID=" + encodeURIComponent(projectID));
-        // if (startPos) parameters.push("pos="+encodeURIComponent(startPos));
-        // if (baseWidth) parameters.push("baseWidth="+encodeURIComponent(baseWidth))
+        let parameters = [];
+        parameters.push('geneID=' + encodeURIComponent(geneName));
+        parameters.push('projectID=' + encodeURIComponent(projectID));
+        // if (startPos) parameters.push('pos='+encodeURIComponent(startPos));
+        // if (baseWidth) parameters.push('baseWidth='+encodeURIComponent(baseWidth))
 
-        res = $.getJSON(this.serveradress + "/geneinfo?" + parameters.join("&"));
+        res = $.getJSON(this.serveradress + '/geneinfo?' + parameters.join('&'));
       }
 
       this.geneCache.put(cacheID, res);
@@ -76,22 +74,22 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
   },
 
 
-  /**
+  /*
    * current format:
    * {
-        *  "hen01": {
-        *    "dir": ".//_data/vials_projects/hen01.vials_project",
-        *    "info": {
-        *      "bam_root_dir": "/vagrant_external/bodyMap_broad_igv/indexed",
-        *      "gene_name_mapped": "event_names_enriched",
-        *      "id_type_guessed": "ensembl",
-        *      "project_type": "miso",
-        *      "ref_genome": "hg19"
-        *    },
-        *    "name": "hen01",
-        *    "project_id": "hen01"
-        *  }
-        *}
+   *  'hen01': {
+   *    'dir': './/_data/vials_projects/hen01.vials_project',
+   *    'info': {
+   *      'bam_root_dir': '/vagrant_external/bodyMap_broad_igv/indexed',
+   *      'gene_name_mapped': 'event_names_enriched',
+   *      'id_type_guessed': 'ensembl',
+   *      'project_type': 'miso',
+   *      'ref_genome': 'hg19'
+   *    },
+   *    'name': 'hen01',
+   *    'project_id': 'hen01'
+   *  }
+   *}
    * @returns {null|*}
    */
   getAllProjects: function () {
@@ -100,21 +98,23 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
       // -- localFile handling
 
       var projects = {};
-      projects[this.localFileName] = {"data": [{"data_type": "file"}]}
+      projects[this.localFileName] = {data: [{data_type: 'file'}]};
 
-      if (this.allProjects === null)
+      if (this.allProjects === null) {
         this.allProjects = Promise.resolve(projects);
+      }
     } else {
       // -- server handling
-      if (this.allProjects === null)
-        this.allProjects = $.getJSON(this.serveradress + "/projects");
+      if (this.allProjects === null) {
+        this.allProjects = $.getJSON(this.serveradress + '/projects');
+      }
     }
 
     return this.allProjects;
   },
 
   getAllGeneNames: function (projectID, geneDescriptor) {
-    return $.getJSON(this.serveradress + "/geneselect?projectID=" + projectID + "&selectFilter=" + geneDescriptor + "&exactMatch=True")
+    return $.getJSON(`${this.serveradress}/geneselect?projectID=${projectID}&selectFilter=${geneDescriptor}&exactMatch=True`);
   },
 
   /*
@@ -126,10 +126,10 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
 
   setGroup: function (idList) {
 
-    var grpID = idList.map(function (d) {
-      return _.slice(d, 0, 2).join('')
-    }).join('_')
-    var groupName = _.uniqueId('grp_' + grpID + '-')
+    const grpID = idList.map(function (d) {
+      return _.slice(d, 0, 2).join('');
+    }).join('_');
+    const groupName = _.uniqueId('grp_' + grpID + '-');
     this.groups[groupName] = idList;
     this.groupRetainCount[groupName] = 0;
     return groupName;
@@ -140,10 +140,9 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
   releaseGroup: function (groupName) {
     if (groupName in this.groupRetainCount && this.groupRetainCount[groupName] > 1) {
       this.groupRetainCount[groupName]--;
-    }
-    else {
+    } else {
       if (groupName in this.groups) {
-        delete this.groups[groupName]
+        delete this.groups[groupName];
         return true;
       }
     }
@@ -154,7 +153,7 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
       return {
         name: groupName,
         samples: this.groups[groupName]
-      }
+      };
     } else {
       return null;
     }
@@ -167,16 +166,16 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
   //    return false;
   //},
   clearAllGroups: function () {
-    this.groups = {}
-    this.groupRetainCount = {}
+    this.groups = {};
+    this.groupRetainCount = {};
   },
   getGroups: function () {
     return _.map(this.groups, function (v, k) {
       return {
         name: k,
         samples: v
-      }
-    })
+      };
+    });
   }
 
 

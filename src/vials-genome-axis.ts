@@ -6,7 +6,6 @@
 import * as event from 'phovea_core/src/event';
 import * as gui from './vials-gui';
 import * as helper from './vials-helper';
-import * as _ from 'lodash';
 import * as d3 from 'd3';
 
 
@@ -38,52 +37,6 @@ var margin = {top: 5, right: 150, bottom: 5, left: 150};
 var fullHeight = 30;
 var height = fullHeight - margin.top - margin.bottom;
 
-var guiPanel = {
-  buttonHeight: 20,
-  buttonPadding: 5,
-  y: 5,
-  //buttons: [
-  //    {
-  //        w: 150,
-  //        label: 'group selected',
-  //        event: 'buttonGroupSelected'
-  //    },
-  //    {
-  //        w: 150,
-  //        label: 'ungroup selected',
-  //        event: 'buttonUnGroupSelected'
-  //
-  //    },
-  //    {
-  //        w: 150,
-  //        label: 'unselect all',
-  //        event: 'buttonUnselectAll'
-  //
-  //    },
-  //    {
-  //        w: 150,
-  //        label: 'group by attribute',
-  //        event: 'buttonGroupByAttribute'
-  //    }
-  //]
-
-
-}
-
-var axisPlot = {
-  //height: 200,
-  //prefix: "readsPlot",
-  //y: guiPanel.buttonHeight + guiPanel.y + 5,
-  //labelWidth: 300,
-  //panels: {
-  //    std: {
-  //        height: 20,
-  //        xDiff: 25
-  //    }
-  //}
-}
-
-
 /**
  * build the vis and return node
  * @param $parent - the d3 selection of parent node
@@ -103,20 +56,20 @@ VialsGenomeAxis.prototype.build = function ($parent) {
   var genomeCoord = null;
 
 
-  var textLabelPadding = 0
+  var textLabelPadding = 0;
 
 
   //--  create the outer DOM structure:
-  var head = $parent.append("div").attr({
-    "class": "gv"
-  })
-  var svg = head.append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+  var head = $parent.append('div').attr({
+    'class': 'gv'
+  });
+  var svg = head.append('svg')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom)
     .style({
-      "left": "20px",
-      "position": "relative"
-    })
+      'left': '20px',
+      'position': 'relative'
+    });
 
   //--  create textLabel and retrieve its width
   textLabelPadding = 40;
@@ -124,14 +77,14 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
 
   //--  create a group offset by the label
-  var svgMain = svg.append("g").attr({
-    "class": "axisMain",
-    "transform": "translate(" + textLabelPadding + ",0)"
+  var svgMain = svg.append('g').attr({
+    'class': 'axisMain',
+    'transform': 'translate(' + textLabelPadding + ',0)'
   });
 
-  var crosshairGroup = svgMain.append("g").attr({
-    "transform": "translate(" + 0 + "," + 0 + ")",
-    "class": "crosshair_group"
+  var crosshairGroup = svgMain.append('g').attr({
+    'transform': 'translate(' + 0 + ',' + 0 + ')',
+    'class': 'crosshair_group'
   });
 
   function reset() {
@@ -144,27 +97,27 @@ VialsGenomeAxis.prototype.build = function ($parent) {
   function initView() {
 
     // create crosshair
-    crosshairGroup.append("line").attr({
-      "class": "crosshair",
-      "x1": 0,
-      "y1": 0,
-      "x2": 0,
-      "y2": fullHeight
+    crosshairGroup.append('line').attr({
+      'class': 'crosshair',
+      'x1': 0,
+      'y1': 0,
+      'x2': 0,
+      'y2': fullHeight
     }).style({
-      "stroke-width": "1",
-      "stroke": "black",
-      "pointer-events": "none"
+      'stroke-width': '1',
+      'stroke': 'black',
+      'pointer-events': 'none'
     });
 
-    //crosshairGroup.append("text").attr("class", "crosshairPosBG")
-    crosshairGroup.append("text").attr("class", "crosshairPos")
+    //crosshairGroup.append('text').attr('class', 'crosshairPosBG')
+    crosshairGroup.append('text').attr('class', 'crosshairPos');
 
     var currentX = 0;
-    svg.on("mousemove", function () {
+    svg.on('mousemove', function () {
       currentX = d3.mouse(this)[0] - 40;
-      event.fire("crosshair", currentX);
+      event.fire('crosshair', currentX);
 
-    })
+    });
 
     //var offsetX = 0;
     //guiPanel.buttons.forEach(function (d) {
@@ -185,10 +138,10 @@ VialsGenomeAxis.prototype.build = function ($parent) {
   function initEventHandlers() {
 
     // -- global Events
-    event.on("newDataLoaded", dataUpdate);
-    event.on("crosshair", updateCrosshair);
-    event.on("updateVis", updateVis);
-    event.on("axisChange", updateVis);
+    event.on('newDataLoaded', dataUpdate);
+    event.on('crosshair', updateCrosshair);
+    event.on('updateVis', updateVis);
+    event.on('axisChange', updateVis);
 
     // *****************
     // ******** Internal Data Events: highlights & selections
@@ -201,31 +154,31 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
 
     function updateCrosshair(event, x) {
-      var visible = (x < 0 || x > axis.getWidth()) ? "hidden" : "visible";
+      var visible = (x < 0 || x > axis.getWidth()) ? 'hidden' : 'visible';
 
-      crosshairGroup.selectAll(".crosshair").attr({
-        "x1": x,
-        "x2": x,
-        "visibility": visible
-      })
+      crosshairGroup.selectAll('.crosshair').attr({
+        'x1': x,
+        'x2': x,
+        'visibility': visible
+      });
 
-      //crosshairGroup.selectAll(".crosshairPosBG")
+      //crosshairGroup.selectAll('.crosshairPosBG')
       //  .text(function (d) {
       //    return axis.screenPosToGenePos(x)
       //  }).attr({
-      //      "x": x + 9,
-      //      "y": 14,
-      //      "visibility": visible
+      //      'x': x + 9,
+      //      'y': 14,
+      //      'visibility': visible
       //    });
 
-      crosshairGroup.selectAll(".crosshairPos")
+      crosshairGroup.selectAll('.crosshairPos')
         .text(function (d) {
-          return axis.screenPosToGenePos(x)
+          return axis.screenPosToGenePos(x);
         })
         //.attr({
-        //  "x": x + 10,
-        //  "y": 15,
-        //  "visibility": visible
+        //  'x': x + 10,
+        //  'y': 15,
+        //  'visibility': visible
         //});
         .each(function () {
           var self = d3.select(this);
@@ -233,11 +186,11 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
 
           self.attr({
-            "x": x + xoffset,
-            "y": 15,
-            "visibility": visible
+            'x': x + xoffset,
+            'y': 15,
+            'visibility': visible
           });
-        })
+        });
     }
 
   }
@@ -252,15 +205,15 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
       //var diff = genomeCoord.end - genomeCoord.start;
       var scale = d3.scale.linear().domain([0, 100]).range([genomeCoord.start, genomeCoord.end]);
-      var stepSize = (genomeCoord.end - genomeCoord.start) / 100
+      var stepSize = (genomeCoord.end - genomeCoord.start) / 100;
 
 
-      var ticks = svgMain.selectAll(".ticks").data(d3.range(0, 101));
+      var ticks = svgMain.selectAll('.ticks').data(d3.range(0, 101));
       ticks.exit().remove();
 
       //// --- adding Element to class ticks
-      //var ticksEnter = ticks.enter().append("line").attr({
-      //  "class": "ticks"
+      //var ticksEnter = ticks.enter().append('line').attr({
+      //  'class': 'ticks'
       //})
       //
       //// --- changing nodes for ticks
@@ -277,32 +230,32 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
 
       // --- adding Element to class ticks
-      var ticksEnter = ticks.enter().append("polygon").attr({
-        "class": "ticks"
-      })
+      ticks.enter().append('polygon').attr({
+        'class': 'ticks'
+      });
 
       // --- changing nodes for ticks
       ticks.transition().attr({
         points: function (d) {
-          if (genomeCoord.strand == '+') {
+          if (genomeCoord.strand === '+') {
             return axis.genePosToScreenPos(scale(d)) + ',0 ' +
-              ((d != 100) ? axis.genePosToScreenPos(scale(d) + stepSize) + ',' + height / 2 + ' ' : '') +
+              ((d !== 100) ? axis.genePosToScreenPos(scale(d) + stepSize) + ',' + height / 2 + ' ' : '') +
               axis.genePosToScreenPos(scale(d)) + ',' + height;
           } else {
             return axis.genePosToScreenPos(scale(d)) + ',0 ' +
-              ((d != 0) ? axis.genePosToScreenPos(scale(d) - stepSize) + ',' + height / 2 + ' ' : '') +
+              ((d !== 0) ? axis.genePosToScreenPos(scale(d) - stepSize) + ',' + height / 2 + ' ' : '') +
               axis.genePosToScreenPos(scale(d)) + ',' + height;
 
 
           }
         }
 
-      })
+      });
 
 
       // // --- adding Element to class ticks
-      //var ticksEnter = ticks.enter().append("rect").attr({
-      //  "class": "ticks"
+      //var ticksEnter = ticks.enter().append('rect').attr({
+      //  'class': 'ticks'
       //})
       //
       //// --- changing nodes for ticks
@@ -324,38 +277,38 @@ VialsGenomeAxis.prototype.build = function ($parent) {
   }
 
   function updateReverseButton() {
-    var directionToggleGroup = svgMain.selectAll(".directionToggleGroup").data([1])
-    var directionToggleGroupEnter = directionToggleGroup.enter().append("g").attr({
-      "class": "directionToggleGroup"
-    })
-    directionToggleGroupEnter.append("rect").attr({
-      "class": "directionToggle",
-      "width": 125,
-      "height": 20,
-      "rx": 10,
-      "ry": 10
-    }).on("click", function () {
+    var directionToggleGroup = svgMain.selectAll('.directionToggleGroup').data([1]);
+    var directionToggleGroupEnter = directionToggleGroup.enter().append('g').attr({
+      'class': 'directionToggleGroup'
+    });
+    directionToggleGroupEnter.append('rect').attr({
+      'class': 'directionToggle',
+      'width': 125,
+      'height': 20,
+      'rx': 10,
+      'ry': 10
+    }).on('click', function () {
       axis.reverse();
-      d3.select(this).classed("selected", !axis.ascending);
-      event.fire("axisChange");
-    })
+      d3.select(this).classed('selected', !axis.ascending);
+      event.fire('axisChange');
+    });
 
-    directionToggleGroupEnter.append("line").attr({
-      "x1": 20,
-      "x2": 50,
-      "y1": 10,
-      "y2": 10,
-      //"stroke": "black",
-      "stroke-width": 5,
-      "marker-end": "url(\#scaleArrow)",
-      "marker-start": "url(\#scaleArrow)",
-    }).style("pointer-events", "none");
-    var directionToggleText = directionToggleGroupEnter.append("text").attr({}).text("reverse");
-    directionToggleText.attr("transform", "translate(65, 14)");
-    directionToggleText.style("pointer-events", "none");
+    directionToggleGroupEnter.append('line').attr({
+      'x1': 20,
+      'x2': 50,
+      'y1': 10,
+      'y2': 10,
+      //'stroke': 'black',
+      'stroke-width': 5,
+      'marker-end': 'url(\#scaleArrow)',
+      'marker-start': 'url(\#scaleArrow)',
+    }).style('pointer-events', 'none');
+    var directionToggleText = directionToggleGroupEnter.append('text').attr({}).text('reverse');
+    directionToggleText.attr('transform', 'translate(65, 14)');
+    directionToggleText.style('pointer-events', 'none');
 
     directionToggleGroup.attr({
-      "transform": "translate(" + (axis.width + 10) + ",0)"
+      'transform': 'translate(' + (axis.width + 10) + ',0)'
     });
 
 
@@ -376,16 +329,16 @@ VialsGenomeAxis.prototype.build = function ($parent) {
    ================= GENERAL METHODS =====================
    */
 
-  //var exploreArea = svgMain.append("g").attr("transform", "translate(0, 5)").attr("id","exploreArea");
-  //jxnArea = exploreArea.append("g").attr("id", "jxnArea");
+  //var exploreArea = svgMain.append('g').attr('transform', 'translate(0, 5)').attr('id','exploreArea');
+  //jxnArea = exploreArea.append('g').attr('id', 'jxnArea');
 
 
   function updateVis() {
 
-    width = axis.getWidth() + margin.left + margin.right
+    width = axis.getWidth() + margin.left + margin.right;
     svg.attr({
       width: width
-    })
+    });
 
     updateAxis();
     updateReverseButton();
@@ -403,7 +356,7 @@ VialsGenomeAxis.prototype.build = function ($parent) {
       reset();
       axis = that.data.genomeAxis;
       width = axis.getWidth();
-      svg.attr("width", axis.getWidth() + margin.left + margin.right + textLabelPadding);
+      svg.attr('width', axis.getWidth() + margin.left + margin.right + textLabelPadding);
       genomeCoord = {
         start: sampleData.gene.start,
         end: sampleData.gene.end,
@@ -422,5 +375,5 @@ VialsGenomeAxis.prototype.build = function ($parent) {
   initView();
 
   return head.node();
-}
+};
 

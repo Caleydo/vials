@@ -8,9 +8,7 @@ import * as gui from './vials-gui';
 
 
 export const VialsHelper = function () {
-  function VialsHelper() {
-
-  }
+  function VialsHelper() { }
 
   /**
    * creates the label for each view
@@ -21,36 +19,36 @@ export const VialsHelper = function () {
    * @returns {*} - padding width for the current label
    */
   VialsHelper.prototype.drawSideLabel = function (svg, height, margin, align, labelText) {
-    var svgLabel = svg.append("g")
-      .attr("transform", "translate(0," + (height + margin.top) + ")rotate(-90)");
+    var svgLabel = svg.append('g')
+      .attr('transform', 'translate(0,' + (height + margin.top) + ')rotate(-90)');
 
     // create label bg and text:
-    var svgLabelBg = svgLabel.append("rect").attr({
-      "class": "viewLabelBg",
-      "width": height + margin.top,
-      "rx": 10,
-      "ry": 10
+    var svgLabelBg = svgLabel.append('rect').attr({
+      'class': 'viewLabelBg',
+      'width': height + margin.top,
+      'rx': 10,
+      'ry': 10
     });
-    var svgLabelText = svgLabel.append("text").text(labelText).attr({
-      "class": "viewLabelText"
+    var svgLabelText = svgLabel.append('text').text(labelText).attr({
+      'class': 'viewLabelText'
     });
     var bb = svgLabelText.node().getBBox();
 
     // adjust sizes after measuring text size:
-    svgLabelBg.attr({"height": bb.height + 4})
+    svgLabelBg.attr({'height': bb.height + 4})
 
     if (align === 'center') {
-      svgLabelText.attr("transform", "translate(" +
+      svgLabelText.attr('transform', 'translate(' +
         (height + margin.top - bb.width) / 2
-        + "," + (bb.height - 3) + ")")
+        + ',' + (bb.height - 3) + ')');
     } else if (align === 'right') {
-      svgLabelText.attr("transform", "translate(" +
+      svgLabelText.attr('transform', 'translate(' +
         (height - bb.width)
-        + "," + (bb.height - 3) + ")")
+        + ',' + (bb.height - 3) + ')');
     }
 
     return bb.height + 2 * 4;
-  }
+  };
 
 
   VialsHelper.prototype.getPseudoRandom = function () {
@@ -65,7 +63,7 @@ export const VialsHelper = function () {
       seed = ((seed ^ 0xB55A4F09) ^ (seed >>> 16)) & 0xFFFFFFFF;
       return (seed & 0xFFFFFFF) / 0x10000000;
     };
-  }
+  };
 
 
   /**
@@ -86,12 +84,16 @@ export const VialsHelper = function () {
     {
       var i = -1;
       var j = sortedValues.length;
-      while ((sortedValues[++i] < Q[1] - iqr));
-      while (sortedValues[--j] > Q[3] + iqr);
-      whiskerTop = j == sortedValues.length - 1 ? sortedValues[j] : Q[3] + iqr;
-      whiskerDown = i == 0 ? sortedValues[i] : Q[1] - iqr;
+      while ((sortedValues[++i] < Q[1] - iqr)) {
+
+      }
+      while (sortedValues[--j] > Q[3] + iqr) {
+
+      }
+      whiskerTop = j === sortedValues.length - 1 ? sortedValues[j] : Q[3] + iqr;
+      whiskerDown = i === 0 ? sortedValues[i] : Q[1] - iqr;
     }
-    return {"whiskerTop": whiskerTop, "whiskerDown": whiskerDown, "Q": Q};
+    return {'whiskerTop': whiskerTop, 'whiskerDown': whiskerDown, 'Q': Q};
   }
 
 
@@ -100,10 +102,10 @@ export const VialsHelper = function () {
 
 
 var global = new VialsHelper();
-export const drawSideLabel = global.drawSideLabel.bind(global)
-export const getPseudoRandom = global.getPseudoRandom.bind(global)
-export const computeBoxPlot = global.computeBoxPlot.bind(global)
-export const drawButton = global.drawButton
+export const drawSideLabel = global.drawSideLabel.bind(global);
+export const getPseudoRandom = global.getPseudoRandom.bind(global);
+export const computeBoxPlot = global.computeBoxPlot.bind(global);
+export const drawButton = global.drawButton;
 
 
 // THIS IS the copyright notice for the pseudorandom function:
@@ -125,7 +127,7 @@ export const drawButton = global.drawButton
 //       from this software without specific prior written permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+// 'AS IS' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 // LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 // A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
 // OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,

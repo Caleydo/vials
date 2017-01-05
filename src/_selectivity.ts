@@ -3,5 +3,5 @@
  */
 
 
-import 'style-loader!css-loader!selectivity/styles/selectivity.css'
+import 'style-loader!css-loader!selectivity/styles/selectivity.css';
 import 'selectivity/jquery';
