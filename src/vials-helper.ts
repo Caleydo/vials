@@ -2,13 +2,10 @@
  * Created by Hendrik Strobelt (hendrik.strobelt.com) on 8/9/15.
  */
 
-import * as event from 'phovea_core/src/event';
 import * as d3 from 'd3';
-import * as gui from './vials-gui';
 
 
-export const VialsHelper = function () {
-  function VialsHelper() { }
+export class VialsHelper {
 
   /**
    * creates the label for each view
@@ -18,24 +15,24 @@ export const VialsHelper = function () {
    * @param align - alignment of label (right, center,..)
    * @returns {*} - padding width for the current label
    */
-  VialsHelper.prototype.drawSideLabel = function (svg, height, margin, align, labelText) {
-    var svgLabel = svg.append('g')
+  drawSideLabel(svg, height, margin, align, labelText) {
+    const svgLabel = svg.append('g')
       .attr('transform', 'translate(0,' + (height + margin.top) + ')rotate(-90)');
 
     // create label bg and text:
-    var svgLabelBg = svgLabel.append('rect').attr({
+    const svgLabelBg = svgLabel.append('rect').attr({
       'class': 'viewLabelBg',
       'width': height + margin.top,
       'rx': 10,
       'ry': 10
     });
-    var svgLabelText = svgLabel.append('text').text(labelText).attr({
+    const svgLabelText = svgLabel.append('text').text(labelText).attr({
       'class': 'viewLabelText'
     });
-    var bb = svgLabelText.node().getBBox();
+    const bb = svgLabelText.node().getBBox();
 
     // adjust sizes after measuring text size:
-    svgLabelBg.attr({'height': bb.height + 4})
+    svgLabelBg.attr({'height': bb.height + 4});
 
     if (align === 'center') {
       svgLabelText.attr('transform', 'translate(' +
@@ -48,12 +45,13 @@ export const VialsHelper = function () {
     }
 
     return bb.height + 2 * 4;
-  };
+  }
 
 
-  VialsHelper.prototype.getPseudoRandom = function () {
-    var seed = 0x2F6E2B1;
+  getPseudoRandom() {
+    let seed = 0x2F6E2B1;
     return function () {
+      /* tslint:disable */
       // Robert Jenkins’ 32 bit integer hash function
       seed = ((seed + 0x7ED55D16) + (seed << 12)) & 0xFFFFFFFF;
       seed = ((seed ^ 0xC761C23C) ^ (seed >>> 19)) & 0xFFFFFFFF;
@@ -62,8 +60,9 @@ export const VialsHelper = function () {
       seed = ((seed + 0xFD7046C5) + (seed << 3)) & 0xFFFFFFFF;
       seed = ((seed ^ 0xB55A4F09) ^ (seed >>> 16)) & 0xFFFFFFFF;
       return (seed & 0xFFFFFFF) / 0x10000000;
+      /* tslint:enable */
     };
-  };
+  }
 
 
   /**
@@ -71,41 +70,37 @@ export const VialsHelper = function () {
    * @param values
    * @returns {{whiskerTop: *, whiskerDown: *, Q: Array}}
    */
-  VialsHelper.prototype.computeBoxPlot = function (values) { // by bilal
-    var sortedValues = values.sort(d3.ascending);
-    var Q = new Array(5);
+  computeBoxPlot(values) { // by bilal
+    const sortedValues = values.sort(d3.ascending);
+    const Q = new Array(5);
     Q[0] = d3.min(sortedValues);
     Q[4] = d3.max(sortedValues);
     Q[1] = d3.quantile(sortedValues, 0.25);
     Q[2] = d3.quantile(sortedValues, 0.5);
     Q[3] = d3.quantile(sortedValues, 0.75);
-    var iqr = 1.5 * (Q[3] - Q[1]);
-    var whiskerTop, whiskerDown;
+    const iqr = 1.5 * (Q[3] - Q[1]);
+    let whiskerTop, whiskerDown;
     {
-      var i = -1;
-      var j = sortedValues.length;
+      let i = -1;
+      let j = sortedValues.length;
       while ((sortedValues[++i] < Q[1] - iqr)) {
-
+        // nothing to do
       }
       while (sortedValues[--j] > Q[3] + iqr) {
-
+        // nothing to do
       }
       whiskerTop = j === sortedValues.length - 1 ? sortedValues[j] : Q[3] + iqr;
       whiskerDown = i === 0 ? sortedValues[i] : Q[1] - iqr;
     }
     return {'whiskerTop': whiskerTop, 'whiskerDown': whiskerDown, 'Q': Q};
   }
+}
 
 
-  return VialsHelper;
-}();
-
-
-var global = new VialsHelper();
+const global = new VialsHelper();
 export const drawSideLabel = global.drawSideLabel.bind(global);
 export const getPseudoRandom = global.getPseudoRandom.bind(global);
 export const computeBoxPlot = global.computeBoxPlot.bind(global);
-export const drawButton = global.drawButton;
 
 
 // THIS IS the copyright notice for the pseudorandom function:

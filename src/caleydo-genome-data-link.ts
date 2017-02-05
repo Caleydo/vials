@@ -8,8 +8,8 @@ import * as _ from 'lodash';
 
 //noinspection Annotator
 
-export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link', {
-  init: function (desc) {
+const dataLink = datatypes.defineDataType('caleydo-genome-data-link', {
+  init(desc) {
     this.serveradress = desc.serveradress;
     this.sampleCache = new LRUCache(5); // create a cache of size 5
     this.geneCache = new LRUCache(5); // create a cache of size 5
@@ -24,13 +24,13 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
     this.groupRetainCount = {};
   },
 
-  useFile: function (fileName) {
+  useFile(fileName) {
     this.localFileName = fileName;
     this.localFileData = $.getJSON(fileName);
   },
 
 
-  getGeneData: function (projectID, geneName) {
+  getGeneData(projectID, geneName) {
     const cacheID = projectID + '==>' + geneName;
 
     let res = this.geneCache.get(cacheID);
@@ -57,7 +57,7 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
 
       } else {
         // regular server handling
-        let parameters = [];
+        const parameters = [];
         parameters.push('geneID=' + encodeURIComponent(geneName));
         parameters.push('projectID=' + encodeURIComponent(projectID));
         // if (startPos) parameters.push('pos='+encodeURIComponent(startPos));
@@ -92,13 +92,14 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
    *}
    * @returns {null|*}
    */
-  getAllProjects: function () {
+  getAllProjects() {
 
     if (this.localFileName) {
       // -- localFile handling
 
-      var projects = {};
-      projects[this.localFileName] = {data: [{data_type: 'file'}]};
+      const projects = {
+        [this.localFileName]: {data: [{data_type: 'file'}]}
+      };
 
       if (this.allProjects === null) {
         this.allProjects = Promise.resolve(projects);
@@ -113,7 +114,7 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
     return this.allProjects;
   },
 
-  getAllGeneNames: function (projectID, geneDescriptor) {
+  getAllGeneNames(projectID, geneDescriptor) {
     return $.getJSON(`${this.serveradress}/geneselect?projectID=${projectID}&selectFilter=${geneDescriptor}&exactMatch=True`);
   },
 
@@ -124,7 +125,7 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
    * */
 
 
-  setGroup: function (idList) {
+  setGroup(idList) {
 
     const grpID = idList.map(function (d) {
       return _.slice(d, 0, 2).join('');
@@ -134,10 +135,10 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
     this.groupRetainCount[groupName] = 0;
     return groupName;
   },
-  retainGroup: function (groupName) {
+  retainGroup(groupName) {
     this.groupRetainCount[groupName]++;
   },
-  releaseGroup: function (groupName) {
+  releaseGroup(groupName) {
     if (groupName in this.groupRetainCount && this.groupRetainCount[groupName] > 1) {
       this.groupRetainCount[groupName]--;
     } else {
@@ -148,7 +149,7 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
     }
 
   },
-  getGroup: function (groupName) {
+  getGroup(groupName) {
     if (groupName in this.groups) {
       return {
         name: groupName,
@@ -165,11 +166,11 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
   //    }
   //    return false;
   //},
-  clearAllGroups: function () {
+  clearAllGroups() {
     this.groups = {};
     this.groupRetainCount = {};
   },
-  getGroups: function () {
+  getGroups() {
     return _.map(this.groups, function (v, k) {
       return {
         name: k,
@@ -182,7 +183,7 @@ export const GenomeDataLink = datatypes.defineDataType('caleydo-genome-data-link
 });
 
 export function create(desc) {
-  return new GenomeDataLink(desc);
+  return new dataLink(desc);
 }
 
 /*

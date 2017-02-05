@@ -20,7 +20,7 @@ export function VialsGenomeAxis(data, parent) {
   this.parent = parent;
   this.node = this.build(d3.select(parent));
 }
-export const VialsReadVis = VialsGenomeAxis;
+//export const VialsReadVis = VialsGenomeAxis;
 
 /**
  * factory method of this module
@@ -33,9 +33,9 @@ export function create(data, parent) {
 }
 
 // GLOBAL VARIABLES & STATUS
-var margin = {top: 5, right: 150, bottom: 5, left: 150};
-var fullHeight = 30;
-var height = fullHeight - margin.top - margin.bottom;
+const margin = {top: 5, right: 150, bottom: 5, left: 150};
+const fullHeight = 30;
+const height = fullHeight - margin.top - margin.bottom;
 
 /**
  * build the vis and return node
@@ -50,20 +50,20 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
 
   //-- initial parametrization:
-  var that = this;
-  var axis = that.data.genomeAxis;
-  var width = axis.getWidth();
-  var genomeCoord = null;
+  const that = this;
+  let axis = that.data.genomeAxis;
+  let width = axis.getWidth();
+  let genomeCoord = null;
 
 
-  var textLabelPadding = 0;
+  let textLabelPadding = 0;
 
 
   //--  create the outer DOM structure:
-  var head = $parent.append('div').attr({
+  const head = $parent.append('div').attr({
     'class': 'gv'
   });
-  var svg = head.append('svg')
+  const svg = head.append('svg')
     .attr('width', width + margin.left + margin.right)
     .attr('height', height + margin.top + margin.bottom)
     .style({
@@ -77,12 +77,12 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
 
   //--  create a group offset by the label
-  var svgMain = svg.append('g').attr({
+  const svgMain = svg.append('g').attr({
     'class': 'axisMain',
     'transform': 'translate(' + textLabelPadding + ',0)'
   });
 
-  var crosshairGroup = svgMain.append('g').attr({
+  const crosshairGroup = svgMain.append('g').attr({
     'transform': 'translate(' + 0 + ',' + 0 + ')',
     'class': 'crosshair_group'
   });
@@ -112,7 +112,7 @@ VialsGenomeAxis.prototype.build = function ($parent) {
     //crosshairGroup.append('text').attr('class', 'crosshairPosBG')
     crosshairGroup.append('text').attr('class', 'crosshairPos');
 
-    var currentX = 0;
+    let currentX = 0;
     svg.on('mousemove', function () {
       currentX = d3.mouse(this)[0] - 40;
       event.fire('crosshair', currentX);
@@ -154,7 +154,7 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
 
     function updateCrosshair(event, x) {
-      var visible = (x < 0 || x > axis.getWidth()) ? 'hidden' : 'visible';
+      const visible = (x < 0 || x > axis.getWidth()) ? 'hidden' : 'visible';
 
       crosshairGroup.selectAll('.crosshair').attr({
         'x1': x,
@@ -181,8 +181,8 @@ VialsGenomeAxis.prototype.build = function ($parent) {
         //  'visibility': visible
         //});
         .each(function () {
-          var self = d3.select(this);
-          var xoffset = x > width / 2 ? -10 - (<any>self.node()).getBBox().width : 10;
+          const self = d3.select(this);
+          const xoffset = x > width / 2 ? -10 - (<any>self.node()).getBBox().width : 10;
 
 
           self.attr({
@@ -204,11 +204,11 @@ VialsGenomeAxis.prototype.build = function ($parent) {
     if (genomeCoord) {
 
       //var diff = genomeCoord.end - genomeCoord.start;
-      var scale = d3.scale.linear().domain([0, 100]).range([genomeCoord.start, genomeCoord.end]);
-      var stepSize = (genomeCoord.end - genomeCoord.start) / 100;
+      const scale = d3.scale.linear().domain([0, 100]).range([genomeCoord.start, genomeCoord.end]);
+      const stepSize = (genomeCoord.end - genomeCoord.start) / 100;
 
 
-      var ticks = svgMain.selectAll('.ticks').data(d3.range(0, 101));
+      const ticks = svgMain.selectAll('.ticks').data(d3.range(0, 101));
       ticks.exit().remove();
 
       //// --- adding Element to class ticks
@@ -236,7 +236,7 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
       // --- changing nodes for ticks
       ticks.transition().attr({
-        points: function (d) {
+        points(d) {
           if (genomeCoord.strand === '+') {
             return axis.genePosToScreenPos(scale(d)) + ',0 ' +
               ((d !== 100) ? axis.genePosToScreenPos(scale(d) + stepSize) + ',' + height / 2 + ' ' : '') +
@@ -277,8 +277,8 @@ VialsGenomeAxis.prototype.build = function ($parent) {
   }
 
   function updateReverseButton() {
-    var directionToggleGroup = svgMain.selectAll('.directionToggleGroup').data([1]);
-    var directionToggleGroupEnter = directionToggleGroup.enter().append('g').attr({
+    const directionToggleGroup = svgMain.selectAll('.directionToggleGroup').data([1]);
+    const directionToggleGroupEnter = directionToggleGroup.enter().append('g').attr({
       'class': 'directionToggleGroup'
     });
     directionToggleGroupEnter.append('rect').attr({
@@ -303,7 +303,7 @@ VialsGenomeAxis.prototype.build = function ($parent) {
       'marker-end': 'url(\#scaleArrow)',
       'marker-start': 'url(\#scaleArrow)',
     }).style('pointer-events', 'none');
-    var directionToggleText = directionToggleGroupEnter.append('text').attr({}).text('reverse');
+    const directionToggleText = directionToggleGroupEnter.append('text').attr({}).text('reverse');
     directionToggleText.attr('transform', 'translate(65, 14)');
     directionToggleText.style('pointer-events', 'none');
 
@@ -337,7 +337,7 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
     width = axis.getWidth() + margin.left + margin.right;
     svg.attr({
-      width: width
+      width
     });
 
     updateAxis();
@@ -348,8 +348,8 @@ VialsGenomeAxis.prototype.build = function ($parent) {
 
 
   function dataUpdate() {
-    var curGene = gui.current.getSelectedGene();
-    var curProject = gui.current.getSelectedProject();
+    const curGene = gui.current.getSelectedGene();
+    const curProject = gui.current.getSelectedProject();
 
     that.data.getGeneData(curProject, curGene).then(function (sampleData) {
 

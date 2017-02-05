@@ -31,8 +31,8 @@ export function VialsGUI() {
 
   this.allVisUpdates = [];
 
-  var $projectSelector = $('#projectSelector');
-  var $geneSelector = $('#geneSelector');
+  const $projectSelector = $('#projectSelector');
+  const $geneSelector = $('#geneSelector');
 
 
   // TODO: delete this after iso implementation
@@ -54,7 +54,7 @@ export function VialsGUI() {
 
   this.getColorForSelection = function (name) {
     if (!(that.mappedColors.has(name))) {
-      var theColor = '#666666';
+      let theColor = '#666666';
       if (that.availableColors.length > 0) {
         theColor = that.availableColors.pop();
       }
@@ -68,7 +68,7 @@ export function VialsGUI() {
 
   this.releaseColorForSelection = function (name) {
     if (that.mappedColors.has(name)) {
-      var theColor = that.mappedColors.get(name);
+      const theColor = that.mappedColors.get(name);
 
       if (theColor !== '#666666') {
         that.availableColors.push(theColor);
@@ -83,7 +83,7 @@ export function VialsGUI() {
   this.init = function (genomeDataLink) {
     that.genomeDataLink = genomeDataLink;
     d3.select('#toggleIntrons').on('click', function () {
-      var el = d3.select(this);
+      const el = d3.select(this);
       if (el.classed('buttonSelected')) {
         // de-activate
         el.classed('buttonSelected', false);
@@ -141,227 +141,227 @@ export function VialsGUI() {
       ajax: {},
       readOnly: true,
       templates: {
-        resultItem: function (item) {
+        resultItem(item) {
           return (
             `<div class='selectivity-result-item' data-item-id=''${item.id}'>
             '<b>${item.text}</b> (${item.id})<br>${item.description}</div>`
           );
         },
-        singleSelectedItem: function (options) {
+        singleSelectedItem(options) {
           return (
             `<span class='selectivity-single-selected-item' data-item-id='${_.escape(options.id)}'>
             ${options.removable ? `<a class='selectivity-single-selected-item-remove'><i class='fa fa-remove'></i></a>` : ''}${options.text} (${options.id})</span>`
           );
         }
-    ,
-          },
-          placeholder: 'No gene selected'
+        ,
+      },
+      placeholder: 'No gene selected'
+    });
+
+
+  };
+
+  //TODO: remove this after fixing increase and decrease width
+  event.on('redrawAllVis', function () {
+    that.allVisUpdates.forEach(function (update) {
+      update();
+    });
+  });
+
+
+  this.populateGeneData = function (projectIDitem, geneID) {
+    $('#startScreenText')
+      .html(' Loading.. ');//<span class='glyphicon glyphicon-refresh glyphicon-spin' ></span>
+    $('#vialsLogo').addClass('fa-spin-custom');
+
+    $(that.chromIDDiv.node()).val('-');
+    $(that.startPosDiv.node()).val('---');
+    $(that.strandDiv.node()).val('?');
+    history.pushState({
+      project: projectIDitem.id,
+      gene: geneID
+    }, 'Title', location.pathname + '?projectID=' + projectIDitem.id + '&geneID=' + geneID);
+
+    $('#vials_vis').fadeOut(function () {
+      $('.startScreen').fadeIn(
+        loadData
+      );
+    });
+
+    function loadData() {
+      that.genomeDataLink.getGeneData(projectIDitem.id, geneID).then(function (geneData) {
+        $('.startScreen').fadeOut('fast', function () {
+          $('#vials_vis').fadeTo('fast', 1);
         });
 
+        //$('#startScreen').find('img').removeClass('fa-spin-custom')
 
-      };
 
-      //TODO: remove this after fixing increase and decrease width
-      event.on('redrawAllVis', function () {
-        that.allVisUpdates.forEach(function (update) {
-          update();
-        })
+        $(that.chromIDDiv.node()).val(geneData.gene.chromID);
+        $(that.startPosDiv.node()).val(geneData.gene.start + '-' + geneData.gene.end);
+        $(that.strandDiv.node()).val(geneData.gene.strand);
+
+        //that.genomeDataLink.genomeAxis.avrgExonLength = 30;
+        that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start, geneData.gene.end);
+        that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene.merged_ranges);
+        that.genomeDataLink.genomeAxis.shrinkIntrons(true);
+
+        event.fire('newDataLoaded');
       });
+    }
 
 
-      this.populateGeneData = function (projectIDitem, geneID) {
-        $('#startScreenText')
-          .html(' Loading.. ');//<span class='glyphicon glyphicon-refresh glyphicon-spin' ></span>
-        $('#vialsLogo').addClass('fa-spin-custom');
-
-        $(that.chromIDDiv.node()).val('-');
-        $(that.startPosDiv.node()).val('---');
-        $(that.strandDiv.node()).val('?');
-        history.pushState({
-          project: projectIDitem.id,
-          gene: geneID
-        }, 'Title', location.pathname + '?projectID=' + projectIDitem.id + '&geneID=' + geneID);
-
-        $('#vials_vis').fadeOut(function () {
-          $('.startScreen').fadeIn(
-            loadData
-          );
-        });
-
-        function loadData() {
-          that.genomeDataLink.getGeneData(projectIDitem.id, geneID).then(function (geneData) {
-            $('.startScreen').fadeOut('fast', function () {
-              $('#vials_vis').fadeTo('fast', 1);
-            });
-
-            //$('#startScreen').find('img').removeClass('fa-spin-custom')
+  };
 
 
-            $(that.chromIDDiv.node()).val(geneData.gene.chromID);
-            $(that.startPosDiv.node()).val(geneData.gene.start + '-' + geneData.gene.end);
-            $(that.strandDiv.node()).val(geneData.gene.strand);
-
-            //that.genomeDataLink.genomeAxis.avrgExonLength = 30;
-            that.genomeDataLink.genomeAxis.setGeneStartEnd(geneData.gene.start, geneData.gene.end);
-            that.genomeDataLink.genomeAxis.calculateBreakPointsByGenePos(geneData.gene.merged_ranges);
-            that.genomeDataLink.genomeAxis.shrinkIntrons(true);
-
-            event.fire('newDataLoaded');
-          });
-        }
-
-
-      };
-
-
-      this.getAjaxConfiguration = function (projectID) {
-        return {
-          url: this.genomeDataLink.serveradress + '/geneselect',
-          dataType: 'json',
-          minimumInputLength: 1,
-          quietMillis: 250,
-          params: function (term, offset) {
-            return {projectID: projectID, selectFilter: term}
-          },
-          fetch: function(url, init, queryOptions) {
-              return $.ajax(url).then((data: any[]) => {
-                  return {
-                      results: data.map((item)=> {
-                          return {
-                            id: item.id,
-                            text: item.name || '---',
-                            description: item.desc || '---'
-                          };
-                      }),
-                      more: false
-                  };
-              });
-          }
-        };
-      };
-
-
-      this.currentGeneSelectorCall = function () {
-        // empty function
-      };
-
-
-      function updateGeneSelector(projectIDitem, selectedGene) {
-
-        var ajax = that.getAjaxConfiguration(projectIDitem.id);
-        (<any>$geneSelector).selectivity('setOptions', {ajax: ajax});
-        $geneSelector.off('change', that.currentGeneSelectorCall);
-
-
-        if (selectedGene) {
-          that.genomeDataLink.getAllGeneNames(projectIDitem.id, selectedGene).then(function (selGeneInfoArray) {
-            if (selGeneInfoArray.length === 1) { // if there is one result coming back from the exact matching
-              var selGeneInfo = selGeneInfoArray[0];
-              var geneIDitem = {
-                id: selGeneInfo.id,
-                text: (selGeneInfo.name ? selGeneInfo.name : '---') + ' (' + selGeneInfo.id + ') '
+  this.getAjaxConfiguration = function (projectID) {
+    return {
+      url: this.genomeDataLink.serveradress + '/geneselect',
+      dataType: 'json',
+      minimumInputLength: 1,
+      quietMillis: 250,
+      params(term, offset) {
+        return {projectID, selectFilter: term};
+      },
+      fetch(url, init, queryOptions) {
+        return $.ajax(url).then((data: any[]) => {
+          return {
+            results: data.map((item) => {
+              return {
+                id: item.id,
+                text: item.name || '---',
+                description: item.desc || '---'
               };
-              (<any>$geneSelector).selectivity('data', geneIDitem);
-              that.populateGeneData(projectIDitem, selGeneInfo.id);
-            }
+            }),
+            more: false
+          };
+        });
+      }
+    };
+  };
 
-          })
-        } else {
-          (<any>$geneSelector).selectivity('data', null);
-          $(that.chromIDDiv.node()).val('-');
-          $(that.startPosDiv.node()).val('---');
-          $(that.strandDiv.node()).val('?');
-          $('#startScreenText')
-            .html(' please select a gene '); //<span class='glyphicon glyphicon-refresh glyphicon-spin' ></span>
-          $('#vialsLogo').removeClass('fa-spin-custom');
-          $('#vials_vis').fadeOut(function () {
-            $('.startScreen').fadeIn(
 
-            );
-          });
+  this.currentGeneSelectorCall = function () {
+    // empty function
+  };
 
+
+  function updateGeneSelector(projectIDitem, selectedGene) {
+
+    const ajax = that.getAjaxConfiguration(projectIDitem.id);
+    (<any>$geneSelector).selectivity('setOptions', {ajax});
+    $geneSelector.off('change', that.currentGeneSelectorCall);
+
+
+    if (selectedGene) {
+      that.genomeDataLink.getAllGeneNames(projectIDitem.id, selectedGene).then(function (selGeneInfoArray) {
+        if (selGeneInfoArray.length === 1) { // if there is one result coming back from the exact matching
+          const selGeneInfo = selGeneInfoArray[0];
+          const geneIDitem = {
+            id: selGeneInfo.id,
+            text: (selGeneInfo.name ? selGeneInfo.name : '---') + ' (' + selGeneInfo.id + ') '
+          };
+          (<any>$geneSelector).selectivity('data', geneIDitem);
+          that.populateGeneData(projectIDitem, selGeneInfo.id);
         }
 
+      });
+    } else {
+      (<any>$geneSelector).selectivity('data', null);
+      $(that.chromIDDiv.node()).val('-');
+      $(that.startPosDiv.node()).val('---');
+      $(that.strandDiv.node()).val('?');
+      $('#startScreenText')
+        .html(' please select a gene '); //<span class='glyphicon glyphicon-refresh glyphicon-spin' ></span>
+      $('#vialsLogo').removeClass('fa-spin-custom');
+      $('#vials_vis').fadeOut(function () {
+        $('.startScreen').fadeIn(
 
-        that.currentGeneSelectorCall = function (event) {
-          that.populateGeneData(projectIDitem, event.value);
-        };
-        $geneSelector.on('change', that.currentGeneSelectorCall);
-
-
-      }
-
-      this.start = function (selectedProjectID, selectedGene, exonLength) {
-        that.genomeDataLink.genomeAxis.avrgExonLength = +exonLength || 30;
-        that.genomeDataLink.getAllProjects().then(function (projects) {
-
-
-          var selectedProjectID = selectedProjectID || Object.keys(projects)[0];
-          var selectedProjectItem = null;
-
-
-          var itemList = Object.keys(projects).map(function (projectID, index) {
-            var current_project = projects[projectID];
-            var res = {id: current_project.project_id, text: current_project.name};
-            if (projectID === selectedProjectID) {
-              selectedProjectItem = res;
-            }
-            return res;
-          });
-
-
-          (<any>$projectSelector).selectivity({
-            items: itemList,
-            placeholder: 'No project selected'
-          });
-
-
-          if (selectedProjectItem) {
-            (<any>$projectSelector).selectivity('data', selectedProjectItem);
-            (<any>$geneSelector).selectivity('setOptions', {readOnly: false});
-            updateGeneSelector(selectedProjectItem, selectedGene);
-          }
-
-          $projectSelector.on('change', function (event) {
-
-            updateGeneSelector({id: (<any>event).value}, null);
-
-          });
-
-
-        });
-
-
-      };
-
-
-      this.getSelectedProject = function () {
-        return (<any>$projectSelector).selectivity('value');
-      };
-
-
-      this.getSelectedGene = function () {
-        return (<any>$geneSelector).selectivity('value');
-      };
-
-      this.getStartPos = function () {
-        return parseInt($(that.startPosDiv.node()).val(), 10);
-      };
-
-      this.getBaseWidth = function () {
-        return parseInt($(that.baseWidthInputDiv.node()).val(), 10);
-      };
-
+        );
+      });
 
     }
 
 
-    var globalGUI = new VialsGUI();
+    that.currentGeneSelectorCall = function (event) {
+      that.populateGeneData(projectIDitem, event.value);
+    };
+    $geneSelector.on('change', that.currentGeneSelectorCall);
 
-    export const current = globalGUI;
+
+  }
+
+  this.start = function (selectedProjectID, selectedGene, exonLength) {
+    that.genomeDataLink.genomeAxis.avrgExonLength = +exonLength || 30;
+    that.genomeDataLink.getAllProjects().then(function (projects) {
 
 
-    //exports.geneSelector = globalGUI.geneSelector;
-    //exports.init = globalGUI.init;
-    //exports.start = globalGUI.start;
-    //exports.allVisUpdates = globalGUI.allVisUpdates;
+      selectedProjectID = selectedProjectID || Object.keys(projects)[0];
+      let selectedProjectItem = null;
+
+
+      const itemList = Object.keys(projects).map(function (projectID, index) {
+        const currentProject = projects[projectID];
+        const res = {id: currentProject.project_id, text: currentProject.name};
+        if (projectID === selectedProjectID) {
+          selectedProjectItem = res;
+        }
+        return res;
+      });
+
+
+      (<any>$projectSelector).selectivity({
+        items: itemList,
+        placeholder: 'No project selected'
+      });
+
+
+      if (selectedProjectItem) {
+        (<any>$projectSelector).selectivity('data', selectedProjectItem);
+        (<any>$geneSelector).selectivity('setOptions', {readOnly: false});
+        updateGeneSelector(selectedProjectItem, selectedGene);
+      }
+
+      $projectSelector.on('change', function (event) {
+
+        updateGeneSelector({id: (<any>event).value}, null);
+
+      });
+
+
+    });
+
+
+  };
+
+
+  this.getSelectedProject = function () {
+    return (<any>$projectSelector).selectivity('value');
+  };
+
+
+  this.getSelectedGene = function () {
+    return (<any>$geneSelector).selectivity('value');
+  };
+
+  this.getStartPos = function () {
+    return parseInt($(that.startPosDiv.node()).val(), 10);
+  };
+
+  this.getBaseWidth = function () {
+    return parseInt($(that.baseWidthInputDiv.node()).val(), 10);
+  };
+
+
+}
+
+
+const globalGUI = new VialsGUI();
+
+export const current = globalGUI;
+
+
+//exports.geneSelector = globalGUI.geneSelector;
+//exports.init = globalGUI.init;
+//exports.start = globalGUI.start;
+//exports.allVisUpdates = globalGUI.allVisUpdates;

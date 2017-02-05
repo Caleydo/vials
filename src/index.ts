@@ -19,7 +19,7 @@ let vis;
 (<any>window).GoogleAnalyticsObject = 'ga';
 (<any>window).ga = {q: [['create', 'UA-45998043-2', 'vials.io'], ['send', 'pageview']], l: Date.now()};
 {
-  let s = document.createElement('script');
+  const s = document.createElement('script');
   s.src = 'http://www.google-analytics.com/analytics.js';
   document.head.appendChild(s);
 }

@@ -32,20 +32,20 @@ export function create(data, parent) {
 }
 
 // GLOBAL VARIABLES & STATUS
-var margin = {top: 40, right: 150, bottom: 10, left: 150};
-var fullHeight = 350;
-var height = fullHeight - margin.top - margin.bottom;
+const margin = {top: 40, right: 150, bottom: 10, left: 150};
+const fullHeight = 350;
+const height = fullHeight - margin.top - margin.bottom;
 
 
-//icon: "\uf012",
+//icon: '\uf012',
 //  icon
 //:
-//"\uf24d",
+//'\uf24d',
 //  icon
 //:
-//"\uf259"
+//'\uf259'
 
-var guiHead = {
+const guiHead = {
   g: null,
   y: 5,
   height: 17,
@@ -53,7 +53,7 @@ var guiHead = {
   options: [
     {
       name: 'dotplot',
-      icon: "\uf012",
+      icon: '\uf012',
       id: 'scatter',
       x: 0,
       w: 80,
@@ -61,7 +61,7 @@ var guiHead = {
     },
     {
       name: 'group comparison',
-      icon: "\uf24d",
+      icon: '\uf24d',
       id: 'groupX',
       x: 81,
       w: 150,
@@ -71,16 +71,16 @@ var guiHead = {
 
   ],
   defaultOption: 'scatter'
-}
+};
 
-var abundancePlot = {
+const abundancePlot = {
   g: null,
   height: 200,
-  prefix: "jxn_weight",
+  prefix: 'jxn_weight',
   y: 30,
   panels: {
     panelGapsize: 4,
-    prefix: "jxn_weight_panel",
+    prefix: 'jxn_weight_panel',
 
     mini: {
       //boxPlotWidth:3,
@@ -113,41 +113,41 @@ var abundancePlot = {
 
   }
 
-}
+};
 
-var connectorPlot = {
+const connectorPlot = {
   g: null,
   height: 100,
-  prefix: "jxn_con",
+  prefix: 'jxn_con',
   y: abundancePlot.height + abundancePlot.y,
   frozenHighlight: null, // dynamic
   upperConnectors: {
     g: null,
     height: 60,
-    prefix: "jxn_con_upper",
+    prefix: 'jxn_con_upper',
     y: 0
   },
   triangles: {
     g: null,
     height: 8,
     y: 60,
-    prefix: "jxn_con_triangle"
+    prefix: 'jxn_con_triangle'
   }
   ,
   lowerConnectors: {
     g: null,
     height: 100 - (60 + 8),
-    prefix: "jxn_con_lower",
+    prefix: 'jxn_con_lower',
     y: 60 + 8
   }
-}
+};
 
-var heatmapPlot = {
+const heatmapPlot = {
   g: null,
   height: 15,
-  prefix: "jxn_heat",
+  prefix: 'jxn_heat',
   y: connectorPlot.y + connectorPlot.height
-}
+};
 
 
 /**
@@ -163,39 +163,39 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
 
   //-- initial parametrization:
-  var that = this;
-  var axis = that.data.genomeAxis;
-  var width = axis.getWidth();
+  const that = this;
+  let axis = that.data.genomeAxis;
+  let width = axis.getWidth();
 
-  // data var:
-  var allData : any= {}; // api data
-  var triangleData = []; // data to draw triangles
-  var allJxns = {}; // juncntion information as map
-  var allExons = [];
-  var jxnGroups = []; // end positions of jxn groups for connector drawing
-  var sampleOrder = {definedSize: 0, order: [], valid: false, sortByKey: null}; // sort order for elements in scatterplot view (abundance)
+  // data const:
+  let allData: any = {}; // api data
+  let triangleData = []; // data to draw triangles
+  let allJxns = {}; // juncntion information as map
+  let allExons = [];
+  let jxnGroups = []; // end positions of jxn groups for connector drawing
+  let sampleOrder = {definedSize: 0, order: [], valid: false, sortByKey: null}; // sort order for elements in scatterplot view (abundance)
 
-  var groupings = []; // hold grouping information
-  var groupingsMeta = [] // separate grouping meta information
+  let groupings = []; // hold grouping information
+  let groupingsMeta = []; // separate grouping meta information
 
-  var isSelectedIsoForm = false;
+  let isSelectedIsoForm = false;
 
-  //visual variables:
-  var weightScale = d3.scale.linear().range([abundancePlot.height - 10, 10]);
-  var endOfPanels = 10; // whats the final width of all panels
-  var textLabelPadding = 0
+  //visual constiables:
+  const weightScale = d3.scale.linear().range([abundancePlot.height - 10, 10]);
+  let endOfPanels = 10; // whats the final width of all panels
+  let textLabelPadding = 0;
 
   //--  create the outer DOM structure:
-  var head = $parent.append("div").attr({
-    "class": "gv"
-  })
-  var svg = head.append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
+  const head = $parent.append('div').attr({
+    'class': 'gv'
+  });
+  const svg = head.append('svg')
+    .attr('width', width + margin.left + margin.right)
+    .attr('height', height + margin.top + margin.bottom)
     .style({
-      "left": "20px",
-      "position": "relative"
-    })
+      'left': '20px',
+      'position': 'relative'
+    });
 
   //--  create textLabel and retrieve its width
   textLabelPadding = 40;
@@ -203,46 +203,46 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
 
   //--  create a group offset by the label
-  var svgMain = svg.append("g").attr({
-    "class": "jxnMain",
-    "transform": "translate(" + textLabelPadding + ",0)"
+  const svgMain = svg.append('g').attr({
+    'class': 'jxnMain',
+    'transform': 'translate(' + textLabelPadding + ',0)'
   });
 
   guiHead.g = svgMain.append('g').attr({
-    "transform": "translate(" + 0 + "," + guiHead.y + ")",
-    "class": "guiHead_group"
-  })
+    'transform': 'translate(' + 0 + ',' + guiHead.y + ')',
+    'class': 'guiHead_group'
+  });
 
-  abundancePlot.g = svgMain.append("g").attr({
-    "transform": "translate(" + 0 + "," + abundancePlot.y + ")",
-    "class": abundancePlot.prefix + "_group"
+  abundancePlot.g = svgMain.append('g').attr({
+    'transform': 'translate(' + 0 + ',' + abundancePlot.y + ')',
+    'class': abundancePlot.prefix + '_group'
   });
 
 
-  heatmapPlot.g = svgMain.append("g").attr({
-    "transform": "translate(" + 0 + "," + heatmapPlot.y + ")",
-    "class": heatmapPlot.prefix + "_group"
+  heatmapPlot.g = svgMain.append('g').attr({
+    'transform': 'translate(' + 0 + ',' + heatmapPlot.y + ')',
+    'class': heatmapPlot.prefix + '_group'
   });
 
-  var crosshairGroup = svgMain.append("g").attr({
-    "transform": "translate(" + 0 + "," + heatmapPlot.y + ")",
-    "class": "crosshair_group"
+  const crosshairGroup = svgMain.append('g').attr({
+    'transform': 'translate(' + 0 + ',' + heatmapPlot.y + ')',
+    'class': 'crosshair_group'
   });
 
-  connectorPlot.g = svgMain.append("g").attr({
-    "transform": "translate(" + 0 + "," + connectorPlot.y + ")",
-    "class": connectorPlot.prefix + "_group"
+  connectorPlot.g = svgMain.append('g').attr({
+    'transform': 'translate(' + 0 + ',' + connectorPlot.y + ')',
+    'class': connectorPlot.prefix + '_group'
   });
 
-  ["triangles", "upperConnectors", "lowerConnectors"].forEach(function (subGroup) {
-    connectorPlot[subGroup].g = connectorPlot.g.append("g").attr({
-      "transform": "translate(" + 0 + "," + connectorPlot[subGroup].y + ")",
-      "class": connectorPlot[subGroup].prefix + "_group"
+  ['triangles', 'upperConnectors', 'lowerConnectors'].forEach(function (subGroup) {
+    connectorPlot[subGroup].g = connectorPlot.g.append('g').attr({
+      'transform': 'translate(' + 0 + ',' + connectorPlot[subGroup].y + ')',
+      'class': connectorPlot[subGroup].prefix + '_group'
     });
   });
 
   function reset() {
-    // data var:
+    // data const:
     allData = {}; // api data
     triangleData = []; // data to draw triangles
     allJxns = {}; // juncntion information as map
@@ -251,7 +251,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
     sampleOrder = {definedSize: 0, order: [], valid: false, sortByKey: null}; // sort order for elements in scatterplot view (abundance)
 
     groupings = []; // hold grouping information
-    groupingsMeta = [] // separate grouping meta information
+    groupingsMeta = []; // separate grouping meta information
 
     isSelectedIsoForm = false;
   }
@@ -260,72 +260,72 @@ VialsJunctionVis.prototype.build = function ($parent) {
   function initView() {
 
     // create crosshair
-    crosshairGroup.append("line").attr({
-      "class": "crosshair",
-      "x1": 0,
-      "y1": 0,
-      "x2": 0,
-      "y2": fullHeight - heatmapPlot.y
+    crosshairGroup.append('line').attr({
+      'class': 'crosshair',
+      'x1': 0,
+      'y1': 0,
+      'x2': 0,
+      'y2': fullHeight - heatmapPlot.y
     }).style({
-      "stroke-width": "1",
-      "stroke": "black",
-      "pointer-events": "none"
+      'stroke-width': '1',
+      'stroke': 'black',
+      'pointer-events': 'none'
     });
 
-    //crosshairGroup.append("text").attr("class", "crosshairPos")
+    //crosshairGroup.append('text').attr('class', 'crosshairPos')
 
-    var currentX = 0;
-    heatmapPlot.g.on("mousemove", function () {
+    let currentX = 0;
+    heatmapPlot.g.on('mousemove', function () {
       currentX = d3.mouse(this)[0];
-      event.fire("crosshair", currentX);
+      event.fire('crosshair', currentX);
 
-    })
+    });
 
-    var ghTitle = guiHead.g.append('text').text(guiHead.title).attr({
+    const ghTitle = guiHead.g.append('text').text(guiHead.title).attr({
       y: guiHead.height - 3
-    })
-    var bb = ghTitle.node().getBBox();
+    });
+    const bb = ghTitle.node().getBBox();
 
-    var guiHeadOption = guiHead.g.selectAll(".guiHeadOption").data(guiHead.options);
+    const guiHeadOption = guiHead.g.selectAll('.guiHeadOption').data(guiHead.options);
     guiHeadOption.exit().remove();
 
     // --- adding Element to class guiHeadOption
-    var guiHeadOptionEnter = guiHeadOption.enter().append("g").attr({
-      "class": "guiHeadOption",
-      "transform": function (d, i) {
-        return "translate(" + (d.x + bb.width + 5) + "," + 0 + ")";
+    const guiHeadOptionEnter = guiHeadOption.enter().append('g').attr({
+      'class': 'guiHeadOption',
+      'transform'(d, i) {
+        return 'translate(' + (d.x + bb.width + 5) + ',' + 0 + ')';
       }
 
     }).classed('selected', function (dd) {
-      return dd.id == guiHead.defaultOption
+      return dd.id === guiHead.defaultOption;
     });
 
     guiHeadOptionEnter.append('rect').attr({
-      class: "guiButtonBG",
-      width: function (d) {
+      'class': 'guiButtonBG',
+      width(d) {
         return d.w;
       },
       height: guiHead.height
     }).on({
-      'click': function (d) {
+      'click'(d) {
         guiHeadOption.classed('selected', function (dd) {
-          return dd.id == d.id
+          return dd.id === d.id;
         });
         _.each(allJxns, function (jxn: any) {
-          if (jxn.state == guiHead.defaultOption) {
+          if (jxn.state === guiHead.defaultOption) {
             jxn.state = d.id;
           }
-        })
+        });
 
         guiHead.defaultOption = d.id;
 
         updateVis();
 
       }
-    })
+    });
 
     guiHeadOptionEnter.append('text').attr({
-      class: "guiButtonLabel",
+      'class': 'guiButtonLabel',
       x: 3,
       y: guiHead.height - 3
     }).text(function (d) {
@@ -333,9 +333,9 @@ VialsJunctionVis.prototype.build = function ($parent) {
     });
 
     guiHeadOptionEnter.append('text').attr({
-      class: "decoration",
+      'class': 'decoration',
       y: guiHead.height - 3,
-      x: function (d) {
+      x(d) {
         return d.w - 20;
       }
     }).text(function (d) {
@@ -350,176 +350,177 @@ VialsJunctionVis.prototype.build = function ($parent) {
   function initEventHandlers() {
 
     // -- global Events
-    event.on("newDataLoaded", dataUpdate);
-    event.on("crosshair", updateCrosshair);
-    event.on("updateVis", updateVis);
-    event.on("axisChange", updateVis);
+    event.on('newDataLoaded', dataUpdate);
+    event.on('crosshair', updateCrosshair);
+    event.on('updateVis', updateVis);
+    event.on('axisChange', updateVis);
 
     // -- highlight a Junction
-    event.on("highlightJxn", function (e, key, highlight) {
+    event.on('highlightJxn', function (e, key, highlight) {
 
       //======== FLAGs =======
 
       //TODO: potential cause for errors
       if (connectorPlot.frozenHighlight != null) {
-        var clean = connectorPlot.frozenHighlight;
+        const clean = connectorPlot.frozenHighlight;
         connectorPlot.frozenHighlight = null;
-        event.fire("highlightFlag", clean, false);
+        event.fire('highlightFlag', clean, false);
       }
 
-      var triangles = connectorPlot.triangles.g.selectAll(".triangle")
-      var highlightTriangles = triangles.filter(function (d) {
+      const triangles = connectorPlot.triangles.g.selectAll('.triangle');
+      const highlightTriangles = triangles.filter(function (d) {
         // TODO: the location could be only a substring of a real location (unlikely but maybe)
-        if (key.indexOf(d.loc) > -1) return true;
-        else return false;
-      })
-      highlightTriangles.classed("highlighted", highlight);
+        if (key.indexOf(d.loc) > -1) {
+          return true;
+        }
+        return false;
+      });
+      highlightTriangles.classed('highlighted', highlight);
 
       //========= CONNECTORS ====
 
-      var lowerConnector = connectorPlot.lowerConnectors.g.selectAll(".con");
+      const lowerConnector = connectorPlot.lowerConnectors.g.selectAll('.con');
       lowerConnector.filter(function (d) {
         // TODO: the location could be only a substring of a real location (unlikely but maybe)
-        if (key.indexOf(d.loc) > -1) return true;
-        else return false;
-      }).classed("highlighted", highlight);
+        return (key.indexOf(d.loc) > -1);
+      }).classed('highlighted', highlight);
 
-      var directNeighbors = connectorPlot.upperConnectors.g.selectAll(".neighborCon");
+      const directNeighbors = connectorPlot.upperConnectors.g.selectAll('.neighborCon');
       directNeighbors.filter(function (d) {
-        return key == (d.jxns[0].start + ":" + d.jxns[0].end); // if start and end assemble to the key
-      }).classed("highlighted", highlight);
+        return key === (d.jxns[0].start + ':' + d.jxns[0].end); // if start and end assemble to the key
+      }).classed('highlighted', highlight);
 
-      var donorConnectors = connectorPlot.upperConnectors.g.selectAll(".donorCon");
+      const donorConnectors = connectorPlot.upperConnectors.g.selectAll('.donorCon');
       donorConnectors.filter(function (d) {
-        return d.key == key;
-      }).classed("highlighted", highlight);
+        return d.key === key;
+      }).classed('highlighted', highlight);
 
-      var accConnectors = connectorPlot.upperConnectors.g.selectAll(".accCon");
+      const accConnectors = connectorPlot.upperConnectors.g.selectAll('.accCon');
       accConnectors.filter(function (d) {
-        return d.key == key;
-      }).classed("highlighted", highlight);
+        return d.key === key;
+      }).classed('highlighted', highlight);
 
 
       // ========= Panels =====
-      var panels = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix);
-      var keyPanel = panels.filter(function (d) {
-        return d.key == key;
-      })
-      keyPanel.select(".panelIndicator").style("opacity", highlight ? 1 : null);
-      keyPanel.select(".panelBG").classed("highlighted", highlight)//.style("fill-opacity",highlight?.1 :null);
+      const panels = abundancePlot.g.selectAll('.' + abundancePlot.panels.prefix);
+      const keyPanel = panels.filter(function (d) {
+        return d.key === key;
+      });
+      keyPanel.select('.panelIndicator').style('opacity', highlight ? 1 : null);
+      keyPanel.select('.panelBG').classed('highlighted', highlight);//.style('fill-opacity',highlight?.1 :null);
 
 
-    })
+    });
 
     // -- hover over a flag
-    event.on("highlightFlag", function (e, loc, highlight) {
+    event.on('highlightFlag', function (e, loc, highlight) {
 
       _.keys(allJxns).forEach(function (key) {
-        var obj = allJxns[key];
-        if (obj.start == loc || obj.end == loc) {
-          event.fire("highlightJxn", key, highlight);
+        const obj = allJxns[key];
+        if (obj.start === loc || obj.end === loc) {
+          event.fire('highlightJxn', key, highlight);
         }
-      })
+      });
 
 
-    })
+    });
 
     // *****************
     // ******** External Data Events: highlights & selections
     // *****************
 
-    event.on("sampleHighlight", function (e, sample, highlight) {
-      var panels = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix);
-      var hDots = panels.selectAll(".dots").filter(function (d) {
-        return d.w.sample == sample;
-      })
-      hDots.classed("highlighted", highlight);
-      hDots.attr({r: highlight ? 4 : 2})
+    event.on('sampleHighlight', function (e, sample, highlight) {
+      const panels = abundancePlot.g.selectAll('.' + abundancePlot.panels.prefix);
+      const hDots = panels.selectAll('.dots').filter(function (d) {
+        return d.w.sample === sample;
+      });
+      hDots.classed('highlighted', highlight);
+      hDots.attr({r: highlight ? 4 : 2});
     });
 
-    event.on("groupHighlight", function (e, groupID, highlight) {
-      var groupSamples = _.find(groupings, 'name', groupID)
+    event.on('groupHighlight', function (e, groupID, highlight) {
+      const groupSamples = _.find(groupings, 'name', groupID);
       if (groupSamples) {
-        var alldots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
+        const alldots = abundancePlot.g.selectAll('.' + abundancePlot.panels.prefix).selectAll('.dots');
 
         alldots.filter(function (d) {
-          return _.includes(groupSamples.samples, d.w.sample)
+          return _.includes(groupSamples.samples, d.w.sample);
         })
-          .classed("highlighted", highlight)
+          .classed('highlighted', highlight)
           .attr({r: highlight ? 4 : 2});
       }
 
-    })
+    });
 
     event.on('sampleSelect', function (e, sample, isSelected) {
-      var allDots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
+      const allDots = abundancePlot.g.selectAll('.' + abundancePlot.panels.prefix).selectAll('.dots');
       if (isSelected) {
         allDots.filter(function (d) {
-          return d.w.sample == sample;
+          return d.w.sample === sample;
         }).style({
           fill: gui.current.getColorForSelection(sample)
-        })
+        });
       } else {
         allDots.filter(function (d) {
-          return d.w.sample == sample;
+          return d.w.sample === sample;
         }).style({
           fill: null
-        })
+        });
       }
-    })
+    });
 
-    var groupSelect = function (e, groupID, isSelected) {
-      var groupSamples = _.find(groupings, 'name', groupID)
+    const groupSelect = function (e, groupID, isSelected) {
+      const groupSamples = _.find(groupings, 'name', groupID);
       if (groupSamples) {
-        var allDots = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix).selectAll(".dots");
+        const allDots = abundancePlot.g.selectAll('.' + abundancePlot.panels.prefix).selectAll('.dots');
 
         if (isSelected) {
           allDots.filter(function (d) {
             return _.includes(groupSamples.samples, d.w.sample);
           }).style({
             fill: gui.current.getColorForSelection(groupID)
-          })
+          });
         } else {
           allDots.filter(function (d) {
             return _.includes(groupSamples.samples, d.w.sample);
           }).style({
             fill: null
-          })
+          });
         }
       }
 
     };
-    event.on("groupSelect", groupSelect)
+    event.on('groupSelect', groupSelect);
 
-    event.on("isoFormSelect", function (e, isoInfo) {
+    event.on('isoFormSelect', function (e, isoInfo) {
       //{isoform: d.id, index:-1}
 
       if (isoInfo.index > -1) {
         isSelectedIsoForm = true;
-        //var exonIDs = allData.gene.isoforms[isoInfo.isoform].exons;
-        var selectedExons = _.sortBy(allExons.filter(function (d) {
-          return d.isoformID == isoInfo.isoform;
+        //const exonIDs = allData.gene.isoforms[isoInfo.isoform].exons;
+        const selectedExons = _.sortBy(allExons.filter(function (d) {
+          return d.isoformID === isoInfo.isoform;
         }), 'start');
 
 
         // all JXNs to std:
-        _.values(allJxns).forEach(function (jxn:any) {
+        _.values(allJxns).forEach(function (jxn: any) {
           jxn.state = 'mini';
           jxn.selectedIsoform = false;
-        })
+        });
 
 
-        //var jxnIDs =[];
-        //var matchingJxn = [];
-        var lastExon = null;
+        //const jxnIDs =[];
+        //const matchingJxn = [];
+        let lastExon = null;
 
         selectedExons.forEach(function (exon) {
           if (lastExon != null) {
             //jxnIDs.push(lastExon.end+'_'+exon.start);
 
-            var match = allJxns[lastExon.end + ':' + exon.start];
+            const match = allJxns[lastExon.end + ':' + exon.start];
             if (match != null) {
-              match.state = guiHead.defaultOption // TODO: modify default behavior
+              match.state = guiHead.defaultOption; // TODO: modify default behavior
               match.selectedIsoform = true; // needed for decoration
               //matchingJxn.push(match);
             }
@@ -527,7 +528,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
           } else {
             lastExon = exon;
           }
-        })
+        });
 
 
       } else {
@@ -536,16 +537,16 @@ VialsJunctionVis.prototype.build = function ($parent) {
         _.values(allJxns).forEach(function (jxn: any) {
           jxn.state = 'std';
           jxn.selectedIsoform = false;
-        })
+        });
 
       }
 
       updateVis();
 
-    })
+    });
 
 
-    event.on("groupingChanged", function (e, groupName, samples) {
+    event.on('groupingChanged', function (e, groupName, samples) {
 
 
       if (samples && samples.length > 0) {
@@ -555,19 +556,21 @@ VialsJunctionVis.prototype.build = function ($parent) {
         // add grouping
         groupings.push({
           name: groupName,
-          samples: samples
-        })
+          samples
+        });
 
-        var allBoxPlots = {};
+        const allBoxPlots = {};
         _.keys(allJxns).forEach(function (jkey) {
-          var jxn = allJxns[jkey];
+          const jxn = allJxns[jkey];
 
 
-          var allWeights = _.map(jxn.weights.filter(function (d) {
+          const allWeights = _.map(jxn.weights.filter(function (d) {
             return _.includes(samples, d.sample);
           }), 'weight');
-          if (allWeights.length > 2) allBoxPlots[jkey] = {boxplot: helper.computeBoxPlot(allWeights)};
-        })
+          if (allWeights.length > 2) {
+            allBoxPlots[jkey] = {boxplot: helper.computeBoxPlot(allWeights)};
+          }
+        });
 
         groupingsMeta.push(allBoxPlots);
 
@@ -577,7 +580,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
         that.data.releaseGroup(groupName);
 
         //remove grouping
-        var index = _.findIndex(groupings, (d:any) => d.name === groupName)
+        const index = _.findIndex(groupings, (d: any) => d.name === groupName);
         if (index > -1) {
           groupSelect(null, groupName, false);
           groupings.splice(index, 1);
@@ -589,7 +592,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
       }
 
-    })
+    });
 
 
   }
@@ -600,25 +603,25 @@ VialsJunctionVis.prototype.build = function ($parent) {
    */
 
   function updateCrosshair(event, x) {
-    var visible = (x < 0 || x > axis.getWidth()) ? "hidden" : "visible";
+    const visible = (x < 0 || x > axis.getWidth()) ? 'hidden' : 'visible';
 
-    crosshairGroup.selectAll(".crosshair").attr({
-      "x1": x,
-      "x2": x,
-      "visibility": visible
-    })
+    crosshairGroup.selectAll('.crosshair').attr({
+      'x1': x,
+      'x2': x,
+      'visibility': visible
+    });
 
-    //d3.selectAll(".crosshairPos")
+    //d3.selectAll('.crosshairPos')
     //  .text(function (d) {
     //    return axis.screenPosToGenePos(x)
     //  })
     //  .each(function () {
-    //    var self = d3.select(this),
+    //    const self = d3.select(this),
     //      bb = self.node().getBBox();
     //    self.attr({
-    //      "x": x + 10,
-    //      "y": fullHeight - heatmapPlot.y - bb.height / 2,
-    //      "visibility": visible
+    //      'x': x + 10,
+    //      'y': fullHeight - heatmapPlot.y - bb.height / 2,
+    //      'visibility': visible
     //    });
     //  })
   }
@@ -626,31 +629,31 @@ VialsJunctionVis.prototype.build = function ($parent) {
   // -- HEATMAP PLOT --
   function updateHeatmap() {
     // bind local data
-    var heatMapGroup = heatmapPlot.g;
+    const heatMapGroup = heatmapPlot.g;
 
-    var startField = axis.ascending ? 'start' : 'end';
-    var endField = axis.ascending ? 'end' : 'start';
+    const startField = axis.ascending ? 'start' : 'end';
+    const endField = axis.ascending ? 'end' : 'start';
 
     // --- D3 update cycle
-    var exonHeat = heatMapGroup.selectAll(".exon").data(allExons);
+    const exonHeat = heatMapGroup.selectAll('.exon').data(allExons);
     exonHeat.exit().remove();
 
     // --- adding Element to class exon
-    var exonHeatEnter = exonHeat.enter().append("rect").attr({
-      "class": heatmapPlot.prefix + " exon",
+    const exonHeatEnter = exonHeat.enter().append('rect').attr({
+      'class': heatmapPlot.prefix + ' exon',
       y: 0,
       height: heatmapPlot.height
-    })
+    });
 
     // --- changing attr for exon
     exonHeat.transition().attr({
-      x: function (d) {
+      x(d) {
         return axis.genePosToScreenPos(d[startField]);
       },
-      width: function (d) {
+      width(d) {
         return axis.genePosToScreenPos(d[endField]) - axis.genePosToScreenPos(d[startField]);
       }
-    })
+    });
 
 
   }
@@ -661,181 +664,188 @@ VialsJunctionVis.prototype.build = function ($parent) {
    */
   function updateFlags() {
 
-    var animate = arguments[0] || false;
-    var triangleLength = connectorPlot.triangles.height;
-    var positiveStrand = allData.gene.strand === '+';
+    const animate = arguments[0] || false;
+    const triangleLength = connectorPlot.triangles.height;
+    const positiveStrand = allData.gene.strand === '+';
 
-    var triangles = connectorPlot.triangles.g.selectAll(".triangle").data(triangleData);
+    const triangles = connectorPlot.triangles.g.selectAll('.triangle').data(triangleData);
     triangles.exit().remove();
 
-    triangles.enter().append("polygon").attr({
-      "transform": function (d, i) {
-        return "translate(" + d.xStart + ",0)"
+    triangles.enter().append('polygon').attr({
+      'transform' (d, i) {
+        return 'translate(' + d.xStart + ',0)';
       },
-      "class": connectorPlot.triangles.prefix + " triangle "
+      'class': connectorPlot.triangles.prefix + ' triangle '
     }).on({
-      "mouseover": function (d) {
-        event.fire("crosshair", axis.genePosToScreenPos(d.loc));
-        event.fire("highlightFlag", +d.loc, true);
+      'mouseover' (d) {
+        event.fire('crosshair', axis.genePosToScreenPos(d.loc));
+        event.fire('highlightFlag', +d.loc, true);
       },
-      "mouseout": function (d) {
-        if (connectorPlot.frozenHighlight == null) event.fire("highlightFlag", +d.loc, false);
+      'mouseout' (d) {
+        if (connectorPlot.frozenHighlight == null) {
+          event.fire('highlightFlag', +d.loc, false);
+        }
       },
-      "click": function (d) {
-        if (connectorPlot.frozenHighlight == null) connectorPlot.frozenHighlight = +d.loc;
-        else connectorPlot.frozenHighlight = null;
+      'click'(d) {
+        if (connectorPlot.frozenHighlight == null) {
+          connectorPlot.frozenHighlight = +d.loc;
+        } else {
+          connectorPlot.frozenHighlight = null;
+        }
       }
-    })
+    });
 
-    triangles.classed("donor", function (d) {
-      return d.type == 'donor' ? true : null;
-    })
-    triangles.classed("receptor", function (d) {
-      return d.type == 'receptor' ? true : null;
-    })
+    triangles.classed('donor', function (d) {
+      return d.type === 'donor' ? true : null;
+    });
+    triangles.classed('receptor', function (d) {
+      return d.type === 'receptor' ? true : null;
+    });
 
     triangles.attr({
       //+ d.type;},
-      "points": function (d, i) {
+      'points'(d, i) {
         return isLeftArrow(d.type, positiveStrand) ?
           [
             0, triangleLength / 2,
             triangleLength, 0,
             triangleLength, triangleLength
           ] : [
-          triangleLength, triangleLength / 2,
-          0, 0,
-          0, triangleLength
-        ]
+            triangleLength, triangleLength / 2,
+            0, 0,
+            0, triangleLength
+          ];
       }
-    })
+    });
 
-    var trans = triangles;
-    if (animate) trans = triangles.transition();
+    let trans = triangles;
+    if (animate) {
+      trans = triangles.transition();
+    }
 
     //TODO: remove one transition
     trans.transition().attr({
-      "transform": function (d, i) {
-        return "translate(" + d.xStart + ",0)"
+      'transform'(d, i) {
+        return 'translate(' + d.xStart + ',0)';
       }
-    })
+    });
 
   }
 
   function updateConnectors() {
-    var triangleLength = connectorPlot.triangles.height;
-    var positiveStrand = allData.gene.strand === '+';
+    const triangleLength = connectorPlot.triangles.height;
+    const positiveStrand = allData.gene.strand === '+';
 
 
-    var startField = axis.ascending ? 'start' : 'end';
-    var endField = axis.ascending ? 'end' : 'start';
+    const startField = axis.ascending ? 'start' : 'end';
+    const endField = axis.ascending ? 'end' : 'start';
 
 
     /* -- update lower connectors - D3 circle -- */
-    var lowerConnector = connectorPlot.lowerConnectors.g.selectAll(".con").data(triangleData);
+    const lowerConnector = connectorPlot.lowerConnectors.g.selectAll('.con').data(triangleData);
     lowerConnector.exit().remove();
 
-    lowerConnector.enter().append("polyline").attr({
-      "class": connectorPlot.lowerConnectors.prefix + " con"
-    })
+    lowerConnector.enter().append('polyline').attr({
+      'class': connectorPlot.lowerConnectors.prefix + ' con'
+    });
 
     lowerConnector.transition().attr({
-      "points": function (d, i) {
+      'points'(d, i) {
         return [
           d.anchor, 0,
           d.anchor, triangleLength / 2,
           axis.genePosToScreenPos(d.loc), connectorPlot.lowerConnectors.height
-        ]
+        ];
       }
-    })
+    });
 
     // draw direct neighbors
-    var directNeighbors = connectorPlot.upperConnectors.g.selectAll(".neighborCon").data(jxnGroups.filter(function (d) {
+    const directNeighbors = connectorPlot.upperConnectors.g.selectAll('.neighborCon').data(jxnGroups.filter(function (d) {
       return d.directNeighbor;
-    }))
+    }));
     directNeighbors.exit().remove();
 
-    directNeighbors.enter().append("polygon").attr({
-      "class": "neighborCon areaCon"
+    directNeighbors.enter().append('polygon').attr({
+      'class': 'neighborCon areaCon'
     }).on({
-      "mouseover": function (d) {
-        event.fire("highlightJxn", (d.jxns[0].start + ":" + d.jxns[0].end), true)
+      'mouseover'(d) {
+        event.fire('highlightJxn', (d.jxns[0].start + ':' + d.jxns[0].end), true);
       },
-      "mouseout": function (d) {
-        event.fire("highlightJxn", (d.jxns[0].start + ":" + d.jxns[0].end), false)
+      'mouseout'(d) {
+        event.fire('highlightJxn', (d.jxns[0].start + ':' + d.jxns[0].end), false);
       }
-    })
+    });
 
-    var h = connectorPlot.upperConnectors.height;
+    let h = connectorPlot.upperConnectors.height;
     directNeighbors.transition().attr({
-      points: function (d) {
-        var jxn = d.jxns[0];
+      points(d) {
+        const jxn = d.jxns[0];
         return [
           jxn.x, 0,
           jxn.x + jxn.w, 0,
-          jxn[endField + "Triangle"].anchor, h,
-          jxn[startField + "Triangle"].anchor, h
-        ]
+          jxn[endField + 'Triangle'].anchor, h,
+          jxn[startField + 'Triangle'].anchor, h
+        ];
 
       }
-    })
+    });
     // isoformselection
     directNeighbors.classed('hiddenCon', function (d) {
       return (isSelectedIsoForm && !d.jxns[0].selectedIsoform) ? true : null;
-    })
+    });
 
 
-    var allDonors = _.flatten(jxnGroups.filter(function (d) {
+    const allDonors = _.flatten(jxnGroups.filter(function (d) {
       return !d.directNeighbor;
     }).map(function (d) {
       return d.jxns.map(function (jxn) {
-        return {endX: jxn.x + jxn.w, jxns: [jxn], key: (jxn.start + ':' + jxn.end)}
-      })
-    }))
+        return {endX: jxn.x + jxn.w, jxns: [jxn], key: (jxn.start + ':' + jxn.end)};
+      });
+    }));
 
 
     // -- draw donor connectors
-    var donorConnectors = connectorPlot.upperConnectors.g.selectAll(".donorCon")
+    const donorConnectors = connectorPlot.upperConnectors.g.selectAll('.donorCon')
       .data(allDonors, function (d) {
-        return d.key
-      }) //jxnGroups.filter(function(d){return !d.directNeighbor;}) TODO: decide for a strategy: allgroup or single select
+        return d.key;
+      }); //jxnGroups.filter(function(d){return !d.directNeighbor;}) TODO: decide for a strategy: allgroup or single select
     donorConnectors.exit().remove();
 
-    donorConnectors.enter().append("polygon").attr({
-      "class": "donorCon areaCon"
+    donorConnectors.enter().append('polygon').attr({
+      'class': 'donorCon areaCon'
     }).on({
-      "mouseover": function (d) {
-        event.fire("highlightJxn", d.key, true)
+      'mouseover'(d) {
+        event.fire('highlightJxn', d.key, true);
       },
-      "mouseout": function (d) {
-        event.fire("highlightJxn", d.key, false)
+      'mouseout'(d) {
+        event.fire('highlightJxn', d.key, false);
       }
-    })
+    });
 
 
-    var h = connectorPlot.upperConnectors.height;
-    var connector = (positiveStrand/*==axis.ascending*/) ? 'startTriangle' : 'endTriangle'
-    var antiConnector = (positiveStrand/*==axis.ascending*/) ? 'endTriangle' : 'startTriangle'
+    h = connectorPlot.upperConnectors.height;
+    const connector = (positiveStrand/*==axis.ascending*/) ? 'startTriangle' : 'endTriangle';
+    const antiConnector = (positiveStrand/*==axis.ascending*/) ? 'endTriangle' : 'startTriangle';
 
     donorConnectors.transition().attr({
-      points: function (d) {
-        var jxn = d.jxns[0];
+      points(d) {
+        const jxn = d.jxns[0];
         return [
           jxn.x, 0,
           d.endX, 0,
           jxn[connector].anchor, h
-        ]
+        ];
 
       }
-    })
+    });
 
     donorConnectors.classed('hiddenCon', function (d) {
       return (isSelectedIsoForm && !d.jxns[0].selectedIsoform) ? true : null;
-    })
+    });
 
 
     // -- Retrieve Connector Lines
-    var allConLines = _.flatten(jxnGroups.filter(function (d) {
+    const allConLines = _.flatten(jxnGroups.filter(function (d) {
       return !d.directNeighbor;
     }).map(function (d) {
       return d.jxns.map(function (jxn) {
@@ -843,109 +853,114 @@ VialsJunctionVis.prototype.build = function ($parent) {
           startX: (jxn.x + jxn.w / 2),
           endX: jxn[antiConnector].anchor,
           key: (jxn.start + ':' + jxn.end),
-          jxn: jxn
-        }
-      })
-    }))
+          jxn
+        };
+      });
+    }));
 
     //--- plot connector lines
-    var accConnectors = connectorPlot.upperConnectors.g.selectAll(".accCon").data(allConLines)
+    const accConnectors = connectorPlot.upperConnectors.g.selectAll('.accCon').data(allConLines);
     accConnectors.exit().remove();
 
-    accConnectors.enter().append("line").attr({
-      "class": "accCon lineCon"
-    })
+    accConnectors.enter().append('line').attr({
+      'class': 'accCon lineCon'
+    });
 
     accConnectors.transition().attr({
-      x1: function (d) {
+      x1(d) {
         return d.startX;
       },
-      x2: function (d) {
+      x2(d) {
         return d.endX;
       },
       y1: 0,
       y2: h
-    })
+    });
 
     //isoformselction
     accConnectors.classed('hiddenCon', function (d) {
       return (isSelectedIsoForm && !d.jxn.selectedIsoform) ? true : null;
-    })
+    });
 
 
   }
 
   function updateAbundanceView() {
-    var allJxnArray = Object.keys(allJxns).map(function (key) {
+    const allJxnArray = Object.keys(allJxns).map(function (key) {
       return {
-        key: key, jxn: allJxns[key]
+        key, jxn: allJxns[key]
       };
-    })
+    });
 
 
     // --  PANELS
-    var panels = abundancePlot.g.selectAll("." + abundancePlot.panels.prefix)
+    const panels = abundancePlot.g.selectAll('.' + abundancePlot.panels.prefix)
       .data(allJxnArray, function (d) {
         return d.key;
-      })
+      });
     panels.exit().remove();
 
     // --- Enter:
-    var panelsEnter = panels.enter().append("g").attr({
-      class: abundancePlot.panels.prefix + " panel"
-    })
-    panelsEnter.append("rect").attr({
-      class: "panelBG",
+    const panelsEnter = panels.enter().append('g').attr({
+      class: abundancePlot.panels.prefix + ' panel'
+    });
+    panelsEnter.append('rect').attr({
+      class: 'panelBG',
       height: abundancePlot.height
     }).on({
-      "click": function (d) {
-        if (d.jxn.state == 'std') d.jxn.state = guiHead.defaultOption;
-        else d.jxn.state = 'std';
+      'click'(d) {
+        if (d.jxn.state === 'std') {
+          d.jxn.state = guiHead.defaultOption;
+        } else {
+          d.jxn.state = 'std';
+        }
         updateVis();
       },
-      "mouseover": function (d) {
-        event.fire("highlightJxn", d.key, true);
+      'mouseover'(d) {
+        event.fire('highlightJxn', d.key, true);
 
-        //d3.select(this).style({stroke:"grey"});
+        //d3.select(this).style({stroke:'grey'});
       },
-      "mouseout": function (d) {
-        event.fire("highlightJxn", d.key, false)
-        //d3.select(this).style({stroke:"none"});
+      'mouseout'(d) {
+        event.fire('highlightJxn', d.key, false);
+        //d3.select(this).style({stroke:'none'});
       }
-    })
-    panelsEnter.append("rect").attr({
-      class: "panelIndicator",
+    });
+    panelsEnter.append('rect').attr({
+      class: 'panelIndicator',
       height: 5,
       x: 3,
       y: abundancePlot.height - 6
-    })
+    });
 
 
     // --- Updates:
     panels.transition().attr({
-      "transform": function (d) {
-        return "translate(" + d.jxn.x + "," + 0 + ")";
+      'transform'(d) {
+        return 'translate(' + d.jxn.x + ',' + 0 + ')';
       }
-    })
-    let panelBG = panels.select(".panelBG")
+    });
+    const panelBG = panels.select('.panelBG');
     panelBG.transition().attr({
-      width: function (d) {
+      width(d) {
         return d.jxn.w;
       }
-    })
-    panelBG.classed("scatter", function (d) {
-      return (d.jxn.state == 'scatter' || d.jxn.state == 'groupX') ? true : null;
-    })
+    });
+    panelBG.classed('scatter', function (d) {
+      return (d.jxn.state === 'scatter' || d.jxn.state === 'groupX') ? true : null;
+    });
 
-    panels.select(".panelIndicator").transition().attr({
-      width: function (d) {
-        if (d.jxn.state == 'mini') return 1;
+    panels.select('.panelIndicator').transition().attr({
+      width (d) {
+        if (d.jxn.state === 'mini') {
+          return 1;
+        }
         return d.jxn.w - 6;
       }
-    })
+    });
 
 
-    var allSampleLength = Object.keys(allData.samples).length;
+    const allSampleLength = Object.keys(allData.samples).length;
 
     /**
      * Update Cycle for the abundance/weight dots per panel
@@ -953,120 +968,112 @@ VialsJunctionVis.prototype.build = function ($parent) {
     function updateDots() {
 
       // precalculations for state 'groupX':
-      var gLength = groupings.length;
-      var groupingOffset = 12;
-      var groupInc = (abundancePlot.panels.groupX.currentWidth - groupingOffset) / (gLength + 1);
+      const gLength = groupings.length;
+      const groupingOffset = 12;
+      const groupInc = (abundancePlot.panels.groupX.currentWidth - groupingOffset) / (gLength + 1);
 
 
-      var alldots = panels.selectAll(".dots").data(function (d) {
-        if (d.jxn.state == 'std') {
-          var randomizer = helper.getPseudoRandom()
-          res = d.jxn.weights.map(function (w) {
-            return {x: (d.jxn.w * 3 / 8 + randomizer() * d.jxn.w / 4), w: w}
-          })
-          return res;
+      const alldots = panels.selectAll('.dots').data(function (d) {
+        if (d.jxn.state === 'std') {
+          const randomizer = helper.getPseudoRandom();
+          return d.jxn.weights.map(function (w) {
+            return {x: (d.jxn.w * 3 / 8 + randomizer() * d.jxn.w / 4), w};
+          });
 
-        }
-        else if (d.jxn.state == 'scatter') {
-          var res = [];
+        } else if (d.jxn.state === 'scatter') {
+          const res = [];
           if (!sampleOrder.valid) {
-            res = d.jxn.weights.map(function (w, i) {
+            return d.jxn.weights.map(function (w, i) {
               return {
                 x: 6 + (i / allSampleLength * (abundancePlot.panels.scatter.currentWidth - 12)),
-                w: w
-              }
-            })
+                w
+              };
+            });
           } else {
-            res = d.jxn.weights.map(function (w, i) {
+            return d.jxn.weights.map(function (w, i) {
               return {
                 x: 6 + (sampleOrder.order.indexOf(w.sample) / allSampleLength * (abundancePlot.panels.scatter.currentWidth - 12)),
-                w: w
-              }
-            })
+                w
+              };
+            });
           }
-
-          return res;
-
-        }
-        else if (d.jxn.state == 'mini') {
-          res = d.jxn.weights.map(function (w) {
-            return {x: abundancePlot.panels.mini.currentWidth / 2, w: w}
-          })
-          return res;
-        }
-        else if (d.jxn.state == 'groupX') {
+        } else if (d.jxn.state === 'mini') {
+          return d.jxn.weights.map(function (w) {
+            return {x: abundancePlot.panels.mini.currentWidth / 2, w};
+          });
+        } else if (d.jxn.state === 'groupX') {
 
           if (groupings.length > 0) {
 
-            var mapIDtoI = {}
+            const mapIDtoI = {};
             groupings.forEach(function (group, i) {
               group.samples.forEach(function (sample) {
                 mapIDtoI[sample] = i;
               });
-            })
+            });
 
 
-            res = d.jxn.weights.map(function (w) {
-              var x = mapIDtoI[w.sample];
-              if (x == null) x = groupings.length;
+            return d.jxn.weights.map(function (w) {
+              let x = mapIDtoI[w.sample];
+              if (x == null) {
+                x = groupings.length;
+              }
               return {
                 x: (groupingOffset + (x + .5) * groupInc + abundancePlot.panels.std.boxPlotWidth / 2),
-                w: w
-              }
-            })
+                w
+              };
+            });
           } else {
-            res = d.jxn.weights.map(function (w) {
-              return {x: (d.jxn.w / 2), w: w}
-            })
+            return d.jxn.weights.map(function (w) {
+              return {x: (d.jxn.w / 2), w};
+            });
           }
-
-          return res;
 
         }
 
       }, function (d) {
         return d.w.sample;
-      })
+      });
 
       alldots.exit().remove();
 
-      alldots.enter().append("circle").attr({
-        class: "dots",
+      alldots.enter().append('circle').attr({
+        class: 'dots',
         r: 2
       }).on({
-        "mouseover": function (d) {
-          event.fire("sampleHighlight", d.w.sample, true);
-          event.fire("highlightJxn", d3.select(this.parentNode).data()[0].key, true);
+        'mouseover'(d) {
+          event.fire('sampleHighlight', d.w.sample, true);
+          event.fire('highlightJxn', d3.select(this.parentNode).data()[0].key, true);
         },
-        "mouseout": function (d) {
-          event.fire("sampleHighlight", d.w.sample, false);
-          event.fire("highlightJxn", d3.select(this.parentNode).data()[0].key, false);
+        'mouseout'(d) {
+          event.fire('sampleHighlight', d.w.sample, false);
+          event.fire('highlightJxn', d3.select(this.parentNode).data()[0].key, false);
         },
-        'click': function (d) {
-          if (d3.select(this).classed("selected")) {
+        'click'(d) {
+          if (d3.select(this).classed('selected')) {
             //deselect
-            d3.select(this).classed("selected", null);
-            event.fire("sampleSelect", d.w.sample, false)
+            d3.select(this).classed('selected', null);
+            event.fire('sampleSelect', d.w.sample, false);
           } else {
             //select
-            d3.select(this).classed("selected", true);
-            event.fire("sampleSelect", d.w.sample, true)
+            d3.select(this).classed('selected', true);
+            event.fire('sampleSelect', d.w.sample, true);
           }
 
         }
 
-      }).append("title").text(function (d) {
+      }).append('title').text(function (d) {
         return d.w.sample + '\n' + d.w.weight;
-      })
+      });
 
       alldots.transition().attr({
-        cx: function (d) {
+        cx(d) {
           return d.x;
         },
-        cy: function (d) {
+        cy(d) {
           return weightScale(d.w.weight);
         }
-      })
+      });
 
 
     }
@@ -1076,51 +1083,50 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
     // --- SORT DIVIDER to indicate what is valid sorting and what is random
 
-    var sortDevider = panels.selectAll(".sortDivider")
+    const sortDevider = panels.selectAll('.sortDivider')
       .data(function (d) {
-          return (sampleOrder.valid && d.jxn.state == 'scatter') ?
+          return (sampleOrder.valid && d.jxn.state === 'scatter') ?
             [Math.ceil(6 + ((sampleOrder.definedSize - 1) / allSampleLength * (abundancePlot.panels.scatter.currentWidth - 12)))]
-            : []
+            : [];
         }
       );
     sortDevider.exit().remove();
-    sortDevider.enter().append("line").attr({
-      class: "sortDivider",
-      x1: function (d) {
+    sortDevider.enter().append('line').attr({
+      class: 'sortDivider',
+      x1(d) {
         return 0;
       },
-      x2: function (d) {
+      x2(d) {
         return 0;
       },
       y1: weightScale.range()[0],
       y2: weightScale.range()[1]
-    })
+    });
     sortDevider.transition().attr({
-      x1: function (d) {
+      x1(d) {
         return d;
       },
-      x2: function (d) {
+      x2(d) {
         return d;
       }
-    })
+    });
 
 
     function updateBoxPlots() {
 
       //TODO: copied from isoforms.. maybe externalizing ?!
 
-      var height = abundancePlot.panels.std.boxPlotWidth;
-      var offsetStd = Math.max(abundancePlot.panels.std.boxPlotOffset,
-        Math.floor((abundancePlot.panels.std.currentWidth - height) / 2));
+      const height = abundancePlot.panels.std.boxPlotWidth;
+      const offsetStd = Math.max(abundancePlot.panels.std.boxPlotOffset, Math.floor((abundancePlot.panels.std.currentWidth - height) / 2));
 
-      var gLength = groupings.length;
-      var groupingOffset = 12;
-      var groupInc = (abundancePlot.panels.groupX.currentWidth - groupingOffset) / (gLength + 1);
+      const gLength = groupings.length;
+      const groupingOffset = 12;
+      const groupInc = (abundancePlot.panels.groupX.currentWidth - groupingOffset) / (gLength + 1);
 
-      var boxPlots = panels.selectAll(".boxplot").data(function (d) {
-        var res = [];
-        if (d.jxn.weights.length > 3 && !(d.jxn.state == 'mini')) {
-          if (d.jxn.state == 'groupX') {
+      const boxPlots = panels.selectAll('.boxplot').data(function (d) {
+        const res = [];
+        if (d.jxn.weights.length > 3 && !(d.jxn.state === 'mini')) {
+          if (d.jxn.state === 'groupX') {
 
             res.push({
               boxPlot: d.jxn.boxPlotData,
@@ -1129,7 +1135,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
             });
 
             groupingsMeta.forEach(function (gMeta, gmIndex) {
-              var gm = gMeta[d.key];
+              const gm = gMeta[d.key];
               if (gm != null) {
                 res.push({
                   boxPlot: gm.boxplot,
@@ -1139,24 +1145,26 @@ VialsJunctionVis.prototype.build = function ($parent) {
               }
 
 
-            })
+            });
 
 
             // tODO HEREE
           } else {
 
 
-            if (d.jxn.state === 'scatter') res.push({
-              boxPlot: d.jxn.boxPlotData,
-              state: d.jxn.state,
-              x: abundancePlot.panels.scatter.boxPlotOffset
-            });
-
-            else res.push({
-              boxPlot: d.jxn.boxPlotData,
-              state: d.jxn.state,
-              x: offsetStd
-            });
+            if (d.jxn.state === 'scatter') {
+              res.push({
+                boxPlot: d.jxn.boxPlotData,
+                state: d.jxn.state,
+                x: abundancePlot.panels.scatter.boxPlotOffset
+              });
+            } else {
+              res.push({
+                boxPlot: d.jxn.boxPlotData,
+                state: d.jxn.state,
+                x: offsetStd
+              });
+            }
 
 
           }
@@ -1167,82 +1175,82 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
         return res;
 
-      })
+      });
       boxPlots.exit().remove();
 
-      var scaleXScatter = d3.scale.linear().domain(weightScale.domain()).rangeRound(weightScale.range());
+      const scaleXScatter = d3.scale.linear().domain(weightScale.domain()).rangeRound(weightScale.range());
 
 
-      var boxPlotGroup = boxPlots.enter().append("g")
+      const boxPlotGroup = boxPlots.enter().append('g')
         .attr({
-            "class": "boxplot",
-            "transform": "translate(" + offsetStd + "," + 0 + ")"
+            'class': 'boxplot',
+            'transform': 'translate(' + offsetStd + ',' + 0 + ')'
           }
         );
-      //boxPlotGroup.attr({"transform":"rotate(90)"});
-      boxPlotGroup.selectAll(".vticks").data(function (d) {
+      //boxPlotGroup.attr({'transform':'rotate(90)'});
+      boxPlotGroup.selectAll('.vticks').data(function (d) {
 
         return [
           d.boxPlot.whiskerDown,
           d.boxPlot.Q[1],
           d.boxPlot.Q[2],
           d.boxPlot.Q[3],
-          d.boxPlot.whiskerTop]
-      }).enter().append("line").attr({
-        class: "vticks",
-        y1: function (d) {
+          d.boxPlot.whiskerTop];
+      }).enter().append('line').attr({
+        class: 'vticks',
+        y1(d) {
           return scaleXScatter(d);
         },
         y2: scaleXScatter,
         x1: 0,
         x2: height
-      })
+      });
 
-      boxPlotGroup.selectAll(".hticks").data(function (d) {
+      boxPlotGroup.selectAll('.hticks').data(function (d) {
         return [
           [0, d.boxPlot.Q[1], d.boxPlot.Q[3]],
           [height, d.boxPlot.Q[1], d.boxPlot.Q[3]]
         ];
-      }).enter().append("line").attr({
-        class: "hticks",
-        y1: function (d) {
+      }).enter().append('line').attr({
+        class: 'hticks',
+        y1(d) {
           return scaleXScatter(d[1]);
         },
-        y2: function (d) {
+        y2(d) {
           return scaleXScatter(d[2]);
         },
-        x1: function (d) {
+        x1(d) {
           return d[0];
         },
-        x2: function (d) {
+        x2(d) {
           return d[0];
         }
-      })
+      });
 
-      boxPlotGroup.selectAll(".wticks").data(function (d) {
+      boxPlotGroup.selectAll('.wticks').data(function (d) {
         return [
           [d.boxPlot.whiskerDown, d.boxPlot.Q[1]],
           [d.boxPlot.Q[3], d.boxPlot.whiskerTop]
         ];
-      }).enter().append("line").attr({
-        class: "wticks",
-        y1: function (d) {
+      }).enter().append('line').attr({
+        class: 'wticks',
+        y1(d) {
           return scaleXScatter(d[0]);
         },
-        y2: function (d) {
+        y2(d) {
           return scaleXScatter(d[1]);
         },
         x1: Math.round(height / 2),
         x2: Math.round(height / 2)
-      })
+      });
 
 
       //UPDATE POSITION:
       boxPlots.transition().attr({
-        "transform": function (d) {
-          return "translate(" + d.x + "," + 0 + ")";
+        'transform'(d) {
+          return 'translate(' + d.x + ',' + 0 + ')';
         }
-      })
+      });
 
 
     }
@@ -1258,120 +1266,121 @@ VialsJunctionVis.prototype.build = function ($parent) {
       // --- Decoration gets in here
 
 
-      var decoLeft = panels.selectAll(".decoration.left").data(function (d) {
-        if (d.jxn.state == 'scatter' || d.jxn.state == 'groupX') {
+      const decoLeft = panels.selectAll('.decoration.left').data(function (d) {
+        if (d.jxn.state === 'scatter' || d.jxn.state === 'groupX') {
           return [
             {
-              icon: "\uf012",
-              callOnClick: function () {
+              icon: '\uf012',
+              callOnClick() {
                 sortByJxn(d.key);
               },
-              description: "sort by weight",
-              d: d,
-              isSelected: (d.key == sampleOrder.sortByKey && sampleOrder.valid)
+              description: 'sort by weight',
+              d,
+              isSelected: (d.key === sampleOrder.sortByKey && sampleOrder.valid)
             },
             {
-              icon: "\uf24d", callOnClick: function () {
+              icon: '\uf24d', callOnClick() {
               switchGroupState(d.key);
-            }, description: "compare groups", d: d, isSelected: (d.jxn.state == 'groupX')
+            }, description: 'compare groups', d, isSelected: (d.jxn.state === 'groupX')
             },
             //{
-            //  icon: "\uf259", callOnClick: function () {
-            //}, description: "Live long and prosper.", d: d, isSelected: false
+            //  icon: '\uf259', callOnClick: function () {
+            //}, description: 'Live long and prosper.', d: d, isSelected: false
             //}
-          ]
+          ];
         } else {
-          return []
+          return [];
         }
-      })
+      });
       decoLeft.exit().remove();
-      decoLeft.enter().append("text").attr({
-        class: "decoration left",
-        "transform": function (d, i) {
-          return "translate(" + (i * 15 + 2) + "," + 15 + ")";
+      decoLeft.enter().append('text').attr({
+        class: 'decoration left',
+        'transform'(d, i) {
+          return 'translate(' + (i * 15 + 2) + ',' + 15 + ')';
         }
       })
         .text(function (d) {
           return d.icon;
         })
         .on({
-          'mouseover': function (d) {
-            event.fire("highlightJxn", d3.select(this.parentNode).data()[0].key, true);
+          'mouseover'(d) {
+            event.fire('highlightJxn', d3.select(this.parentNode).data()[0].key, true);
           },
-          'mouseout': function (d) {
-            event.fire("highlightJxn", d3.select(this.parentNode).data()[0].key, false);
+          'mouseout'(d) {
+            event.fire('highlightJxn', d3.select(this.parentNode).data()[0].key, false);
           },
-          'click': function (d) {
+          'click'(d) {
             d.callOnClick();
           }
 
         })
-        .append("title").text(function (d) {
+        .append('title').text(function (d) {
         return d.description;
-      })
-      decoLeft.classed("selected", function (d) {
+      });
+      decoLeft.classed('selected', function (d) {
         return d.isSelected ? true : null;
-      })
+      });
 
 
       // right indicators
-      var decoRight = panels.selectAll(".decoration.right").data(function (d) {
-        if (d.jxn.state == 'scatter' || d.jxn.state == 'std' || d.jxn.state == 'groupX') {
+      const decoRight = panels.selectAll('.decoration.right').data(function (d) {
+        if (d.jxn.state === 'scatter' || d.jxn.state === 'std' || d.jxn.state === 'groupX') {
           if (d.jxn.selectedIsoform) {
             return [{
-              icon: "\uf02e",
-              callOnClick: function () {
+              icon: '\uf02e',
+              callOnClick() {
+                // dummy
               },
-              description: "in selected Isoform",
+              description: 'in selected Isoform',
               class: 'inIsoformIndicator',
-              d: d,
+              d,
               isSelected: false
-            }]
+            }];
           }
         }
 
-        return []
+        return [];
 
-      })
+      });
       decoRight.exit().remove();
 
-      decoRight.enter().append("text").attr({
-        class: function (d) {
-          return "decoration right " + d.class;
+      decoRight.enter().append('text').attr({
+        class(d) {
+          return 'decoration right ' + d.class;
         },
-        "transform": function (d, i) {
-          var w = d.d.jxn.state == 'std' ? abundancePlot.panels.std.currentWidth : abundancePlot.panels.scatter.currentWidth;
-          return "translate(" + (w - (i * 15 + 2)) + "," + 15 + ")";
+        'transform'(d, i) {
+          const w = d.d.jxn.state === 'std' ? abundancePlot.panels.std.currentWidth : abundancePlot.panels.scatter.currentWidth;
+          return 'translate(' + (w - (i * 15 + 2)) + ',' + 15 + ')';
         }
       })
         .text(function (d) {
           return d.icon;
         })
         .on({
-          'mouseover': function (d) {
-            event.fire("highlightJxn", d3.select(this.parentNode).data()[0].key, true);
+          'mouseover'(d) {
+            event.fire('highlightJxn', d3.select(this.parentNode).data()[0].key, true);
           },
-          'mouseout': function (d) {
-            event.fire("highlightJxn", d3.select(this.parentNode).data()[0].key, false);
+          'mouseout'(d) {
+            event.fire('highlightJxn', d3.select(this.parentNode).data()[0].key, false);
           },
-          'click': function (d) {
+          'click'(d) {
             d.callOnClick();
           }
 
         })
-        .append("title").text(function (d) {
+        .append('title').text(function (d) {
         return d.description;
-      })
+      });
 
       decoRight.transition().attr({
-        "transform": function (d, i) {
-          var w = d.d.jxn.state == 'std' ? abundancePlot.panels.std.currentWidth : abundancePlot.panels.scatter.currentWidth;
-          return "translate(" + (w - 10 - 2 - (i * 15)) + "," + 15 + ")";
+        'transform'(d, i) {
+          const w = d.d.jxn.state === 'std' ? abundancePlot.panels.std.currentWidth : abundancePlot.panels.scatter.currentWidth;
+          return 'translate(' + (w - 10 - 2 - (i * 15)) + ',' + 15 + ')';
         }
-      })
-      decoRight.classed("selected", function (d) {
+      });
+      decoRight.classed('selected', function (d) {
         return d.isSelected ? true : null;
-      })
+      });
 
 
     }
@@ -1381,11 +1390,11 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
     function sortByJxn(key) {
 
-      var allKeys = Object.keys(allData.samples)
+      const allKeys = Object.keys(allData.samples);
 
       if (key in allJxns) {
 
-        var sortedWeights =
+        const sortedWeights =
           _.map(
             _.sortBy(
               allJxns[key].weights
@@ -1394,9 +1403,9 @@ VialsJunctionVis.prototype.build = function ($parent) {
                 })
               , 'weight')
             , 'sample'
-          )
+          );
 
-        var allNull = _.difference(allKeys, sortedWeights)
+        const allNull = _.difference(allKeys, sortedWeights);
 
 
         sampleOrder.definedSize = sortedWeights.length;
@@ -1413,11 +1422,11 @@ VialsJunctionVis.prototype.build = function ($parent) {
     function switchGroupState(key) {
 
 
-      var jxnList = allJxnArray.filter(function (d) {
-        return d.key == key
+      const jxnList = allJxnArray.filter(function (d) {
+        return d.key === key;
       });
-      if (jxnList.length == 1) {
-        var jxn = jxnList[0];
+      if (jxnList.length === 1) {
+        const jxn = jxnList[0];
 
         if (jxn.jxn.state !== 'groupX') {
           jxn.jxn.state = 'groupX';
@@ -1434,23 +1443,23 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
 
     function updateLegend() {
-      var dotAxisDef = d3.svg.axis()
+      const dotAxisDef = d3.svg.axis()
         .scale(weightScale)
-        .orient("right");
+        .orient('right');
 
-      var dotAxis = abundancePlot.g.selectAll(".axis").data([1]);
+      const dotAxis = abundancePlot.g.selectAll('.axis').data([1]);
       dotAxis.exit().remove();
 
       // --- adding Element to class dotAxis
-      dotAxis.enter().append("g").attr({
-        "class": "axis"
-      }).call(dotAxisDef)
+      dotAxis.enter().append('g').attr({
+        'class': 'axis'
+      }).call(dotAxisDef);
 
       // --- changing nodes for dotAxis
       dotAxis.transition()
         .attr({
-          "transform": "translate(" + (endOfPanels + 5) + ",0)"
-        })
+          'transform': 'translate(' + (endOfPanels + 5) + ',0)'
+        });
 
     }
 
@@ -1467,14 +1476,14 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
   function computeFlagPositions() {
 
-    var triangleLength = connectorPlot.triangles.height;
-    var sitePadding = triangleLength / 3;
+    const triangleLength = connectorPlot.triangles.height;
+    const sitePadding = triangleLength / 3;
 
-    var positiveStrand = allData.gene.strand === '+';
+    const positiveStrand = allData.gene.strand === '+';
 
     // compute desired positions
     triangleData.forEach(function (triangle, i) {
-      var axisLoc = axis.genePosToScreenPos(triangle.loc);
+      const axisLoc = axis.genePosToScreenPos(triangle.loc);
 
       if (isLeftArrow(triangle.type, positiveStrand)) {
         triangle.xStart = triangle.xStartDesired = axisLoc - triangleLength;
@@ -1484,36 +1493,36 @@ VialsJunctionVis.prototype.build = function ($parent) {
         triangle.xEnd = triangle.xEndDesired = axisLoc + triangleLength;
       }
 
-    })
+    });
 
-    var bucketsCopy = triangleData.slice();
+    const bucketsCopy = triangleData.slice();
 
-    if (!axis.ascending)
+    if (!axis.ascending) {
       bucketsCopy.reverse();
-
+    }
     // important to initialize this, as we start from i = 1
     bucketsCopy[0].firstGroupBucket = 0;
 
-    for (var i = 1; i < bucketsCopy.length; ++i) {
+    for (let i = 1; i < bucketsCopy.length; ++i) {
       bucketsCopy[i].firstGroupBucket = i;
-      var ind = i;
-      var shift = -1;
+      let ind = i;
+      let shift = -1;
       while (shift < 0 && ind > 0 && (bucketsCopy[ind].xStart < bucketsCopy[ind - 1].xEnd + sitePadding)) {
-        var firstInd = bucketsCopy[ind - 1].firstGroupBucket;
-        var overlap = bucketsCopy[ind - 1].xEnd + sitePadding - bucketsCopy[ind].xStart;
+        const firstInd = bucketsCopy[ind - 1].firstGroupBucket;
+        const overlap = bucketsCopy[ind - 1].xEnd + sitePadding - bucketsCopy[ind].xStart;
         for (let j = ind; j <= i; ++j) {
-          bucketsCopy[j].xStart += overlap
-          bucketsCopy[j].xEnd += overlap
-          bucketsCopy[j].firstGroupBucket = firstInd
+          bucketsCopy[j].xStart += overlap;
+          bucketsCopy[j].xEnd += overlap;
+          bucketsCopy[j].firstGroupBucket = firstInd;
         }
-        var leftGap = bucketsCopy[firstInd].xStartDesired - bucketsCopy[firstInd].xStart;
-        var rightGap = bucketsCopy[i].xStart - bucketsCopy[i].xStartDesired;
+        const leftGap = bucketsCopy[firstInd].xStartDesired - bucketsCopy[firstInd].xStart;
+        const rightGap = bucketsCopy[i].xStart - bucketsCopy[i].xStartDesired;
         shift = (leftGap - rightGap) / 2;
-        shift = Math.min(shift, axis.getWidth() - bucketsCopy[i].xStart)
-        shift = Math.max(shift, -bucketsCopy[firstInd].xStart)
+        shift = Math.min(shift, axis.getWidth() - bucketsCopy[i].xStart);
+        shift = Math.max(shift, -bucketsCopy[firstInd].xStart);
         for (let j = firstInd; j <= i; ++j) {
-          bucketsCopy[j].xStart += shift
-          bucketsCopy[j].xEnd += shift
+          bucketsCopy[j].xStart += shift;
+          bucketsCopy[j].xEnd += shift;
         }
         ind = firstInd;
       }
@@ -1523,25 +1532,25 @@ VialsJunctionVis.prototype.build = function ($parent) {
       b.xStart = Math.floor(b.xStart);
       b.xEnd = Math.floor(b.xEnd);
       b.anchor = isLeftArrow(b.type, positiveStrand) ? b.xEnd : b.xStart;
-    })
+    });
   }
 
   function computeAbundanceLayout() {
 
-    var gapSize = abundancePlot.panels.panelGapsize;
-    var w = axis.getWidth();
-    var positiveStrand = allData.gene.strand == '+'
-    var allJXNsorted = Object.keys(allJxns).map(function (d) {
+    const gapSize = abundancePlot.panels.panelGapsize;
+    const w = axis.getWidth();
+    const positiveStrand = allData.gene.strand === '+';
+    const allJXNsorted = Object.keys(allJxns).map(function (d) {
       return allJxns[d];
     });
 
 
-    var elementWidth = abundancePlot.panels.std.minWidth;//Math.floor(Math.max(w / (1.5*allJXNsorted.length), abundancePlot.panels.std.minWidth));
+    const elementWidth = abundancePlot.panels.std.minWidth;//Math.floor(Math.max(w / (1.5*allJXNsorted.length), abundancePlot.panels.std.minWidth));
     abundancePlot.panels.std.currentWidth = elementWidth;
 
 
     // start the layout here:
-    var groupBy, groupBySecond;
+    let groupBy, groupBySecond;
     if (positiveStrand) {
       groupBy = 'start';
       groupBySecond = 'end';
@@ -1552,47 +1561,51 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
     // -- first sort the elements by start or end
     allJXNsorted.sort(function (a, b) {
-        var res = d3.ascending(a[groupBy], b[groupBy]);
-        if (res == 0) res = d3.ascending(a[groupBySecond], b[groupBySecond]);
-        if (res == 0) res = d3.ascending(a.weight, b.weight)
+        let res = d3.ascending(a[groupBy], b[groupBy]);
+        if (res === 0) {
+          res = d3.ascending(a[groupBySecond], b[groupBySecond]);
+        }
+        if (res === 0) {
+          res = d3.ascending(a.weight, b.weight);
+        }
         return res;
       }
-    )
+    );
 
 
-    if (!axis.ascending)
+    if (!axis.ascending) {
       allJXNsorted.reverse();
-
-    var currentGroupCriterion = -1;
-    var lastAddedJxn = null;
-    var currentXPos = 0;
+    }
+    let currentGroupCriterion = -1;
+    let lastAddedJxn = null;
+    let currentXPos = 0;
     jxnGroups = []; // clean the list
-    var currentGroup = [];
+    let currentGroup = [];
 
 
     allJXNsorted.forEach(function (jxn) {
 
-      if (currentGroupCriterion == -1 || currentGroupCriterion == jxn[groupBy]) {
+      if (currentGroupCriterion === -1 || currentGroupCriterion === jxn[groupBy]) {
         jxn.x = currentXPos;
         currentGroup.push(jxn);
       } else {
         jxnGroups.push({
           endX: currentXPos,
-          directNeighbor: (lastAddedJxn.directNeighbor && currentGroup.length == 1),
+          directNeighbor: (lastAddedJxn.directNeighbor && currentGroup.length === 1),
           jxns: currentGroup
         });
         currentXPos += gapSize;
-        jxn.x = currentXPos
+        jxn.x = currentXPos;
         currentGroup = [jxn];
       }
 
-      if (jxn.state == 'std') {
+      if (jxn.state === 'std') {
         jxn.w = elementWidth;
-      } else if (jxn.state == 'scatter') {
+      } else if (jxn.state === 'scatter') {
         jxn.w = abundancePlot.panels.scatter.currentWidth;
-      } else if (jxn.state == 'mini') {
+      } else if (jxn.state === 'mini') {
         jxn.w = abundancePlot.panels.mini.currentWidth;
-      } else if (jxn.state == 'groupX') {
+      } else if (jxn.state === 'groupX') {
         jxn.w = abundancePlot.panels.groupX.currentWidth;
       }
 
@@ -1606,14 +1619,14 @@ VialsJunctionVis.prototype.build = function ($parent) {
     // set start parameters// dont forget the last one :)
     jxnGroups.push({
       endX: currentXPos,
-      directNeighbor: (lastAddedJxn.directNeighbor && currentGroup.length == 1),
+      directNeighbor: (lastAddedJxn.directNeighbor && currentGroup.length === 1),
       jxns: currentGroup
     });
 
     //TODO: find better solution for that
-    svg.transition().attr("width", Math.max(currentXPos + 300, axis.getWidth()));
+    svg.transition().attr('width', Math.max(currentXPos + 300, axis.getWidth()));
 
-    endOfPanels = currentXPos
+    endOfPanels = currentXPos;
 
   }
 
@@ -1628,15 +1641,15 @@ VialsJunctionVis.prototype.build = function ($parent) {
    * @returns {boolean}
    */
   function isLeftArrow(type, positiveStrand) {
-    return type == ((positiveStrand == axis.ascending ) ? "donor" : "receptor");
+    return type === ((positiveStrand === axis.ascending ) ? 'donor' : 'receptor');
   }
 
   /*
    ================= GENERAL METHODS =====================
    */
 
-  //var exploreArea = svgMain.append("g").attr("transform", "translate(0, 5)").attr("id","exploreArea");
-  //jxnArea = exploreArea.append("g").attr("id", "jxnArea");
+  //const exploreArea = svgMain.append('g').attr('transform', 'translate(0, 5)').attr('id','exploreArea');
+  //jxnArea = exploreArea.append('g').attr('id', 'jxnArea');
 
 
   function updateVis() {
@@ -1658,26 +1671,26 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
     axis = that.data.genomeAxis;
     width = axis.getWidth();
-    svg.attr("width", width + margin.left + margin.right + textLabelPadding)
+    svg.attr('width', width + margin.left + margin.right + textLabelPadding);
 
-    var curGene = gui.current.getSelectedGene();
-    var curProject = gui.current.getSelectedProject();
+    const curGene = gui.current.getSelectedGene();
+    const curProject = gui.current.getSelectedProject();
 
     that.data.getGeneData(curProject, curGene).then(function (sampleData) {
 
-      console.time("dataLoading");
+      //console.time('dataLoading');
       allData = sampleData;
 
-      var positiveStrand = (sampleData.gene.strand === '+');
+      const positiveStrand = (sampleData.gene.strand === '+');
 
       allExons = [];
       _.values(sampleData.gene.isoforms).forEach(function (isoform: any) {
-        var exonNames = isoform.exonNames.split('_');
-        var exonEnds = isoform.exonEnds.split('_');
-        var exonStarts = isoform.exonStarts.split('_');
+        const exonNames = isoform.exonNames.split('_');
+        const exonEnds = isoform.exonEnds.split('_');
+        const exonStarts = isoform.exonStarts.split('_');
 
 
-        if ((exonNames.length == exonEnds.length) && (exonNames.length == exonStarts.length)) {
+        if ((exonNames.length === exonEnds.length) && (exonNames.length === exonStarts.length)) {
 
           exonNames.forEach(function (exon, index) {
             allExons.push({
@@ -1685,66 +1698,68 @@ VialsJunctionVis.prototype.build = function ($parent) {
               end: +exonEnds[index],
               start: +exonStarts[index],
               isoformID: isoform.isoformID
-            })
-          })
+            });
+          });
         }
 
       });
 
 
       triangleData = [];
-      //var triangleDataSet = {}
-      var allJxnPos = [];
-      var exonCounter = 0;
+      //const triangleDataSet = {}
+      let allJxnPos = [];
+      let exonCounter = 0;
       weightScale.domain([0, 1]);
 
       allJxns = {};
 
       sampleData.measures.jxns.forEach(function (sample) {
         _.keys(sample.data).forEach(function (jxnKey) {
-          var start_end = jxnKey.split(":").map(function (d) {
+          const startEnd = jxnKey.split(':').map(function (d) {
             return +d;
           }); //returns start and end
 
           // take care of the triangle order
           triangleData.push({
-            "type": positiveStrand ? "donor" : "receptor",
-            "loc": start_end[0],
-            "xStart": 0,
-            "xEnd": 0,
-            "anchor": 0,
-            "xStartDesired": 0,
-            "xEndDesired": 0,
-            "firstGroupBucket": exonCounter,
-            "lastGroupBucket": exonCounter
+            'type': positiveStrand ? 'donor' : 'receptor',
+            'loc': startEnd[0],
+            'xStart': 0,
+            'xEnd': 0,
+            'anchor': 0,
+            'xStartDesired': 0,
+            'xEndDesired': 0,
+            'firstGroupBucket': exonCounter,
+            'lastGroupBucket': exonCounter
           });
 
           triangleData.push({
-            "type": positiveStrand ? "receptor" : "donor",
-            "loc": start_end[1],
-            "xStart": 0,
-            "xEnd": 0,
-            "anchor": 0,
-            "xStartDesired": 0,
-            "xEndDesired": 0,
-            "firstGroupBucket": 0
+            'type': positiveStrand ? 'receptor' : 'donor',
+            'loc': startEnd[1],
+            'xStart': 0,
+            'xEnd': 0,
+            'anchor': 0,
+            'xStartDesired': 0,
+            'xEndDesired': 0,
+            'firstGroupBucket': 0
           });
 
           // create 'set' of all JXN positions
-          allJxnPos.push(start_end[0]);
-          allJxnPos.push(start_end[1]);
+          allJxnPos.push(startEnd[0]);
+          allJxnPos.push(startEnd[1]);
 
           // set max
-          var jxnWeight = sample.data[jxnKey];
-          if (weightScale.domain()[1] < jxnWeight) weightScale.domain([0, jxnWeight]);
+          const jxnWeight = sample.data[jxnKey];
+          if (weightScale.domain()[1] < jxnWeight) {
+            weightScale.domain([0, jxnWeight]);
+          }
 
-          var currentPos = allJxns[jxnKey];
-          if (currentPos) currentPos.weights.push({weight: jxnWeight, sample: sample.sample});
-          else {
-            allJxns[jxnKey] =
-            {
-              start: start_end[0],
-              end: start_end[1],
+          const currentPos = allJxns[jxnKey];
+          if (currentPos) {
+            currentPos.weights.push({weight: jxnWeight, sample: sample.sample});
+          } else {
+            allJxns[jxnKey] = {
+              start: startEnd[0],
+              end: startEnd[1],
               weights: [{weight: jxnWeight, sample: sample.sample}],
               state: 'std', // or points, groups
               directNeighbor: false, // for now -- see later code
@@ -1757,36 +1772,36 @@ VialsJunctionVis.prototype.build = function ($parent) {
 
           exonCounter++;
 
-        })
+        });
 
-      })
+      });
 
       // SORT and REMOVE DUPLICATES
       triangleData.sort(function (a, b) {
-        return a.loc < b.loc ? -1 : a.loc == b.loc ? 0 : 1
+        return a.loc < b.loc ? -1 : a.loc === b.loc ? 0 : 1;
       });
       triangleData = _.uniqBy(triangleData, function (item) {
-        return item.loc + item.type
-      })
+        return item.loc + item.type;
+      });
 
 
       // SORT and REMOVE DUPLICATES
       allJxnPos.sort();
       allJxnPos = _.uniq(allJxnPos); //TODO no idea what: `, true);` should do
 
-      var allSamplesCount = Object.keys(allData.samples).length;
+      const allSamplesCount = Object.keys(allData.samples).length;
 
       // add some global knowledge to each junction
       _.keys(allJxns).map(function (jxnKey) {
-        var jxn = allJxns[jxnKey]
+        const jxn = allJxns[jxnKey];//
 
-        jxn.directNeighbor = jxn.end == allJxnPos[allJxnPos.indexOf(jxn.start) + 1]; //  is it the special case ?
+        jxn.directNeighbor = jxn.end === allJxnPos[allJxnPos.indexOf(jxn.start) + 1]; //  is it the special case ?
         jxn.startTriangle = triangleData[allJxnPos.indexOf(jxn.start)];
         jxn.endTriangle = triangleData[allJxnPos.indexOf(jxn.end)];
 
 
         // number of zero values:
-        var zerocount = allSamplesCount - jxn.weights.length;
+        const zerocount = allSamplesCount - jxn.weights.length;
 
         if (zerocount > 0) { // add zerocount times 0 at the end
           jxn.boxPlotData = helper.computeBoxPlot(
@@ -1796,16 +1811,16 @@ VialsJunctionVis.prototype.build = function ($parent) {
         } else {
           jxn.boxPlotData = helper.computeBoxPlot(_.map(jxn.weights, 'weight'));
         }
-      })
+      });
 
       //cleanup
       sampleOrder.valid = false;
 
-      console.timeEnd("dataLoading");
+      //console.timeEnd('dataLoading');
 
-      console.time("updatevis");
+      //console.time('updatevis');
       updateVis();
-      console.timeEnd("updatevis");
+      //console.timeEnd('updatevis');
     });
 
 
@@ -1816,7 +1831,7 @@ VialsJunctionVis.prototype.build = function ($parent) {
   initView();
 
   return head.node();
-}
+};
 
 
 
