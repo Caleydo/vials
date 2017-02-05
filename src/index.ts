@@ -9,7 +9,7 @@ import * as data from 'phovea_core/src/data';
 import * as visPlugins from 'phovea_core/src/vis';
 import * as event from 'phovea_core/src/event';
 import * as gui from './vials-gui';
-import 'imports?jQuery=jquery!bootstrap-sass/assets/javascripts/bootstrap.js';
+import 'imports-loader?jQuery=jquery!bootstrap-sass/assets/javascripts/bootstrap.js';
 import * as $ from 'jquery';
 import * as d3 from 'd3';
 
