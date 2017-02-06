@@ -139,26 +139,17 @@ export function VialsGUI() {
 
     (<any>$geneSelector).selectivity({
       ajax: {},
-      readOnly: true,
       templates: {
         resultItem(item) {
           return (
-            `<div class='selectivity-result-item' data-item-id=''${item.id}'>
-            '<b>${item.text}</b> (${item.id})<br>${item.description}</div>`
-          );
-        },
-        singleSelectedItem(options) {
-          return (
-            `<span class='selectivity-single-selected-item' data-item-id='${_.escape(options.id)}'>
-            ${options.removable ? `<a class='selectivity-single-selected-item-remove'><i class='fa fa-remove'></i></a>` : ''}${options.text} (${options.id})</span>`
+            `<div class='selectivity-result-item' data-item-id='${item.id}'>
+                <b>${item.text}</b> (${item.id})<br>${item.description}
+              </div>`
           );
         }
-        ,
       },
       placeholder: 'No gene selected'
     });
-
-
   };
 
   //TODO: remove this after fixing increase and decrease width
@@ -284,9 +275,9 @@ export function VialsGUI() {
 
 
     that.currentGeneSelectorCall = function (event) {
-      that.populateGeneData(projectIDitem, event.value);
+      that.populateGeneData(projectIDitem, event.id);
     };
-    $geneSelector.on('change', that.currentGeneSelectorCall);
+    $geneSelector.on('selectivity-selected', that.currentGeneSelectorCall);
 
 
   }

@@ -64,7 +64,7 @@
     "lru-fast": "github:sgratzl/js-lru",
     "phovea_core": "github:phovea/phovea_core#v0.0.5",
     "phovea_d3": "github:phovea/phovea_d3#v0.0.5",
-    "selectivity": "3.0.0"
+    "selectivity": "3.0.3"
   },
   "devDependencies": {
     "@types/jasmine": "2.5.40",
