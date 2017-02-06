@@ -3,7 +3,7 @@
 import * as datatypes from 'phovea_core/src/datatype';
 import * as LRUCache from 'lru-fast';
 import * as $ from 'jquery';
-import * as brokenAxis from './vials-genome-axis';
+import * as brokenAxis from './caleydo-broken-axis';
 import * as _ from 'lodash';
 
 //noinspection Annotator
