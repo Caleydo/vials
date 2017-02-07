@@ -32,9 +32,14 @@ let vis;
 };
 
 data.create({
+  id: undefined,
   type: 'caleydo-genome-data-link',
   name: 'Vials',
-  serveradress: '/api/vials'
+  fqname: 'vials/Vials',
+  description: '',
+  serveradress: '/api/vials',
+  creator: 'Vials',
+  ts: Date.now()
 }).then(function (genomeDataLink) {
 
   gui.current.init(genomeDataLink);
