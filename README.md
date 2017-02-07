@@ -1,57 +1,46 @@
-# Caleydo Vials
+vials [![Phovea][phovea-image]][phovea-url] [![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-image]][daviddm-url]
+=====================
 
 Vials visualizes alternative splicing based on mRNAseq data. You can try out vials at http://vials.io/.
 
-Vials uses [Caleydo Web](https://github.com/Caleydo/caleydo-web/) as the underlying visualization framework. This repository contains the client-side Caleydo Web plugin. 
+A [demonstration](http://playground.caleydo.org/vials/) is available in the Caleydo Playground.
 
-## Running Vials
+Installation
+------------
 
-*Note:* We are currently working on a Docker based build ot simplify the deployment process. In the meanwhile create the dev environment
-
-### Pre-conditions: 
-#### Dev-Environment:
-- install vagrant and virtualbox and follow instructions: https://github.com/Caleydo/caleydo_web_container:
-    - `git clone https://github.com/Caleydo/caleydo_web_container`
-    - `cd caleydo_web_container`
-    - `vagrant up` - start the vagrant machine (might take a while - get a coffee :))
-    - `vagrant ssh` - login to the vagrant box
-- within vagrant use the caleydo manager tool to install vials and all dependencies:
-    - `./manage.sh clone https://github.com/Caleydo/vials` 
-    - `./manage.sh clone https://github.com/Caleydo/vials_server`
-    - `./manage.sh resolve`
-- within vagrant create the data structure for the demo application:
-    - `mkdir _data`
-    - `cd _data`
-    - `mkdir vials_projects`
-    - `cd vials_projects`
-    - download & unzip bodymap data: https://www.dropbox.com/s/xrbs250tjafjvpd/bodymap.vials_project.zip?dl=0
-    - `cd ..`
-    - download & unzip ref_genomes: https://www.dropbox.com/s/zoqnihdrhony4bh/reference_genomes.zip?dl=0
-    - resulting folder structure (excerpt):
 ```
-/vagrant (or ‘caleydo_web_container’)
-	_data
-		reference_genomes
-      hg19_broad
-    vials_projects
-      bodymap.vials_project
-  plugins
-    vials
-    vials_server
-    … (many others)
-	….
+git clone https://github.com/caleydo/vials.git
+cd vials
+npm install
 ```
-- start server:
-    - `cd /vagrant`
-    - `./manage server`
 
-### Running vials
-* Access it using your web browser: http://localhost:9000/vials/
+Testing
+-------
 
-  
-#### Questions ?
- * Get in touch with us: @HendrikStrobelt or @sgratzl .
- 
+```
+npm test
+```
+
+Building
+--------
+
+```
+npm run build
+```
 
 
 
+***
+
+<a href="https://caleydo.org"><img src="http://caleydo.org/assets/images/logos/caleydo.svg" align="left" width="200px" hspace="10" vspace="6"></a>
+This repository is part of **[Phovea](http://phovea.caleydo.org/)**, a platform for developing web-based visualization applications. For tutorials, API docs, and more information about the build and deployment process, see the [documentation page](http://phovea.caleydo.org).
+
+
+[phovea-image]: https://img.shields.io/badge/Phovea-Application-1BA64E.svg
+[phovea-url]: https://phovea.caleydo.org
+[npm-image]: https://badge.fury.io/js/vials.svg
+[npm-url]: https://npmjs.org/package/vials
+[travis-image]: https://travis-ci.org/caleydo/vials.svg?branch=master
+[travis-url]: https://travis-ci.org/caleydo/vials
+[daviddm-image]: https://david-dm.org/caleydo/vials/status.svg
+[daviddm-url]: https://david-dm.org/caleydo/vials

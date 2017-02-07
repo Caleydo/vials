@@ -1,7 +1,6 @@
 /**
  * Created by Hendrik Strobelt 10/10/14
  */
-@import "../bower_components/font-awesome/css/font-awesome.min.css";
 
 .fa-spin-custom, .glyphicon-spin {
   -webkit-animation: spin 5000ms infinite linear;
@@ -619,3 +618,6 @@ path.stdDev {
   //  overflow-x: visible;
   //  overflow-x: hidden;
 }
+
+
+@import "styles/selectivity";

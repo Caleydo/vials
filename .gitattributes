@@ -20,6 +20,7 @@
 *.less text
 *.styl text
 *.js text
+*.ts text
 *.coffee text
 *.json text
 *.htm text
@@ -66,6 +67,7 @@
 # build config
 *.npmignore text
 *.bowerrc text
+Dockerfile text eof=LF
 
 # Heroku
 Procfile text

@@ -1,6 +1,10 @@
-style.css
-/*.map
-pileup ENSG00000149557.json
-pileup ENSG00000150782.json
-response_tp53_v3.json
-data
+/.tscache
+/.idea
+/build/
+/dist/
+node_modules/
+/src/**/*.js
+/tests/**/*.js
+*.map
+*.css
+*.log
