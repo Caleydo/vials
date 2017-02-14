@@ -3,8 +3,6 @@ vials [![Phovea][phovea-image]][phovea-url] [![NPM version][npm-image]][npm-url]
 
 Vials visualizes alternative splicing based on mRNAseq data. You can try out vials at http://vials.io/.
 
-A [demonstration](http://playground.caleydo.org/vials/) is available in the Caleydo Playground.
-
 Installation
 ------------
 
